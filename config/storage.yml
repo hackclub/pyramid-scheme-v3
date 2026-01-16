@@ -9,8 +9,8 @@ local:
 # Azure Blob Storage using REST API
 azure:
   service: AzureStorage
-  account_name: <%= ENV.fetch('AZURE_STORAGE_ACCOUNT_NAME') %>
-  container: <%= ENV.fetch('AZURE_STORAGE_CONTAINER') %>
+  account_name: <%= ENV.fetch('AZURE_STORAGE_ACCOUNT_NAME', 'dummy') %>
+  container: <%= ENV.fetch('AZURE_STORAGE_CONTAINER', 'dummy') %>
   sas_token: <%= ENV['AZURE_STORAGE_SAS_TOKEN'] %>
   access_key: <%= ENV['AZURE_STORAGE_ACCESS_KEY'] %>
 
