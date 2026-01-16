@@ -1,0 +1,497 @@
+# Pyramid Scheme - Website Strings
+# Update all user-facing text in one place
+
+en:
+  number:
+    format:
+      delimiter: ","
+      separator: "."
+    currency:
+      format:
+        unit: "$"
+        delimiter: ","
+        separator: "."
+        format: "%u%n"
+
+  site:
+    name: "Pyramid Scheme"
+    description: "Tell your friends, put up posters and get shards to spend on fun products."
+    age_requirement: "Ages 13+ (including 19 and above) are permitted to participate, but referrals only count for users ages 13 to 18. (Not actually a pyramid scheme, just a fun name!)"
+    copyright: "Pyramid Scheme © %{year} Hack Club. 501(c)(3) nonprofit (EIN: 81-2908499)"
+
+  nav:
+    shop: "Shop"
+    campaigns: "Campaigns"
+    leaderboard: "Leaderboard"
+    settings: "Settings"
+    admin: "Admin"
+    faq: "FAQ"
+    login: "Login with Hack Club"
+    logout: "Logout"
+    ranks: "Ranks"
+    shards: "shards"
+
+  footer:
+    hack_club: "Hack Club"
+    github: "GitHub"
+
+  auth:
+    please_sign_in: "Please sign in to access this page"
+    access_denied: "Access denied"
+    unauthorized: "Unauthorized"
+    forbidden: "Forbidden"
+
+    flash:
+      welcome: "Welcome to Pyramid, %{name}!"
+      cancelled: "Authentication was cancelled or failed."
+      generic_error: "Something went wrong. Please try again."
+      auth_failed_generic: "Authentication failed. Please try again."
+      auth_failed_with_message: "Authentication failed: %{message}"
+
+  api:
+    errors:
+      invalid_api_key: "Invalid or missing API key"
+      permission_denied: "Permission denied for %{action} on %{resource}"
+
+  campaigns:
+    errors:
+      closed: "This campaign is no longer available."
+      coming_soon: "This campaign is coming soon."
+      not_found: "Campaign not found."
+    show:
+      actions:
+        generate_poster: "Generate poster"
+        copy_referral_link: "Copy referral link"
+        create_poster: "Create poster"
+      posters:
+        heading: "Your posters"
+        location_not_set: "Location not set"
+        referrals_label: "Referrals"
+        code_prefix: "code:"
+        empty:
+          title: "No posters yet"
+          subtitle: "Click \"Generate poster\" to create your first one."
+      referrals:
+        heading: "Your referrals"
+        progress_label: "Progress"
+        country_prefix: "country:"
+        empty:
+          title: "No referrals yet"
+          subtitle: "Referral link sharing is coming soon."
+        status:
+          awaiting_verification:
+            label: "Awaiting Verification"
+            description: "Awaiting ID verification and the user must be between the ages of 13 and 18."
+          awaiting_hours:
+            label: "Awaiting Hours"
+            description: "User must log 1 hour using Hackatime. Currently logged %{tracked}."
+          completed:
+            label: "Successful"
+            description: "Successful. You've received a payout."
+      login_panel:
+        heading: "Login to participate"
+        description: "Generate posters, track referrals, and earn shards in %{campaign_name}."
+        login_button: "Login"
+      poster_status:
+        pending: "Pending: Submit Proof"
+        awaiting_review: "Awaiting Review"
+        on_hold: "On Hold"
+        rejected: "Rejected"
+
+  posters:
+    paid_quota:
+      title: "Weekly Paid Posters"
+      description: "You can create unlimited posters but shards are only awarded for your first %{base} per week (+%{bonus} posters added to this quota per completed referral, i.e, you get %{bonus} extra paid posters per referral)."
+      short_description: "%{base} base + %{bonus} per completed referral. Unlimited posters, but shards only for paid ones!"
+      count: "%{created}/%{limit} paid this week"
+      remaining:
+        with_shards: "%{count} paid remaining"
+        no_shards: "Over limit (no shards)"
+      bonus_earned: "You've earned +%{bonus_count} bonus paid posters from %{referrals} completed referral!"
+      bonus_earned_plural: "You've earned +%{bonus_count} bonus paid posters from %{referrals} completed referrals this week!"
+      quota_exceeded: "Cannot generate %{requested} posters. You have %{remaining} paid posters remaining this week. You can still generate infinite posters, but the rest will not earn shards. You can also repeatedly print any existing poster."
+    titles:
+      index: "My Posters"
+      new: "Create Poster"
+      show: "Poster"
+      generate: "Generate Poster"
+      details: "Poster Details"
+    credit:
+      designer: "Poster designs by Yessa"
+
+    flash:
+      created: "Poster generated! Download it and put it up."
+      create_error: "Failed to create poster. Please try again."
+      updated: "Poster updated successfully!"
+      deleted: "Poster deleted successfully."
+      cannot_delete_submitted: "Cannot delete a poster that has been submitted for review."
+      location_locked: "Location cannot be changed after proof has been submitted."
+      location_updated: "Location updated successfully!"
+      submit_location_required: "Please save your location before submitting."
+      submit_proof_required: "Please upload your proof photo before submitting."
+      submitted: "Poster submitted for review!"
+      auto_verified: "🎉 Your poster has been automatically verified! Shards have been awarded."
+      proof_uploaded_success: "Proof uploaded and automatically approved! You earned %{count} %{shards}!"
+      proof_uploaded_review: "Proof uploaded! Your poster is now under review."
+      proof_upload_error: "Please select an image to upload."
+      generate_error: "Failed to generate poster. Please try again."
+
+    success:
+      proof_approved_title: "Proof uploaded and approved!"
+      proof_approved_body:
+        one: "Your poster was automatically verified. You earned %{count} shard!"
+        other: "Your poster was automatically verified. You earned %{count} shards!"
+      submitted_title: "Poster submitted successfully!"
+      auto_verified_body:
+        one: "Your poster has been automatically verified. You earned %{count} shard!"
+        other: "Your poster has been automatically verified. You earned %{count} shards!"
+      pending_body: "Your poster is pending verification."
+
+    common:
+      back_to_posters: "Back to Posters"
+      download_poster: "Download Poster PDF"
+      upload_proof: "Upload Proof"
+      generate_poster: "Generate Poster"
+
+    status:
+      pending: "Pending: Submit Proof"
+      in_review: "In Review"
+      success: "Approved"
+      digital: "Digital"
+      on_hold: "On Hold"
+      rejected: "Rejected"
+
+    index:
+      heading: "My Posters"
+      subtitle: "Track your poster submissions."
+      create_poster_coming_soon: "Create Poster (coming soon)"
+      created_ago: "Created %{time} ago"
+      view_details: "View Details"
+      download_qr: "Download QR"
+      empty:
+        title: "No posters yet"
+        subtitle: "Create your first poster to start earning shards!"
+
+    new:
+      card_title: "Create a Poster"
+      campaign_label: "Campaign"
+      location_label: "Where you'll put this poster (be specific)"
+      location_placeholder: "e.g., Coffee shop bulletin board on Main St, next to the entrance"
+      location_help: "This helps us verify your poster submission."
+      country_label: "Country"
+      country_blank: "Select a country..."
+      coming_soon_title: "Poster creation is coming soon."
+      coming_soon_body: "We're polishing the flow for generating posters and submitting proof."
+      how_it_works:
+        title: "How it works:"
+        step_1: "Fill out the form below"
+        step_2: "Download your poster with a unique QR code"
+        step_3: "Print and put it up in a public place"
+        step_4: "Upload proof (photo of the poster in place)"
+        step_5: "Get verified and earn shards!"
+        earn_once_verified:
+          one: "Earn %{count} shard once verified!"
+          other: "Earn %{count} shards once verified!"
+      info:
+        poster_reward:
+          one: "You get %{count} shard for putting up a poster."
+          other: "You get %{count} shards for putting up a poster."
+        signup_bonus: "Plus 3 shards when someone signs up using your poster!"
+        proof_instructions: "After putting up your poster, take a clear photo showing the poster in place and upload it here."
+      rules:
+        title: "Important Rules:"
+        rule_1: "Do not put posters too close to each other"
+        rule_2: "AI generated and fake posters will result in severe punishment across all Hack Club services"
+        rule_3: "Defrauding Hack Club is severely punishable"
+      tips:
+        title: "Tips for Success"
+        tip_1: "Choose high-traffic areas"
+        tip_2: "Make sure the QR code is visible and scannable"
+        tip_3: "Get permission if required"
+        tip_4: "Take a clear photo for verification"
+
+    show:
+      qr_card_title: "Your Poster QR Code"
+      qr_alt: "QR Code"
+      download_qr_code: "Download QR Code"
+      details_title: "Poster Details"
+      fields:
+        campaign: "Campaign"
+        created: "Created"
+        scans: "Scans"
+        reward: "Reward"
+        location: "Location"
+        country: "Country"
+      rejection_reason_label: "Rejection Reason:"
+      verified_on: "Verified on %{date}"
+
+  landing:
+    hero:
+      title: "Pyramid Scheme."
+      cta_primary: "Start earning"
+      cta_leaderboard: "View leaderboard"
+      cta_dashboard: "Go to Dashboard"
+      cta_faq: "Read the FAQ"
+    faq:
+      title: "Frequently Asked Questions"
+
+    attribution:
+      text: "Pyramid of Cheops, Giza (1853–1854), John Beasley Greene."
+      link_text: "nga.gov"
+      url: "https://www.nga.gov/artworks/212245-pyramid-cheops-giza"
+
+    events_by_numbers:
+      title: "Past events, by the numbers"
+      description_html: |
+        <ul class="list-disc list-outside space-y-3 pl-6 text-foreground">
+          <li>Check out our <a href='https://hcb.hackclub.com/hq' target='_blank' rel='noopener' class='underline hover:text-foreground transition-colors'>finances</a>.</li>
+          <li>See what we're building at <a href='https://hackclub.com' target='_blank' rel='noopener' class='underline hover:text-foreground transition-colors'>Hack Club</a>.</li>
+        </ul>
+      tabs:
+        high_seas: "High Seas"
+        summer_of_making: "Summer of Making"
+      high_seas:
+        category: "Winter 2024"
+        title: "High Seas"
+        description: "A global coding challenge where teens build projects, log hours, and earn prizes."
+        url: "https://highseas.hackclub.com/"
+        cta: "Visit High Seas"
+        stats:
+          participants: "High schoolers participated"
+          hours: "Hours logged"
+          prizes_shipped: "Prizes shipped"
+        values:
+          participants: 17000
+          hours: 500000
+          prizes_shipped: 12000
+      summer_of_making:
+        category: "Summer 2025"
+        title: "Summer of Making"
+        description: "A summer-long building sprint with hardware grants and a whole lot of shipping. In collaboration with GitHub!"
+        url: "https://summer.hackclub.com/"
+        cta: "Visit Summer of Making"
+        stats:
+          participants: "High schoolers participated"
+          hours: "Hours logged"
+          prizes_shipped: "Prizes shipped"
+          countries: "Countries"
+        values:
+          participants: 4141
+          hours: 80370
+          prizes_shipped: 5044
+
+  admin:
+    title_prefix: "Admin"
+    brand: "Pyramid Admin"
+    nav:
+      dashboard: "Dashboard"
+      users: "Users"
+      campaigns: "Campaigns"
+      posters: "Posters"
+      shop_items: "Shop Items"
+      orders: "Orders"
+      api_keys: "API Keys"
+      back_to_site: "Back to Site"
+    api_keys:
+      raw_key:
+        title: "Copy your API key now:"
+        subtitle: "This is the only time you'll see this key."
+      flash:
+        created: "API key created. Copy it now - you won't see it again!"
+        deactivated: "API key deactivated."
+
+      index:
+        title: "API Keys"
+        subtitle: "Manage API keys for campaign integrations."
+        create: "Create API Key"
+        table:
+          name: "Name"
+          campaign: "Campaign"
+          key_prefix: "Key Prefix"
+          status: "Status"
+          last_used: "Last Used"
+          requests: "Requests"
+        status:
+          active: "Active"
+          inactive: "Inactive"
+        last_used:
+          never: "Never"
+          ago: "%{time} ago"
+        revoke:
+          label: "Revoke"
+          confirm: "Are you sure you want to revoke this API key?"
+        empty:
+          title: "No API keys yet"
+          subtitle: "Create an API key to allow external programs to send referral data."
+
+      new:
+        title: "Create API Key"
+        subtitle: "Generate a key for external integrations."
+        back: "Back to API Keys"
+        submit: "Create API Key"
+        notice:
+          title: "Important"
+          body: "The API key will only be shown once after creation. Make sure to copy it immediately."
+
+      form:
+        name:
+          label: "Key Name"
+          placeholder: "e.g., Hackatime Integration"
+        campaign:
+          label: "Campaign"
+          placeholder: "Select a campaign"
+        description:
+          label: "Description"
+          placeholder: "What will this API key be used for?"
+
+
+  shop:
+    title: "Shard Shop"
+    subtitle: "I know this is what you were waiting for"
+    no_items: "No items available"
+    no_items_hint: "Check back soon for new items!"
+    low_stock: "Only %{count} left!"
+    flash:
+      region_updated: "Region updated to %{region}"
+      item_unavailable: "That item isn't available right now."
+      quantity_minimum: "Quantity must be at least 1."
+      quantity_exceeds_stock: "Requested quantity exceeds available stock."
+      select_address: "Please select a shipping address."
+      insufficient_shards: "You don't have enough shards for this purchase."
+      out_of_stock: "This item is out of stock."
+      limit_exceeded: "You've reached the purchase limit for this item."
+      order_success: "Order placed successfully!"
+      order_error: "An unexpected error occurred. Please try again."
+
+  poster_groups:
+    flash:
+      created: "%{count} posters generated successfully!"
+      create_error: "Failed to create poster group. Please try again."
+      updated: "Group updated successfully!"
+      update_error: "Failed to update group."
+      deleted: "Poster group deleted."
+      delete_error: "Failed to delete poster group."
+      location_required: "All posters must have a location before submitting."
+      proof_required: "All posters must have proof images before submitting."
+      all_submitted: "All %{count} posters submitted for review!"
+      submit_error: "Failed to submit posters for review."
+      poster_generated: "Poster generated successfully!"
+      poster_generate_error: "Failed to generate poster."
+      poster_matched: "Poster #%{id} matched and submitted!"
+      no_qr_detected: "No valid QR code detected. Please upload a clear photo with a visible QR code."
+      auto_match_error: "Failed to auto-match poster."
+      submitted_manual_review: "Submitted for manual review."
+
+  video_submissions:
+    flash:
+      created: "Video submission received! It will be reviewed soon."
+      create_error: "Failed to submit video. Please try again."
+      deleted: "Submission deleted."
+      delete_error: "Failed to delete submission."
+      already_submitted: "You've already submitted to this campaign."
+      no_video_url: "Please provide a video URL."
+
+  admin:
+    posters:
+      flash:
+        verified: "Poster verified and shards awarded."
+        on_hold: "Poster marked as on hold."
+        rejected: "Poster rejected."
+        marked_digital: "Poster marked as digital (no shards awarded)."
+        cannot_mark_digital: "Cannot mark as digital: poster is not pending."
+        no_proof: "Cannot retry: no proof image attached."
+        auto_verified: "🎉 Poster auto-verified successfully! Shards awarded."
+        auto_verify_attempted: "Auto-verification attempted but did not pass threshold."
+        auto_verify_failed: "Auto-verify failed. Please try again."
+        resubmission_requested: "Poster sent back for resubmission."
+        not_found: "Poster not found."
+    referrals:
+      flash:
+        verified: "Referral verified successfully."
+        verify_error: "Failed to verify referral."
+        completed: "Referral completed successfully."
+        complete_error: "Failed to complete referral."
+        minutes_updated: "Arcade minutes updated."
+        minutes_error: "Failed to update arcade minutes."
+        deleted: "Referral deleted successfully."
+        delete_error: "Failed to delete referral."
+
+  settings:
+    title: "Settings"
+    subtitle: "Manage your Pyramid preferences."
+    profile:
+      title: "Profile Settings"
+      display_name: "Display Name"
+      display_name_placeholder: "Your display name"
+      email: "Email"
+      email_hint: "Email is synced from Hack Club and cannot be changed here."
+    privacy:
+      title: "Privacy Settings"
+      hide_leaderboard: "Hide from leaderboards"
+      hide_leaderboard_hint: "Your referrals and posters will still be tracked, but you won't appear on public leaderboards."
+    account:
+      title: "Account Information"
+      slack_id: "Slack ID"
+      member_since: "Member Since"
+      total_earned: "Total earned"
+      referrals: "Referrals"
+      posters: "Posters"
+      copy_slack_id: "Copy Slack ID"
+      copy_email: "Copy email"
+    save: "Save Changes"
+    cancel: "Cancel"
+
+  leaderboard:
+    title: "Leaderboard"
+    subtitle: "See who's leading. Referral leaderboard ends on <strong>January 30th, 2026</strong>. Ties result in split prize. Current leaderboard has been extended!"
+    category:
+      referrals: "Referrals"
+      posters: "Posters"
+      shards: "Shards"
+    search:
+      placeholder: "Search by name or Slack ID..."
+    you_badge: "You"
+    empty:
+      search:
+        title: "No matching results"
+        subtitle: "Try a different name or Slack ID."
+      blank:
+        title: "Nothing to show yet"
+        subtitle: "Check back once people start earning shards."
+
+  faq:
+    items:
+      - question: "What is Pyramid Scheme?"
+        answer: "Pyramid Scheme is a referral program by Hack Club where you can earn shards by referring people for programs and putting up posters. Use your shards to get cool things from the shop!"
+      - question: "How do I earn shards?"
+        answer: "You earn <strong>3 shards</strong> for every successful referral (when someone you refer codes for 1 hour), <strong>1 shard</strong> for every verified poster you put up, and <strong>3 shards</strong> when someone signs up using your poster!"
+      - question: "What is a referral?"
+        answer: "A referral is when you invite someone to join a Hack Club program. They need to verify their identity and code for at least 1 hour for the referral to be completed."
+      - question: "How do posters work?"
+        answer: "You can generate unique QR code posters for campaigns. Put them up in public places, submit a photo for verification, and earn shards when approved."
+      - question: "What are campaigns?"
+        answer: "Campaigns are themed referral events like <a href='https://flavortown.hackclub.com' target='_blank' class='underline'>Flavortown</a>. Each campaign has its own leaderboard and may offer special rewards or emblems."
+      - question: "Who can participate?"
+        answer: "Pyramid Scheme is open to Hack Club members ages 13+. You can sign in with your Hack Club account. Referrals only count for teens aged 13-18."
+      - question: "Can I opt out of the leaderboard?"
+        answer: "Yes! Go to Settings and toggle the leaderboard opt-out option. Your stats will still be tracked, but you won't appear publicly."
+      - question: "I have more questions..."
+        answer: "You can join the <a href='https://hackclub.com/slack' target='_blank' class='underline'>Hack Club Slack</a> and ask in the <a href='https://hackclub.enterprise.slack.com/archives/C07N1TCHY3T' target='_blank' class='underline'>#pyramid-scheme</a> channel!"
+
+  flash:
+    success: "Success"
+    error: "Error"
+    signed_out: "Signed out successfully!"
+    settings_saved: "Settings saved!"
+
+  common:
+    view_all: "View all"
+    back: "Back"
+    cancel: "Cancel"
+    close: "Close"
+    coming_soon: "Coming soon"
+    previous: "Previous"
+    next: "Next"
+    page_of: "Page %{page} of %{pages}"
+    notifications_aria_label: "Notifications (F8)"
+    not_available: "—"

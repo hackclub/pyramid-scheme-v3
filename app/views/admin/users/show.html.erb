@@ -1,0 +1,259 @@
+<% content_for :title, @user.display_name %>
+
+<div class="mb-6">
+  <%= link_to admin_users_path, class: "inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors" do %>
+    <%= icon :chevron_left, size: 16 %>
+    Back to Users
+  <% end %>
+</div>
+
+<div class="grid gap-6 lg:grid-cols-3 mb-8">
+  <div class="lg:col-span-2 rounded-lg border border-border bg-card p-6 shadow-sm">
+    <div class="flex justify-between items-start mb-6">
+      <div class="flex items-center gap-6">
+        <% if @user.avatar.present? %>
+          <%= image_tag @user.avatar, class: "w-20 h-20 rounded-full" %>
+        <% end %>
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight text-foreground mb-2"><%= @user.display_name %></h1>
+          <p class="text-sm text-muted-foreground mb-3"><%= @user.email %></p>
+          <div class="flex gap-2">
+            <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium <%= @user.admin? ? 'bg-primary/10 text-primary' : @user.fulfiller? ? 'bg-blue-500/10 text-blue-500' : 'bg-muted text-muted-foreground' %>">
+              <%= @user.role.humanize %>
+            </span>
+            <% if @user.is_banned? %>
+              <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-red-500/10 text-red-500">Banned</span>
+            <% end %>
+          </div>
+        </div>
+      </div>
+      <%= link_to "Edit", edit_admin_user_path(@user), class: "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <div>
+        <p class="text-sm text-muted-foreground mb-1">Total Shards</p>
+        <p class="text-2xl font-bold text-foreground"><%= number_with_delimiter(@user.total_shards) %></p>
+      </div>
+      <div>
+        <p class="text-sm text-muted-foreground mb-1">Referrals</p>
+        <p class="text-2xl font-bold text-foreground"><%= @user.referral_count %></p>
+      </div>
+      <div>
+        <p class="text-sm text-muted-foreground mb-1">Posters</p>
+        <p class="text-2xl font-bold text-foreground"><%= @user.poster_count %></p>
+      </div>
+      <div>
+        <p class="text-sm text-muted-foreground mb-1">Joined</p>
+        <p class="text-lg font-bold text-foreground"><%= @user.created_at.strftime("%b %d, %Y") %></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+    <h3 class="text-lg font-semibold text-foreground mb-6">Quick Actions</h3>
+
+    <div class="flex flex-col gap-4">
+      <%# Impersonate button - only visible to authorized admins %>
+      <% if can_impersonate_users? && @user != current_user %>
+        <%= button_to admin_impersonate_user_path(@user), method: :post,
+            class: "inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium bg-amber-500 text-white hover:bg-amber-600 transition-colors w-full",
+            data: { turbo_confirm: "Are you sure you want to impersonate #{@user.display_name}? You will see the app as they do." } do %>
+          <%= icon :user_check, size: 16 %>
+          Impersonate User
+        <% end %>
+        <div class="border-t border-border"></div>
+      <% end %>
+
+      <%# Admin promotion/demotion - only show if not viewing self %>
+      <% if @user != current_user %>
+        <% if @user.admin? %>
+          <%= button_to demote_from_admin_admin_user_path(@user), method: :post,
+              class: "inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium bg-orange-500 text-white hover:bg-orange-600 transition-colors w-full",
+              data: { turbo_confirm: "Are you sure you want to demote #{@user.display_name} from admin? They will lose all admin privileges." } do %>
+            <%= icon :shield_off, size: 16 %>
+            Demote from Admin
+          <% end %>
+        <% else %>
+          <%= button_to promote_to_admin_admin_user_path(@user), method: :post,
+              class: "inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition-colors w-full",
+              data: { turbo_confirm: "Are you sure you want to promote #{@user.display_name} to admin? They will have full admin access." } do %>
+            <%= icon :shield_check, size: 16 %>
+            Promote to Admin
+          <% end %>
+        <% end %>
+        <div class="border-t border-border"></div>
+      <% end %>
+
+      <% if @user.is_banned? %>
+        <div class="p-3 rounded-lg bg-red-500/10 border border-red-500/20 mb-2">
+          <p class="text-xs font-medium text-red-500 mb-1">Banned at: <%= @user.banned_at&.strftime("%b %d, %Y %H:%M") %></p>
+          <% if @user.banned_reason.present? %>
+            <p class="text-xs text-red-400"><strong>Reason:</strong> <%= @user.banned_reason %></p>
+          <% end %>
+          <% if @user.internal_ban_reason.present? %>
+            <p class="text-xs text-red-400 mt-1"><strong>Internal:</strong> <%= @user.internal_ban_reason %></p>
+          <% end %>
+        </div>
+        <%= button_to "Unban User", unban_admin_user_path(@user), method: :post, class: "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors w-full" %>
+      <% else %>
+        <%= form_with url: ban_admin_user_path(@user), method: :post, class: "flex flex-col gap-2" do %>
+          <input type="text" name="banned_reason" placeholder="Reason (visible to user)" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+          <input type="text" name="internal_ban_reason" placeholder="Internal reason (admin only)" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+          <button type="submit" class="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors w-full"
+              data-turbo-confirm="Are you sure you want to ban this user?">
+            Ban User
+          </button>
+        <% end %>
+      <% end %>
+
+      <div class="border-t border-border"></div>
+
+      <%= form_with url: grant_shards_admin_user_path(@user), method: :post, class: "flex flex-col gap-2" do %>
+        <input type="number" name="amount" placeholder="Amount" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" min="1" required>
+        <input type="text" name="description" placeholder="Reason (optional)" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+        <button type="submit" class="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">Grant Shards</button>
+      <% end %>
+
+      <div class="border-t border-border"></div>
+
+      <%= form_with url: debit_shards_admin_user_path(@user), method: :post, class: "flex flex-col gap-2" do %>
+        <input type="number" name="amount" placeholder="Amount" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" min="1" max="<%= @user.total_shards %>" required>
+        <input type="text" name="description" placeholder="Reason (optional)" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+        <button type="submit" class="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors">Debit Shards</button>
+      <% end %>
+
+      <div class="border-t border-border"></div>
+
+      <%= button_to "Wipe Referrals & Posters", wipe_data_admin_user_path(@user), method: :post,
+          class: "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors w-full",
+          data: { turbo_confirm: "Are you sure? This will permanently delete ALL referrals and posters for this user. This cannot be undone." } %>
+
+      <% unless @user.admin? || @user == current_user %>
+        <div class="border-t border-border"></div>
+
+        <%= button_to admin_user_path(@user), method: :delete,
+            class: "inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors w-full",
+            data: { turbo_confirm: "⚠️ DANGER: Are you absolutely sure you want to PERMANENTLY DELETE #{@user.display_name}?\n\nThis will delete:\n• The user account\n• All #{@user.referral_count} referrals\n• All #{@user.poster_count} posters\n• All shard transactions\n• All shop orders\n\nThis action CANNOT be undone!" } do %>
+          <%= icon :trash_2, size: 16 %>
+          Delete User Permanently
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div class="grid gap-6 md:grid-cols-2 mb-8">
+  <div class="rounded-lg border border-border bg-card shadow-sm">
+    <div class="p-6 border-b border-border">
+      <h3 class="text-lg font-semibold text-foreground">Recent Referrals</h3>
+    </div>
+    <% if @referrals.any? %>
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="border-b border-border">
+            <tr class="text-left">
+              <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Referred</th>
+              <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Campaign</th>
+              <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <% @referrals.each do |referral| %>
+              <tr class="hover:bg-muted/50 transition-colors">
+                <td class="px-6 py-4 text-sm text-foreground"><%= referral.referred_identifier %></td>
+                <td class="px-6 py-4 text-sm text-foreground"><%= referral.campaign.name %></td>
+                <td class="px-6 py-4">
+                  <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium <%= referral_status_badge_class(referral) %>">
+                    <%= referral_status_label(referral) %>
+                  </span>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="p-6">
+        <p class="text-sm text-muted-foreground">No referrals yet.</p>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="rounded-lg border border-border bg-card shadow-sm">
+    <div class="p-6 border-b border-border">
+      <h3 class="text-lg font-semibold text-foreground">Recent Transactions</h3>
+    </div>
+    <% if @transactions.any? %>
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="border-b border-border">
+            <tr class="text-left">
+              <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Amount</th>
+              <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Type</th>
+              <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Date</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <% @transactions.each do |tx| %>
+              <tr class="hover:bg-muted/50 transition-colors">
+                <td class="px-6 py-4 text-sm font-medium <%= tx.credit? ? 'text-green-500' : 'text-red-500' %>">
+                  <%= tx.credit? ? '+' : '' %><%= tx.amount %>
+                </td>
+                <td class="px-6 py-4 text-sm text-foreground"><%= tx.transaction_type.humanize %></td>
+                <td class="px-6 py-4 text-sm text-muted-foreground"><%= tx.created_at.strftime("%b %d") %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="p-6">
+        <p class="text-sm text-muted-foreground">No transactions yet.</p>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<div class="rounded-lg border border-border bg-card shadow-sm mb-8">
+  <div class="p-6 border-b border-border flex items-center justify-between">
+    <div>
+      <h3 class="text-lg font-semibold text-foreground">Proxy hits</h3>
+      <p class="text-sm text-muted-foreground">Requests logged by the proxy for <%= @user.referral_code %>.</p>
+    </div>
+    <span class="text-xs text-muted-foreground">Showing <%= @referral_logs.size %> recent</span>
+  </div>
+  <% if @referral_logs.any? %>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="border-b border-border">
+          <tr class="text-left">
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">IP</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">User agent</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">When</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <% @referral_logs.each do |log| %>
+            <tr class="hover:bg-muted/50 transition-colors">
+              <td class="px-6 py-4 text-sm font-mono text-foreground"><%= log.ip_address %></td>
+              <td class="px-6 py-4 text-sm text-muted-foreground"><%= truncate(log.user_agent.to_s, length: 80) %></td>
+              <td class="px-6 py-4 text-sm text-muted-foreground"><%= time_ago_in_words(log.created_at) %> ago</td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="p-6">
+      <p class="text-sm text-muted-foreground">No proxy hits recorded for this referral code yet.</p>
+    </div>
+  <% end %>
+</div>
+
+<% if @user.internal_notes.present? %>
+  <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+    <h3 class="text-lg font-semibold text-foreground mb-4">Internal Notes</h3>
+    <pre class="text-sm text-muted-foreground whitespace-pre-wrap"><%= @user.internal_notes %></pre>
+  </div>
+<% end %>

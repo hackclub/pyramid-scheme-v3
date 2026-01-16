@@ -1,0 +1,164 @@
+<% content_for :title, t("admin.nav.posters") %>
+
+<div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+  <div>
+    <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Posters</h1>
+    <p class="text-sm text-muted-foreground mt-1">Review submissions and manage verification.</p>
+  </div>
+</div>
+
+<%# Status tabs %>
+<div class="flex gap-2 border-b border-border mb-6">
+  <% status_labels = {
+    "in_review" => "In Review",
+    "pending" => "Pending",
+    "success" => "Verified",
+    "digital" => "Digital",
+    "on_hold" => "On Hold",
+    "rejected" => "Rejected"
+  } %>
+  <% status_labels.each do |key, label| %>
+    <% active = @status == key %>
+    <%= link_to label,
+        admin_posters_path(status: key),
+        class: "px-4 py-2 text-sm font-medium transition-colors #{active ? 'text-foreground border-b-2 border-primary -mb-px' : 'text-muted-foreground hover:text-foreground'}" %>
+  <% end %>
+</div>
+
+<% if @posters.any? %>
+  <%# Mobile card view %>
+  <div class="md:hidden space-y-3">
+    <% @posters.each do |poster| %>
+      <%= link_to admin_poster_path(poster, status: @status), class: "block rounded-lg border border-border bg-card p-4 shadow-sm hover:bg-muted/30 transition-colors" do %>
+        <div class="flex items-start gap-3">
+          <% if poster.proof_image.attached? %>
+            <%= image_tag url_for(poster.proof_image.variant(:thumb)), class: "w-16 h-16 rounded-lg object-cover flex-shrink-0" %>
+          <% elsif poster.proof_image_url.present? %>
+            <div class="w-16 h-16 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+              <%= icon :image, size: 20, class_name: "text-muted-foreground" %>
+            </div>
+          <% else %>
+            <div class="w-16 h-16 rounded-lg bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center flex-shrink-0">
+              <%= icon :circle_alert, size: 20, class_name: "text-yellow-600" %>
+            </div>
+          <% end %>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="font-medium text-foreground truncate"><%= poster.user&.display_name || "Deleted User" %></span>
+              <span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium flex-shrink-0 <%= poster_status_badge_class(poster.verification_status) %>">
+                <%= poster.verification_status&.humanize || "Unknown" %>
+              </span>
+            </div>
+            <div class="text-xs text-muted-foreground mb-1"><%= poster.campaign&.name || "—" %></div>
+            <div class="flex items-center gap-3 text-xs text-muted-foreground">
+              <span><%= time_ago_in_words(poster.created_at) %> ago</span>
+              <% if poster.location_description.present? %>
+                <span class="truncate"><%= truncate(poster.location_description, length: 20) %></span>
+              <% end %>
+            </div>
+          </div>
+          <%= icon :chevron_right, size: 18, class_name: "text-muted-foreground flex-shrink-0" %>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+
+  <%# Desktop table view %>
+  <div class="hidden md:block rounded-lg border border-border bg-card shadow-sm">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="border-b border-border">
+          <tr class="text-left">
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">User</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Campaign</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Location</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Status</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Group</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Submitted</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Proof</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <% @posters.each do |poster| %>
+            <tr class="hover:bg-muted/50 transition-colors">
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                  <% if poster.user&.avatar.present? %>
+                    <%= image_tag poster.user.avatar, class: "w-8 h-8 rounded-full" %>
+                  <% else %>
+                    <div class="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                      <%= icon :user, size: 16, class_name: "text-muted-foreground" %>
+                    </div>
+                  <% end %>
+                  <div>
+                    <div class="font-medium text-foreground"><%= poster.user&.display_name || "Deleted User" %></div>
+                    <div class="text-xs text-muted-foreground"><%= poster.user&.email || "—" %></div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 text-sm text-foreground"><%= poster.campaign&.name || "Deleted Campaign" %></td>
+              <td class="px-6 py-4 text-sm text-muted-foreground"><%= truncate(poster.location_description, length: 40) || "—" %></td>
+              <td class="px-6 py-4">
+                <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium <%= poster_status_badge_class(poster.verification_status) %>">
+                  <%= poster.verification_status&.humanize || "Unknown" %>
+                </span>
+              </td>
+              <td class="px-6 py-4 text-sm text-muted-foreground">
+                <% if poster.poster_group.present? %>
+                  <span class="inline-flex items-center gap-1 text-primary" title="Part of a bulk group">
+                    <%= icon :layers, size: 14 %>
+                    <span class="text-xs"><%= poster.poster_group.poster_count %></span>
+                  </span>
+                <% else %>
+                  <span class="text-muted-foreground">—</span>
+                <% end %>
+              </td>
+              <td class="px-6 py-4 text-sm text-muted-foreground"><%= time_ago_in_words(poster.created_at) %> ago</td>
+              <td class="px-6 py-4 text-sm text-muted-foreground">
+                <% if poster.proof_image.attached? || poster.proof_image_url.present? %>
+                  <span class="inline-flex items-center gap-2 text-green-600 font-medium">
+                    <%= icon :circle_check, size: 16, class_name: "text-green-600" %>
+                    Received
+                  </span>
+                <% else %>
+                  <span class="inline-flex items-center gap-2 text-yellow-700 font-medium">
+                    <%= icon :circle_alert, size: 16, class_name: "text-yellow-700" %>
+                    Missing
+                  </span>
+                <% end %>
+              </td>
+              <td class="px-6 py-4 text-sm text-right">
+                <%= link_to "Review", admin_poster_path(poster, status: @status), class: "inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% else %>
+  <div class="rounded-lg border border-border bg-card p-12 text-center">
+    <p class="text-sm text-muted-foreground">No posters in this queue.</p>
+  </div>
+<% end %>
+
+  <% if @pagy.pages > 1 %>
+  <div class="flex items-center justify-center gap-2 p-4 mt-4 rounded-lg border border-border bg-card md:border-t md:border-x-0 md:border-b-0 md:rounded-none md:rounded-b-lg">
+    <% if @pagy.page > 1 %>
+      <%= link_to admin_posters_path(page: @pagy.page - 1, status: @status), class: "inline-flex items-center justify-center rounded-md p-2 md:px-3 md:py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" do %>
+        <%= icon :chevron_left, size: 18 %>
+        <span class="hidden md:inline ml-1">Previous</span>
+      <% end %>
+    <% end %>
+    <span class="text-sm text-muted-foreground mx-2">
+      <%= @pagy.page %> / <%= @pagy.pages %>
+    </span>
+    <% if @pagy.page < @pagy.pages %>
+      <%= link_to admin_posters_path(page: @pagy.page + 1, status: @status), class: "inline-flex items-center justify-center rounded-md p-2 md:px-3 md:py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" do %>
+        <span class="hidden md:inline mr-1">Next</span>
+        <%= icon :chevron_right, size: 18 %>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

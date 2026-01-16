@@ -1,0 +1,434 @@
+<% content_for :title, "#{@campaign.name} · #{t('nav.campaigns')} · #{t('site.name')}" %>
+
+<%# Allow campaign surface to fill the entire main area (between header and footer) %>
+<% content_for :skip_container, true %>
+<% content_for :skip_footer, true %>
+
+<%# Use the campaign's theme class for styling %>
+<% theme_class = @campaign.theme_class %>
+<% has_custom_theme = @campaign.theme.in?(%w[flavortown aces construct sleepover]) %>
+<% is_flavortown = @campaign.theme == "flavortown" %>
+<% is_aces = @campaign.theme == "aces" %>
+<% is_construct = @campaign.theme == "construct" %>
+<% is_sleepover = @campaign.theme == "sleepover" %>
+
+<% if has_custom_theme %>
+  <% content_for :main_class, "campaign-surface #{theme_class}" %>
+<% end %>
+
+<div class="<%= theme_class %> min-h-full pb-40" data-controller="poster-modal referral-modal video-submission-modal">
+  <div class="relative overflow-x-hidden">
+    <%# Background texture - campaign specific %>
+    <% if is_flavortown %>
+      <div class="pointer-events-none absolute inset-0 opacity-[0.08]" style="background-image: url('<%= asset_path('flavortown/striped-btn-bg.svg') %>'); background-size: 260px;"></div>
+    <% elsif is_aces %>
+      <div class="pointer-events-none absolute inset-0 opacity-[0.15]" style="background: radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255, 215, 0, 0.08) 0%, transparent 50%);"></div>
+    <% elsif is_construct %>
+      <div class="pointer-events-none fixed inset-0 opacity-[0.06] z-0" style="background: repeating-linear-gradient(45deg, #000 0, #000 10px, #f5a623 10px, #f5a623 20px);"></div>
+    <% elsif is_sleepover %>
+      <div class="pointer-events-none absolute inset-0 opacity-[0.2]" style="background-image: url('<%= asset_path('sleepover/bunny-tile.png') %>'); background-size: 220px;"></div>
+      <div class="pointer-events-none absolute inset-0" style="background: linear-gradient(180deg, rgba(217, 218, 248, 0.95) 0%, rgba(199, 214, 255, 0.75) 55%, rgba(255, 255, 255, 0.9) 100%);"></div>
+    <% end %>
+
+    <div class="container relative pt-8 pb-10">
+      <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-8">
+        <div class="space-y-3 max-w-2xl">
+          <div class="flex items-center gap-3">
+            <h1 class="campaign-font text-4xl md:text-5xl font-black tracking-tight"><%= @campaign.name %></h1>
+            <% if is_construct || is_aces %>
+              <span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2.5 py-1 text-xs font-bold text-emerald-400 uppercase tracking-wide flex-shrink-0 border border-emerald-500/30"
+                    style="display: none;"
+                    data-controller="new-badge"
+                    data-new-badge-key-value="campaign-<%= @campaign.slug %>-header">
+                <%= icon :star, size: 12 %>
+                New
+                <button type="button" class="hover:text-white transition-colors" data-action="click->new-badge#dismiss">
+                  <%= icon :x, size: 10 %>
+                </button>
+              </span>
+            <% end %>
+          </div>
+          <p class="text-base leading-relaxed opacity-90"><%= @campaign.description %></p>
+        </div>
+
+        <%# Campaign mascot/image %>
+        <% if is_flavortown %>
+          <div class="relative flex justify-center lg:justify-end">
+            <%= image_tag "flavortown/chef-orpheus-head.webp", class: "w-44 md:w-56 drop-shadow-[0_30px_60px_rgba(0,0,0,0.22)]", alt: "" %>
+          </div>
+        <% elsif is_aces %>
+          <div class="relative flex justify-center lg:justify-end">
+            <%= image_tag "aces/card.svg", class: "w-44 md:w-56 drop-shadow-[0_30px_60px_rgba(0,0,0,0.22)]", alt: "Aces Card" %>
+          </div>
+        <% elsif is_construct %>
+          <div class="relative flex justify-center lg:justify-end">
+            <%= image_tag "construct/favicon.png", class: "w-36 md:w-48 drop-shadow-[0_30px_60px_rgba(0,0,0,0.22)]", alt: "Construct" %>
+          </div>
+        <% elsif is_sleepover %>
+          <div class="relative flex justify-center lg:justify-end">
+            <%= image_tag "sleepover/bunny-sleeping.png", class: "w-44 md:w-60 drop-shadow-[0_30px_60px_rgba(61,72,132,0.35)]", alt: "Sleepover" %>
+          </div>
+        <% end %>
+      </div>
+
+      <%# Campaign picker (in-body, no extra profile menu) %>
+      <div class="pointer-events-none fixed inset-x-0 bottom-24 md:bottom-14 z-40 flex justify-center">
+        <div class="pointer-events-auto">
+          <%= render "shared/campaign_nav" %>
+        </div>
+      </div>
+
+      <% if user_signed_in? %>
+        <%# Only show hour progress for non-Construct campaigns (Construct tracks ships, not hours) %>
+        <% if !is_construct && @user_referral_received.present? && @user_referral_received.tracked_minutes < 60 %>
+          <div class="mt-6 campaign-panel p-5">
+            <div class="flex flex-col sm:flex-row items-start sm:justify-between gap-3 sm:gap-4 mb-3">
+              <div>
+                <h3 class="campaign-font text-lg font-black">Your Hour Progress</h3>
+                <p class="text-sm opacity-80 mt-0.5">Track your coding time to complete your referral</p>
+              </div>
+              <div class="sm:text-right">
+                <div class="campaign-font text-2xl font-black tabular-nums"><%= @user_referral_received.tracked_minutes.to_i %> min</div>
+                <div class="text-xs opacity-70">of 60 min</div>
+              </div>
+            </div>
+            <div class="bg-black/10 rounded-full h-3 overflow-hidden">
+              <div class="campaign-accent-bg rounded-full h-3 transition-all duration-500" style="width: <%= [@user_referral_received.progress_percentage, 100].min %>%"></div>
+            </div>
+          </div>
+        <% end %>
+
+        <div class="mt-7 space-y-5">
+          <%# Actions %>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <% if has_custom_theme %>
+              <button type="button"
+                      data-action="click->poster-modal#open"
+                      data-campaign-id="<%= @campaign.id %>"
+                      class="campaign-btn campaign-btn--primary w-full inline-flex items-center justify-center gap-2">
+                <%= icon :scan_line, size: 20 %>
+                Generate Posters
+              </button>
+
+              <button type="button"
+                      data-action="click->referral-modal#open"
+                      data-referral-link="<%= @campaign_logic.referral_url_for(current_user.effective_referral_code) %>"
+                      class="campaign-btn campaign-btn--secondary w-full inline-flex items-center justify-center gap-2">
+                <%= icon :link, size: 20 %>
+                Manage Referral Link
+              </button>
+            <% else %>
+              <button type="button"
+                      data-action="click->poster-modal#open"
+                      data-campaign-id="<%= @campaign.id %>"
+                      class="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card px-5 py-3 text-sm font-semibold text-foreground hover:bg-muted transition-colors">
+                <%= icon :scan_line, size: 18 %>
+                Generate Posters
+              </button>
+
+              <button type="button"
+                      data-controller="ui--clipboard"
+                      data-ui--clipboard-text-value="<%= @campaign_logic.referral_url_for(current_user.referral_code) %>"
+                      data-action="click->ui--clipboard#copy"
+                      class="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card px-5 py-3 text-sm font-semibold text-foreground hover:bg-muted transition-colors">
+                <%= icon :share, size: 18 %>
+                <span data-ui--clipboard-target="label">Copy referral link</span>
+              </button>
+            <% end %>
+          </div>
+
+          <%# Lists (posters + referrals) %>
+          <div class="grid gap-5 lg:grid-cols-2">
+            <div class="p-1 min-h-0">
+              <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 sm:gap-4 mb-4">
+                <h2 class="campaign-font text-2xl font-black">Your posters</h2>
+                <div class="flex items-center gap-3">
+                  <div class="campaign-font text-sm font-black tabular-nums opacity-70"><%= number_with_delimiter(@user_posters.size) %> total</div>
+                  <div class="text-xs opacity-60">|</div>
+                  <div class="campaign-font text-sm font-black tabular-nums opacity-70">
+                    <%= current_user.posters_created_this_week %>/<%= current_user.weekly_paid_poster_limit %> shard bonuses this week
+                  </div>
+                </div>
+              </div>
+
+              <%# Weekly bonus shards info %>
+              <div class="campaign-panel-inner p-3 mb-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div class="flex items-center gap-2">
+                    <div>
+                      <div class="campaign-font text-xs font-black campaign-text-secondary uppercase tracking-wider">Bonus Shards Available</div>
+                      <div class="text-xs campaign-text-muted mt-1">
+                        You can get 1 bonus shard each for submitting upto <%= User::BASE_WEEKLY_PAID_POSTERS %> physical posters + bonus posters this week!
+                      </div>
+                      <% if current_user.total_referral_bonus > 0 %>
+                        <div class="text-xs campaign-text-muted mt-1">
+                          <strong>You have gotten <%= current_user.total_referral_bonus %> bonus posters permanently added to your weekly quota for <%= current_user.referral_count %> referral<%= current_user.referral_count == 1 ? '' : 's' %>!</strong>
+                        </div>
+                      <% else %>
+                        <div class="text-xs campaign-text-muted mt-1">
+                          Complete a referral to get 5 extra bonus-eligible posters per week <strong>permanently</strong>!
+                        </div>
+                      <% end %>
+                    </div>
+                    <div class="relative group flex-shrink-0" data-controller="tooltip">
+                      <button type="button" class="campaign-text-muted hover:campaign-text-primary transition-colors">
+                        <%= icon :info, size: 16 %>
+                      </button>
+                      <div class="absolute left-0 bottom-full mb-2 w-64 p-3 rounded-lg bg-black/90 text-white text-xs opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 shadow-xl">
+                        Earn 1 bonus shard for each physical poster (up to your weekly limit). Referrals add 5 extra posters to your weekly limit forever!
+                      </div>
+                    </div>
+                  </div>
+                  <div class="text-sm campaign-text-primary font-black tabular-nums whitespace-nowrap">
+                    <% if current_user.next_poster_will_be_paid? %>
+                      <%= current_user.remaining_paid_posters_this_week %>/<%= current_user.weekly_paid_poster_limit %> left
+                    <% else %>
+                      0/<%= current_user.weekly_paid_poster_limit %> left
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+
+              <div class="max-h-[42vh] overflow-y-auto pr-1">
+                <% if @user_posters.any? || @user_poster_groups.any? %>
+                  <div class="space-y-4">
+                    <%# Show bulk poster groups first %>
+                    <% @user_poster_groups.each do |group| %>
+                      <% summary = group.submission_summary %>
+                      <%= link_to poster_group_path(group), class: "block px-1 py-2 hover:bg-black/5 rounded-lg transition-colors" do %>
+                        <div class="flex items-center justify-between">
+                          <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                              <span class="inline-flex items-center rounded-full campaign-bg-muted px-3 py-1 text-xs font-black campaign-font campaign-text-muted">BULK GROUP</span>
+                              <span class="campaign-font text-sm font-bold campaign-text-primary">
+                                <%= group.name.presence || "Group ##{group.id}" %>
+                              </span>
+                              <span class="text-xs campaign-text-muted">(<%= group.poster_count %> posters)</span>
+                            </div>
+                          </div>
+                          <div class="flex gap-1 flex-shrink-0 ml-2">
+                            <% if summary[:pending] > 0 %>
+                              <span class="inline-flex items-center rounded-full bg-yellow-500/20 px-2 py-0.5 text-[10px] font-bold text-yellow-600"><%= summary[:pending] %></span>
+                            <% end %>
+                            <% if summary[:in_review] > 0 %>
+                              <span class="inline-flex items-center rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-bold text-blue-600"><%= summary[:in_review] %></span>
+                            <% end %>
+                            <% if summary[:success] > 0 %>
+                              <span class="inline-flex items-center rounded-full bg-green-500/20 px-2 py-0.5 text-[10px] font-bold text-green-600"><%= summary[:success] %></span>
+                            <% end %>
+                          </div>
+                        </div>
+                      <% end %>
+                    <% end %>
+
+                    <%# Then show individual posters %>
+                    <% @user_posters.order(created_at: :desc).each do |poster| %>
+                      <% status_label, status_classes = poster_status_badge_full(poster.verification_status) %>
+                      
+                      <%# Warning for pending/in_review posters when user has no quota %>
+                      <% show_quota_warning = poster.verification_status.to_s.in?(%w[pending in_review]) && !current_user.next_poster_will_be_paid? %>
+
+                      <div data-controller="poster-view-modal">
+                      <div class="flex items-start justify-between gap-4 px-1 py-2 hover:bg-black/5 rounded-lg transition-colors">
+                        <button type="button"
+                                data-action="click->poster-view-modal#open"
+                                data-poster-id="<%= poster.id %>"
+                                class="flex items-start justify-between gap-4 w-full text-left flex-1 min-w-0">
+                          <div class="min-w-0">
+                            <div class="flex flex-wrap items-center gap-2">
+                              <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-black campaign-font <%= status_classes %>"><%= status_label %></span>
+                              <span class="font-mono text-xs opacity-70">code: <span class="font-semibold"><%= poster.qr_code_token %></span></span>
+                            </div>
+                            <% if show_quota_warning %>
+                              <div class="mt-1.5 text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                                <%= icon :alert_triangle, size: 12 %>
+                                <% if poster.verification_status.to_s == "pending" %>
+                                  Your poster is still active even if it is pending, but you cannot submit it for payment this week.
+                                <% else %>
+                                  Your poster is still active even if it is in review.
+                                <% end %>
+                              </div>
+                            <% end %>
+                            <div class="mt-2 text-sm font-semibold opacity-80 truncate">
+                              <%= poster.location_description.presence || "Location not set" %>
+                            </div>
+                            <div class="mt-0.5 text-xs opacity-60">
+                              <%= poster.latitude.present? && poster.longitude.present? ? "#{poster.latitude}, #{poster.longitude}" : "" %>
+                            </div>
+                          </div>
+
+                          <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                            <div class="text-[11px] font-black tracking-wider opacity-50">Referrals</div>
+                            <div class="font-mono text-lg font-black tabular-nums opacity-80"><%= number_with_delimiter(poster.scan_count) %></div>
+                          </div>
+                        </button>
+
+                        <% if poster.verification_status == "pending" %>
+                          <button type="button"
+                                  data-action="click->poster-view-modal#open"
+                                  data-poster-id="<%= poster.id %>"
+                                  class="flex-shrink-0 p-2 opacity-70 hover:opacity-100 hover:bg-black/5 rounded-lg transition-colors"
+                                  title="Upload proof">
+                            <%= icon :upload, size: 18 %>
+                          </button>
+
+                          <%= button_to poster_path(poster), method: :delete,
+                              data: { turbo_confirm: "Are you sure you want to delete this poster?\n\nWARNING: Your poster's QR code will stop working and anyone who scans it will no longer be linked to you.\n\nThis cannot be undone." },
+                              class: "flex-shrink-0 p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors",
+                              form: { data: { turbo: false } } do %>
+                            <%= icon :trash_2, size: 18 %>
+                          <% end %>
+                        <% end %>
+                      </div>
+                      <%= render "shared/poster_view_modal", poster: poster %>
+                      </div>
+                    <% end %>
+                  </div>
+                <% else %>
+                  <div class="py-10 text-center">
+                    <p class="campaign-text-muted text-sm">No posters yet</p>
+                    <p class="campaign-text-muted text-xs mt-1">Click "Generate Posters" to create your first one</p>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+
+            <div class="p-1 min-h-0">
+              <div class="flex items-center justify-between gap-4 mb-4">
+                <h2 class="campaign-font text-2xl font-black">Your referrals</h2>
+                <div class="flex items-center gap-2 campaign-font text-base font-black tabular-nums">
+                  <%= icon :users, size: 16, class_name: 'opacity-50' %>
+                  <span><%= number_with_delimiter(@user_referrals.size) %></span>
+                </div>
+              </div>
+
+              <div class="max-h-[42vh] overflow-y-auto pr-1">
+                <% if @user_referrals.any? %>
+                  <div class="space-y-4">
+                    <% @user_referrals.order(created_at: :desc).each do |referral| %>
+                      <% hours = (referral.tracked_minutes / 60) %>
+                      <% mins = (referral.tracked_minutes % 60) %>
+                      <% tracked = [
+                        (hours.positive? ? "#{hours} hour#{hours == 1 ? '' : 's'}" : nil),
+                        (mins.positive? ? "#{mins} minute#{mins == 1 ? '' : 's'}" : nil)
+                      ].compact.join(' ') %>
+
+                      <%# For Construct: get ships and projects from metadata %>
+                      <% ships_count = referral.metadata&.dig("ships_count").to_i %>
+                      <% projects_count = referral.metadata&.dig("projects_count").to_i %>
+
+                      <%# Determine ID and Hours status separately %>
+                      <% id_verified = referral.status.in?(%w[id_verified completed]) %>
+                      <% hours_complete = referral.status == "completed" || referral.tracked_minutes >= referral.campaign.required_coding_minutes %>
+
+                      <% if is_construct %>
+                        <%# Construct-specific status: Ships-based completion %>
+                        <% label, badge, hover = case referral.status
+                          when "completed" then [
+                            "Successful",
+                            "bg-green-600 text-white",
+                            "Successful. You've received a payout."
+                          ]
+                          else
+                            if ships_count >= 1
+                              ["Ready to Complete", "bg-emerald-500 text-white", "User has shipped! Referral will complete soon."]
+                            else
+                              ["Waiting for Ship", "bg-yellow-400 text-black", "User has #{projects_count} project(s) but needs to ship at least 1."]
+                            end
+                          end %>
+                      <% else %>
+                        <% label, badge, hover = case referral.status
+                          when "pending" then [
+                            "Awaiting Verification",
+                            "bg-blue-600 text-white",
+                            "Awaiting ID verification and the user must be between the ages of 13 and 18."
+                          ]
+                          when "id_verified" then [
+                            "ID Verified, Hours Pending",
+                            "bg-yellow-400 text-black",
+                            "User must log 1 hour using Hackatime. Currently logged #{tracked.presence || '0 minutes'}."
+                          ]
+                          when "completed" then [
+                            "Successful",
+                            "bg-green-600 text-white",
+                            "Successful. You've received a payout."
+                          ]
+                          else [referral.status.to_s.humanize, "bg-[#5b2a1f] text-[#f6e7c8]", ""]
+                        end %>
+                      <% end %>
+
+                      <% country = referral.referred&.country_code.presence || referral.metadata["country_code"].presence || "—" %>
+
+                      <% if is_construct %>
+                        <% status_text = case referral.status
+                          when "completed" then "Complete"
+                          else "Projects: #{projects_count} | Ships: #{ships_count}"
+                        end %>
+                      <% else %>
+                        <% status_text = case referral.status
+                          when "pending" then "ID: Pending"
+                          when "id_verified" then "ID: Yes | Hours: #{tracked.presence || '0 min'}"
+                          when "completed" then "Complete"
+                          else referral.status.to_s.humanize
+                        end %>
+                      <% end %>
+
+                      <div class="flex items-center justify-between gap-4 px-1 py-2">
+                        <div class="min-w-0">
+                          <div class="flex flex-wrap items-center gap-2">
+                            <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-black campaign-font <%= badge %>" title="<%= hover %>"><%= label %></span>
+                            <span class="font-mono text-xs opacity-70">country: <span class="font-semibold"><%= country %></span></span>
+                          </div>
+                          <div class="mt-2 text-sm font-semibold opacity-80 truncate"><%= censor_email(referral.referred_identifier) %></div>
+                        </div>
+
+                        <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                          <div class="text-xs font-semibold opacity-70"><%= status_text %></div>
+                        </div>
+                      </div>
+                    <% end %>
+                  </div>
+                <% else %>
+                  <div class="py-10 text-center">
+                    <p class="campaign-font text-xl font-black">No referrals yet</p>
+                    <p class="text-sm opacity-80 mt-1">Click "Copy referral link" to share with friends.</p>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          </div>
+
+          <%# Video Submissions Section %>
+          <div class="mt-8">
+            <h2 class="campaign-font text-2xl font-black mb-4">Video Submissions</h2>
+            <%= render "shared/video_submissions", campaign: @campaign %>
+          </div>
+        </div>
+      <% else %>
+        <div class="mt-8">
+          <div class="campaign-panel p-6 max-w-2xl">
+            <h2 class="campaign-font text-2xl font-black">Login to participate</h2>
+            <p class="mt-2 text-sm opacity-90">Generate posters, track referrals, and earn shards in <%= @campaign.name %>.</p>
+            <div class="mt-4">
+              <%= link_to auth_path, class: "campaign-btn campaign-btn--primary", data: { turbo: false } do %>
+                <%= icon :user_plus, size: 18 %>
+                Login
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <% if user_signed_in? && has_custom_theme %>
+    <%= render "shared/unified_poster_modal", campaign: @campaign %>
+    <%= render "shared/referral_modal",
+               referral_link: @campaign_logic.referral_url_for(current_user.effective_referral_code),
+               custom_referral_code: current_user.custom_referral_code,
+               custom_link_base_url: @campaign_logic.referral_base_url,
+               is_free: current_user.custom_referral_code_is_free?,
+               change_cost: User::CUSTOM_REFERRAL_CODE_CHANGE_COST,
+               user_shards: current_user.total_shards %>
+  <% end %>
+</div>

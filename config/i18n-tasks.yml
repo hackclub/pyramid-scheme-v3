@@ -1,0 +1,40 @@
+# i18n-tasks configuration
+# Keeps scans fast and avoids treating binary assets as UTF-8 text.
+#
+# Docs: https://github.com/glebm/i18n-tasks
+
+base_locale: en
+locales:
+  - en
+
+# Only manage our primary locale file for now.
+data:
+  read:
+    - config/locales/%{locale}.yml
+  write:
+    - - config/locales/%{locale}.yml
+      - "{en}"
+
+search:
+  # Limit scanning to code we actually author.
+  paths:
+    - app/
+    - config/
+    - lib/
+
+  # Exclude binary assets and large/unrelated folders.
+  exclude:
+    - app/assets/images/**/*
+    - app/assets/builds/**/*
+    - app/assets/fonts/**/*
+    - node_modules/**/*
+    - public/**/*
+    - tmp/**/*
+    - log/**/*
+    - vendor/**/*
+
+# i18n-tasks can be strict about missing/interpolation keys; we keep it lenient for now
+# while we migrate hardcoded strings into i18n.
+ignore_missing:
+  - "activerecord.*"
+  - "errors.*"

@@ -1,0 +1,202 @@
+<%# Video Submissions Section - two panes %>
+<% user_video_submissions = current_user.video_submissions.for_campaign(campaign).recent %>
+
+<div data-controller="video-submission video-submission-modal">
+<div class="grid gap-5 lg:grid-cols-2">
+  <%# Pane 1: Submit Video %>
+  <div class="campaign-panel p-4 sm:p-5" style="box-shadow: none; border-width: 2px;">
+    <div class="mb-4">
+      <h2 class="campaign-font text-xl font-black">Submit a Video</h2>
+      <p class="text-sm opacity-80 mt-1">Earn 1-10 shards for quality video content. Viral videos can earn up to 20 bonus shards!</p>
+    </div>
+
+    <%# Criteria %>
+    <div class="campaign-panel-inner p-3 mb-4">
+      <p class="campaign-font text-xs font-black campaign-text-secondary uppercase tracking-wider mb-2">Quality Criteria</p>
+      <ul class="text-xs campaign-text-muted space-y-1">
+        <li>• The duration should not be too long but not too short!</li>
+        <li>• A personal touch is appreciated-- please avoid fully AI generated narration</li>
+        <li>• High quality A/B roll will help you a lot!</li>
+        <li>• Quality > Quantity. If you make multiple video submissions that are low quality, you might get lesser shards than expected or even no shards at all. Focus on good videos!</li>
+        <li>• No botting any statistic. You will be banned immediately</li>
+      </ul>
+    </div>
+
+    <%= form_with model: VideoSubmission.new, url: campaign_video_submissions_path(campaign_slug: campaign.slug), method: :post, multipart: true, class: "space-y-4", data: { video_submission_target: "form" } do |f| %>
+      <div>
+        <label class="block campaign-font text-xs font-bold campaign-text-primary mb-1">Video URL <span class="text-red-500">(required)</span></label>
+        <p class="text-xs campaign-text-secondary mb-2">YouTube, TikTok, Instagram, or any video link</p>
+        <%= f.text_field :video_url, 
+                         placeholder: "https://youtube.com/watch?v=...",
+                         required: true,
+                         class: "flex h-11 w-full rounded-lg campaign-input px-3 sm:px-4 py-2 text-sm",
+                         data: { video_submission_target: "urlInput" } %>
+      </div>
+
+      <div>
+        <label class="block campaign-font text-xs font-bold campaign-text-primary mb-1">Upload Files (Optional)</label>
+        <p class="text-xs campaign-text-secondary mb-2">Up to 5 files, 200MB total. Videos, images, or screenshots. You may further evidence like your YouTube Dashboard page etc. and it may help with the review</p>
+        <%= f.file_field :video_files,
+                         multiple: true,
+                         accept: "video/mp4,video/quicktime,video/webm,video/x-msvideo,image/png,image/jpeg,image/jpg,image/gif,image/webp",
+                         class: "flex h-11 w-full rounded-lg campaign-input px-3 sm:px-4 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium",
+                         data: { video_submission_target: "fileInput", action: "change->video-submission#validateFiles" } %>
+        <div data-video-submission-target="filePreview" class="hidden mt-2 text-xs campaign-text-muted"></div>
+        <div data-video-submission-target="fileError" class="hidden mt-2 text-xs text-red-600"></div>
+      </div>
+
+      <div data-video-submission-target="uploadProgress" class="hidden">
+        <div class="flex items-center justify-center gap-2 py-3">
+          <svg class="animate-spin h-5 w-5 campaign-text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="campaign-font text-sm font-black campaign-text-primary">Uploading files...</span>
+        </div>
+      </div>
+
+      <button type="submit" 
+              class="campaign-btn campaign-btn--primary w-full justify-center"
+              data-video-submission-target="submitButton">
+        <%= icon :camera, size: 18 %>
+        Submit Video
+      </button>
+    <% end %>
+  </div>
+
+  <%# Pane 2: Your Submissions %>
+  <div class="campaign-panel p-4 sm:p-5" style="box-shadow: none; border-width: 2px;">
+    <div class="flex items-baseline justify-between gap-4 mb-4">
+      <h2 class="campaign-font text-xl font-black">Your Videos</h2>
+      <div class="campaign-font text-sm font-black tabular-nums opacity-70"><%= user_video_submissions.count %></div>
+    </div>
+
+    <div class="max-h-[45vh] overflow-y-auto pr-1">
+      <% if user_video_submissions.any? %>
+        <div class="space-y-3">
+          <% user_video_submissions.each do |submission| %>
+            <% status_label, status_classes = case submission.status
+              when "pending" then ["Pending Review", "bg-yellow-500 text-white"]
+              when "on_hold" then ["On Hold", "bg-orange-500 text-white"]
+              when "approved" then ["Approved", "bg-green-600 text-white"]
+              when "rejected" then ["Rejected", "bg-red-600 text-white"]
+            end %>
+
+            <div class="campaign-panel-inner p-3">
+              <button type="button" 
+                      class="w-full text-left"
+                      data-action="click->video-submission-modal#open"
+                      data-video-submission-id="<%= submission.id %>">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-black campaign-font <%= status_classes %>"><%= status_label %></span>
+                      <% if submission.video_url.present? %>
+                        <span class="text-xs opacity-60">URL</span>
+                      <% end %>
+                      <% if submission.video_files.attached? %>
+                        <span class="text-xs opacity-60"><%= submission.video_files.count %> file(s)</span>
+                      <% end %>
+                    </div>
+                    <div class="mt-1 text-xs opacity-60">
+                      Submitted <%= time_ago_in_words(submission.created_at) %> ago
+                    </div>
+                  </div>
+                  <div class="flex-shrink-0">
+                    <%= icon :chevron_down, size: 16, class_name: "opacity-50" %>
+                  </div>
+                </div>
+              </button>
+            </div>
+
+          <% end %>
+        </div>
+      <% else %>
+        <div class="py-10 text-center">
+          <p class="campaign-font text-xl font-black">No videos yet</p>
+          <p class="text-sm opacity-80 mt-1">Submit your first video to earn shards!</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Modals for video submission details - moved outside grid to be truly at page level %>
+    <% user_video_submissions.each do |submission| %>
+      <div data-video-submission-modal-target="dialog" 
+           data-video-submission-id="<%= submission.id %>"
+           class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" 
+           data-state="closed">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" data-action="click->video-submission-modal#closeOnBackdrop"></div>
+
+        <!-- Modal -->
+        <div class="relative campaign-modal shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+          <!-- Header -->
+          <div class="campaign-modal-header px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between rounded-t-2xl">
+            <h2 class="campaign-font text-xl sm:text-2xl font-black campaign-text-primary">Video Submission</h2>
+            <button type="button"
+                    data-action="click->video-submission-modal#close"
+                    class="campaign-text-muted hover:campaign-text-primary transition-colors">
+              <%= icon :x, size: 24 %>
+            </button>
+          </div>
+
+          <!-- Body -->
+          <div class="px-4 sm:px-6 py-4 sm:py-6 space-y-4">
+          <% if submission.approved? %>
+            <div class="flex items-center justify-between">
+              <span class="text-xs campaign-text-muted">Shards Awarded:</span>
+              <span class="campaign-font font-bold"><%= submission.shards_awarded %></span>
+            </div>
+
+            <% if submission.virality_completed? %>
+              <div class="flex items-center justify-between">
+                <span class="text-xs campaign-text-muted">Viral Status:</span>
+                <% if submission.is_viral? %>
+                  <span class="campaign-font font-bold text-purple-600">🔥 Viral! +<%= submission.viral_bonus %> bonus</span>
+                <% else %>
+                  <span class="text-xs opacity-60">Not viral</span>
+                <% end %>
+              </div>
+            <% else %>
+                    <%= turbo_frame_tag "virality_check_#{submission.id}" do %>
+                      <%= render "video_submissions/virality_check", submission: submission %>
+                    <% end %>
+
+            <div class="flex items-center justify-between border-t border-current/10 pt-2">
+              <span class="text-xs campaign-text-muted">Total Earned:</span>
+              <span class="campaign-font font-black text-lg"><%= submission.total_shards %> shards</span>
+            </div>
+          <% end %>
+          <% end %>
+
+          <% if submission.reviewer_notes.present? %>
+            <div class="text-xs">
+              <span class="campaign-text-muted">Reviewer note:</span>
+              <p class="mt-1 opacity-80"><%= submission.reviewer_notes %></p>
+            </div>
+          <% end %>
+
+          <% if submission.video_url.present? %>
+            <div class="text-xs">
+              <span class="campaign-text-muted">URL:</span>
+              <a href="<%= submission.video_url %>" target="_blank" class="block mt-1 campaign-text-primary hover:underline truncate"><%= submission.video_url %></a>
+            </div>
+          <% end %>
+
+          <% if submission.can_delete? %>
+            <%= button_to video_submission_path(submission), 
+                         method: :delete,
+                         data: { turbo_confirm: "Are you sure you want to delete this submission?" },
+                         class: "w-full campaign-btn campaign-btn--secondary justify-center text-red-600",
+                         form: { data: { turbo: false } } do %>
+              <%= icon :trash_2, size: 14 %>
+              Delete Submission
+            <% end %>
+          <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,51 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+stickers:
+  name: Pile of Stickers
+  description: A few Hack Club stickers :)
+  price_shards: 3
+  unlimited_stock: true
+  stock_quantity:
+  category: Swag
+  active: true
+  metadata: {}
+
+smolhaj:
+  name: Smolhåj
+  description: Soft and huggable. A true friend :)
+  price_shards: 133
+  unlimited_stock: false
+  stock_quantity: 50
+  category: Swag
+  active: true
+  metadata: {}
+
+hackducky:
+  name: HackDucky
+  description: It hacks and it quacks
+  price_shards: 100
+  unlimited_stock: false
+  stock_quantity: 25
+  category: Swag
+  active: true
+  metadata: {}
+
+out_of_stock_item:
+  name: Out of Stock Item
+  description: This item is currently out of stock
+  price_shards: 50
+  unlimited_stock: false
+  stock_quantity: 0
+  category: Swag
+  active: true
+  metadata: {}
+
+inactive_item:
+  name: Inactive Item
+  description: This item is not active
+  price_shards: 10
+  unlimited_stock: true
+  stock_quantity:
+  category: Hidden
+  active: false
+  metadata: {}

@@ -1,0 +1,251 @@
+<% content_for :title, t("admin.nav.dashboard") %>
+
+<div class="mb-8">
+  <h1 class="text-2xl font-bold tracking-tight text-foreground">Dashboard</h1>
+  <p class="text-sm text-muted-foreground mt-1">Overview of platform activity</p>
+</div>
+
+<%# Main Stats - Grouped with Icons %>
+<div class="mb-6">
+  <div class="flex flex-row justify-between pb-8">
+    <!-- Users -->
+    <div class="flex-1 text-center">
+      <div class="flex items-center justify-center gap-3 mb-3">
+        <%= icon :user, size: 24 %>
+        <div class="text-sm font-normal text-muted-foreground tracking-wider">Users</div>
+      </div>
+      <div class="text-4xl font-black text-foreground tabular-nums mb-1"><%= number_with_delimiter(@total_users) %></div>
+      <div class="text-xs text-muted-foreground">Total registered users</div>
+    </div>
+
+    <!-- Referrals -->
+    <div class="flex-1 text-center">
+      <div class="flex items-center justify-center gap-3 mb-3">
+        <%= icon :share_2, size: 24 %>
+        <div class="text-sm font-normal text-muted-foreground tracking-wider">Referrals</div>
+      </div>
+      <div class="text-4xl font-black text-foreground tabular-nums mb-1"><%= number_with_delimiter(@completed_referrals) %></div>
+      <div class="text-xs text-muted-foreground"><%= number_with_delimiter(@completed_referrals) %> completed · <%= number_with_delimiter(@total_referrals - @completed_referrals) %> pending</div>
+    </div>
+
+    <!-- Posters -->
+    <div class="flex-1 text-center">
+      <div class="flex items-center justify-center gap-3 mb-3">
+        <%= icon :image, size: 24 %>
+        <div class="text-sm font-normal text-muted-foreground tracking-wider">Posters</div>
+      </div>
+      <div class="text-4xl font-black text-foreground tabular-nums mb-1"><%= number_with_delimiter(@verified_posters) %></div>
+      <div class="text-xs text-muted-foreground"><%= number_with_delimiter(@verified_posters) %> verified · <%= number_with_delimiter(@total_posters - @verified_posters) %> pending</div>
+    </div>
+
+    <!-- Shards & Hours Combined -->
+    <div class="flex-1 text-center">
+      <div class="flex items-center justify-center gap-3 mb-3">
+        <%= icon :pyramid, size: 24 %>
+        <div class="text-sm font-normal text-muted-foreground tracking-wider">Shards</div>
+      </div>
+      <div class="text-4xl font-black text-foreground tabular-nums mb-1"><%= number_with_delimiter(@total_shards_awarded) %></div>
+      <div class="text-xs text-muted-foreground"><%= number_with_delimiter(@verified_hours.round(1)) %> verified hours · <%= number_with_delimiter(@total_hours.round(1)) %> total</div>
+    </div>
+  </div>
+
+<%# Signup Breakdown %>
+<div class="grid gap-4 md:grid-cols-2 mb-6">
+  <div class="rounded-xl border border-border bg-card p-5">
+    <div class="text-xs text-muted-foreground uppercase tracking-wider mb-4">Signup Sources</div>
+    <div class="space-y-3">
+      <div class="flex items-center justify-between">
+        <span class="text-sm text-muted-foreground">Poster Signups</span>
+        <span class="font-semibold text-foreground tabular-nums"><%= number_with_delimiter(@poster_referrals) %> <span class="text-xs text-muted-foreground font-normal">(<%= number_with_delimiter(@poster_referrals_completed) %> complete)</span></span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-sm text-muted-foreground">Link Signups</span>
+        <span class="font-semibold text-foreground tabular-nums"><%= number_with_delimiter(@link_referrals) %> <span class="text-xs text-muted-foreground font-normal">(<%= number_with_delimiter(@link_referrals_completed) %> complete)</span></span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-sm text-muted-foreground">Poster Scans</span>
+        <span class="font-semibold text-foreground tabular-nums"><%= number_with_delimiter(@total_poster_scans) %></span>
+      </div>
+      <% poster_conversion_pct = @total_poster_scans > 0 ? (@poster_referrals.to_f / @total_poster_scans * 100).round(1) : 0 %>
+      <div class="flex items-center justify-between pt-2 border-t border-border">
+        <span class="text-sm text-muted-foreground">Scan Conversion</span>
+        <span class="font-semibold text-foreground tabular-nums"><%= poster_conversion_pct %>%</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="rounded-lg border border-border bg-card shadow-sm">
+    <div class="p-4 border-b border-border">
+      <h3 class="text-sm font-semibold text-foreground">Referral Code Lookup</h3>
+    </div>
+    <div class="p-4 space-y-3">
+      <%= form_with url: admin_root_path, method: :get, local: true, class: "flex gap-2" do |f| %>
+        <%= f.text_field :referral_code,
+          value: @referral_lookup_code || params[:referral_code],
+          placeholder: "Enter code",
+          class: "flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" %>
+        <%= f.submit "Lookup", class: "rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90" %>
+      <% end %>
+
+      <% if @referral_lookup_code.present? %>
+        <% if @referral_lookup_result&.dig(:error) %>
+          <div class="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+            <%= @referral_lookup_result[:error] %>
+          </div>
+        <% elsif @referral_lookup_result&.dig(:user) %>
+          <div class="rounded-md border border-border bg-muted/20 p-3 text-sm">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex-1">
+                <p class="font-medium text-foreground"><%= @referral_lookup_result[:user].display_name %></p>
+                <p class="text-xs text-muted-foreground mt-1"><%= @referral_lookup_result[:user].email %></p>
+                <div class="flex gap-2 mt-2 text-xs">
+                  <span class="text-muted-foreground">Shards:</span>
+                  <span class="text-foreground"><%= @referral_lookup_result[:user].total_shards %></span>
+                  <span class="text-muted-foreground">·</span>
+                  <span class="text-muted-foreground"><%= @referral_lookup_result[:source] == :poster ? "Poster" : "User" %> code</span>
+                </div>
+              </div>
+              <%= link_to "View", admin_user_path(@referral_lookup_result[:user]), class: "text-xs font-medium text-primary hover:underline" %>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div class="grid gap-4 md:grid-cols-2 mb-6">
+  <div class="rounded-lg border border-border bg-card shadow-sm">
+    <div class="p-4 border-b border-border flex items-center justify-between">
+      <h3 class="text-sm font-semibold text-foreground">Quick Actions</h3>
+    </div>
+    <div class="p-4">
+      <%= button_to "Run Airtable Sync",
+        admin_run_airtable_sync_path,
+        method: :post,
+        data: { turbo: false },
+        class: "w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90" %>
+    </div>
+  </div>
+
+  <div class="rounded-lg border border-border bg-card shadow-sm">
+    <div class="p-4 border-b border-border">
+      <h3 class="text-sm font-semibold text-foreground">Airtable Sync History</h3>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="border-b border-border">
+          <tr class="text-left text-xs text-muted-foreground">
+            <th class="px-4 py-2">Started</th>
+            <th class="px-4 py-2">Status</th>
+            <th class="px-4 py-2">Stats</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <% if @airtable_sync_runs.any? %>
+            <% @airtable_sync_runs.limit(5).each do |run| %>
+              <% stats = run.stats || {} %>
+              <% sync_stats = stats["sync"] || stats[:sync] %>
+              <% sync_stats ||= stats if stats.key?("users_synced") || stats.key?(:users_synced) %>
+              <% sync_stats ||= {} %>
+              <% synced = sync_stats["users_synced"] || sync_stats[:users_synced] || 0 %>
+              <tr class="hover:bg-muted/30">
+                <td class="px-4 py-2 text-foreground"><%= run.started_at ? time_ago_in_words(run.started_at) + " ago" : "-" %></td>
+                <td class="px-4 py-2">
+                  <% status_class = case run.status
+                    when "succeeded" then "bg-green-500/10 text-green-500"
+                    when "running" then "bg-yellow-500/10 text-yellow-500"
+                    else "bg-red-500/10 text-red-500"
+                  end %>
+                  <span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium <%= status_class %>">
+                    <%= run.status.humanize %>
+                  </span>
+                </td>
+                <td class="px-4 py-2 text-muted-foreground"><%= synced %> synced</td>
+              </tr>
+            <% end %>
+          <% else %>
+            <tr>
+              <td colspan="3" class="px-4 py-6 text-center text-sm text-muted-foreground">No sync runs yet</td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="grid gap-4 md:grid-cols-2 mb-6">
+  <div class="rounded-lg border border-border bg-card shadow-sm">
+    <div class="flex justify-between items-center p-4 border-b border-border">
+      <h3 class="text-sm font-semibold text-foreground">Recent Users</h3>
+      <%= link_to "View all", admin_users_path, class: "text-xs text-primary hover:underline" %>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <tbody class="divide-y divide-border">
+          <% @recent_users.limit(5).each do |user| %>
+            <tr class="hover:bg-muted/30">
+              <td class="px-4 py-2"><%= link_to user.display_name, admin_user_path(user), class: "font-medium text-foreground hover:text-primary" %></td>
+              <td class="px-4 py-2 text-muted-foreground text-xs text-right"><%= time_ago_in_words(user.created_at) %> ago</td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="rounded-lg border border-border bg-card shadow-sm">
+    <div class="flex justify-between items-center p-4 border-b border-border">
+      <h3 class="text-sm font-semibold text-foreground">Pending Orders</h3>
+      <%= link_to "View all", admin_shop_orders_path(status: "pending"), class: "text-xs text-primary hover:underline" %>
+    </div>
+    <div class="p-4">
+      <% if @pending_orders > 0 %>
+        <p class="text-3xl font-bold text-foreground tabular-nums"><%= @pending_orders %></p>
+        <p class="text-xs text-muted-foreground mt-1">awaiting review</p>
+      <% else %>
+        <div class="text-center py-6">
+          <p class="text-sm text-muted-foreground">No pending orders</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div class="rounded-lg border border-border bg-card shadow-sm">
+  <div class="flex justify-between items-center p-4 border-b border-border">
+    <h3 class="text-sm font-semibold text-foreground">Pending Poster Verifications</h3>
+    <%= link_to "View all", admin_posters_path(status: "pending"), class: "text-xs text-primary hover:underline" %>
+  </div>
+  <% if @pending_posters.any? %>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="border-b border-border">
+          <tr class="text-left text-xs text-muted-foreground">
+            <th class="px-4 py-2">User</th>
+            <th class="px-4 py-2">Location</th>
+            <th class="px-4 py-2">Submitted</th>
+            <th class="px-4 py-2"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <% @pending_posters.each do |poster| %>
+            <tr class="hover:bg-muted/30">
+              <td class="px-4 py-2"><%= link_to poster.user.display_name, admin_user_path(poster.user), class: "font-medium text-foreground hover:text-primary" %></td>
+              <td class="px-4 py-2 text-muted-foreground"><%= truncate(poster.location_description, length: 30) %></td>
+              <td class="px-4 py-2 text-muted-foreground text-xs"><%= time_ago_in_words(poster.created_at) %> ago</td>
+              <td class="px-4 py-2 text-right">
+                <%= link_to "Review", admin_poster_path(poster), class: "text-xs font-medium text-primary hover:underline" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="text-center py-8">
+      <p class="text-sm text-muted-foreground">No pending verifications</p>
+    </div>
+  <% end %>
+</div>

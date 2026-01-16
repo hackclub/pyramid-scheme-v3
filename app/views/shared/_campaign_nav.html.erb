@@ -1,0 +1,128 @@
+<% campaigns = Campaign.active.not_closed.order(Arel.sql("COALESCE(starts_at, created_at) DESC")) %>
+<% campaigns = campaigns.presence || [Campaign.flavortown || @campaign].compact.uniq %>
+<%# In-body Campaign Selector (no extra profile menu) %>
+<%= render_popover side: "top", class: "relative" do %>
+  <%= popover_trigger do %>
+    <button type="button"
+            class="inline-flex w-[min(52rem,92vw)] items-center justify-between gap-3 rounded-full border border-white/20 bg-black/40 px-6 py-3 text-sm font-bold text-white shadow-lg backdrop-blur-md hover:bg-black/50 transition-colors">
+      <span class="inline-flex items-center gap-3 min-w-0">
+        <% if @campaign&.slug == "flavortown" %>
+          <%= image_tag "flavortown/logo.avif", class: "w-5 h-5 rounded-md", alt: "Flavortown" %>
+        <% elsif @campaign&.slug == "aces" %>
+          <%= image_tag "aces/card.svg", class: "w-5 h-5 rounded-md", alt: "Aces" %>
+        <% elsif @campaign&.slug == "construct" %>
+          <%= image_tag "construct/favicon.png", class: "w-5 h-5 rounded-md", alt: "Construct" %>
+        <% elsif @campaign&.slug == "sleepover" %>
+          <%= image_tag "sleepover/sleepover_logo.png", class: "w-5 h-5 rounded-md", alt: "Sleepover" %>
+        <% else %>
+          <%= icon :flag, size: 16 %>
+        <% end %>
+        <span class="truncate"><%= @campaign&.name || "Campaigns" %></span>
+      </span>
+      <span class="inline-flex items-center gap-2">
+        <% if @campaign&.slug.in?(%w[aces construct sleepover]) %>
+          <span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-400 uppercase tracking-wide flex-shrink-0 border border-emerald-500/30"
+                style="display: none;"
+                data-controller="new-badge"
+                data-new-badge-key-value="campaign-selector-new">
+            <%= icon :sparkles, size: 10 %>
+            New
+            <span class="hover:text-white transition-colors cursor-pointer" data-action="click->new-badge#dismiss" onclick="event.stopPropagation()">
+              <%= icon :x, size: 8 %>
+            </span>
+          </span>
+        <% end %>
+        <%= icon :chevron_up, size: 14, class_name: "transition-transform duration-200" %>
+      </span>
+    </button>
+  <% end %>
+
+  <%= popover_content class: "p-2 w-[min(52rem,92vw)] rounded-2xl border border-white/20 bg-black/60 backdrop-blur-md" do %>
+    <div data-controller="ui--list-filter">
+      <div class="p-2 border-b border-white/10">
+        <div class="relative">
+          <input type="text"
+                 placeholder="Search campaigns..."
+                 class="w-full h-10 rounded-lg border border-white/20 bg-white/10 pl-9 pr-3 text-sm text-white placeholder:text-white/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                 data-ui--list-filter-target="search"
+                 data-action="input->ui--list-filter#filter">
+          <div class="absolute left-3 top-1/2 -translate-y-1/2 text-white/60">
+            <%= icon :search, size: 14 %>
+          </div>
+        </div>
+      </div>
+
+      <div class="max-h-52 overflow-y-auto py-2 space-y-1">
+        <% campaigns.each do |campaign| %>
+          <% is_coming_soon = campaign.coming_soon? && !current_user&.admin? %>
+          <% is_new_campaign = campaign.slug.in?(%w[construct aces sleepover]) %>
+          <% wrapper_class = "flex items-center gap-3 rounded-lg px-4 py-4 transition-colors text-white #{campaign == @campaign ? 'bg-white/20' : ''} #{is_coming_soon ? 'opacity-60 cursor-not-allowed' : 'hover:bg-white/10'}" %>
+
+          <% if is_coming_soon %>
+            <div class="<%= wrapper_class %>" data-name="<%= campaign.name.downcase %>" data-ui--list-filter-target="item">
+              <% if campaign.slug == "flavortown" %>
+                <%= image_tag "flavortown/logo.avif", class: "w-5 h-5 rounded-md", alt: "Flavortown" %>
+              <% elsif campaign.slug == "aces" %>
+                <%= image_tag "aces/card.svg", class: "w-5 h-5 rounded-md", alt: "Aces" %>
+              <% elsif campaign.slug == "construct" %>
+                <%= image_tag "construct/favicon.png", class: "w-5 h-5 rounded-md", alt: "Construct" %>
+              <% elsif campaign.slug == "sleepover" %>
+                <%= image_tag "sleepover/sleepover_logo.png", class: "w-5 h-5 rounded-md", alt: "Sleepover" %>
+              <% else %>
+                <%= icon :flag, size: 16 %>
+              <% end %>
+              <div class="flex-1 min-w-0 flex items-center gap-2">
+                <p class="font-semibold text-sm truncate"><%= campaign.name %></p>
+                <% if is_new_campaign %>
+                  <span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-400 uppercase tracking-wide flex-shrink-0 border border-emerald-500/30"
+                        style="display: none;"
+                        data-controller="new-badge"
+                        data-new-badge-key-value="campaign-<%= campaign.slug %>">
+                    <%= icon :sparkles, size: 10 %>
+                    New
+                    <button type="button" class="hover:text-white transition-colors" data-action="click->new-badge#dismiss">
+                      <%= icon :x, size: 8 %>
+                    </button>
+                  </span>
+                <% end %>
+              </div>
+              <span class="inline-flex items-center rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-400 uppercase tracking-wide">Coming Soon</span>
+            </div>
+          <% else %>
+            <%= link_to campaign_path(campaign.slug), class: wrapper_class, data: { name: campaign.name.downcase }, "data-ui--list-filter-target": "item" do %>
+              <% if campaign.slug == "flavortown" %>
+                <%= image_tag "flavortown/logo.avif", class: "w-5 h-5 rounded-md", alt: "Flavortown" %>
+              <% elsif campaign.slug == "aces" %>
+                <%= image_tag "aces/card.svg", class: "w-5 h-5 rounded-md", alt: "Aces" %>
+              <% elsif campaign.slug == "construct" %>
+                <%= image_tag "construct/favicon.png", class: "w-5 h-5 rounded-md", alt: "Construct" %>
+              <% elsif campaign.slug == "sleepover" %>
+                <%= image_tag "sleepover/sleepover_logo.png", class: "w-5 h-5 rounded-md", alt: "Sleepover" %>
+              <% else %>
+                <%= icon :flag, size: 16 %>
+              <% end %>
+              <div class="flex-1 min-w-0 flex items-center gap-2">
+                <p class="font-semibold text-sm truncate"><%= campaign.name %></p>
+                <% if is_new_campaign %>
+                  <span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-400 uppercase tracking-wide flex-shrink-0 border border-emerald-500/30"
+                        style="display: none;"
+                        data-controller="new-badge"
+                        data-new-badge-key-value="campaign-<%= campaign.slug %>">
+                    <%= icon :sparkles, size: 10 %>
+                    New
+                    <button type="button" class="hover:text-white transition-colors" data-action="click->new-badge#dismiss">
+                      <%= icon :x, size: 8 %>
+                    </button>
+                  </span>
+                <% end %>
+              </div>
+              <% if campaign == @campaign %>
+                <%= icon :check, size: 16, class_name: "text-white" %>
+              <% end %>
+            <% end %>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+<% end %>

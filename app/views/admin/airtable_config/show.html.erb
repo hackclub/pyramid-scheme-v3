@@ -1,0 +1,139 @@
+<% content_for :title, "Airtable Config: #{@campaign.name}" %>
+
+<div class="space-y-6">
+  <div class="flex items-center gap-4">
+    <%= link_to admin_airtable_config_index_path, class: "p-2 rounded-lg hover:bg-secondary transition-colors" do %>
+      <%= icon :arrow_left, size: 20 %>
+    <% end %>
+    <div>
+      <h1 class="text-2xl font-bold">Airtable: <%= @campaign.name %></h1>
+      <p class="text-muted-foreground">Configure Airtable sync settings</p>
+    </div>
+  </div>
+
+  <%= form_with model: @campaign, url: admin_campaign_airtable_config_path(@campaign), method: :patch, class: "space-y-6", data: { controller: "airtable-config" } do |f| %>
+    <%= render_card do %>
+      <div class="p-5 border-b border-border">
+        <h2 class="font-semibold flex items-center gap-2">
+          <%= icon :database, size: 18 %>
+          Base & Table Selection
+        </h2>
+      </div>
+
+      <div class="p-5 space-y-5">
+        <div class="space-y-2">
+          <label class="text-sm font-medium">Airtable Base</label>
+          <% if @bases.any? %>
+            <select name="campaign[airtable_base_id]" class="w-full px-3 py-2 rounded-lg border border-input bg-background" data-airtable-config-target="baseSelect" data-action="change->airtable-config#baseChanged">
+              <option value="">Select a base...</option>
+              <% @bases.each do |base| %>
+                <option value="<%= base[:id] %>" <%= "selected" if @campaign.airtable_base_id == base[:id] %>>
+                  <%= base[:name] %>
+                </option>
+              <% end %>
+            </select>
+          <% else %>
+            <div class="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 text-sm">
+              <p class="font-medium">Unable to fetch Airtable bases</p>
+              <p class="mt-1 text-amber-500/80">Make sure the AIRTABLE_PAT environment variable is set correctly.</p>
+            </div>
+          <% end %>
+          <p class="text-xs text-muted-foreground">The Airtable base containing referral data for this campaign</p>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-sm font-medium">Airtable Table</label>
+          <input type="text" name="campaign[airtable_table_id]" value="<%= @campaign.airtable_table_id %>" class="w-full px-3 py-2 rounded-lg border border-input bg-background" placeholder="tblXXXXXXXXXXXXXX or Table Name">
+          <p class="text-xs text-muted-foreground">The table ID or name within the base (e.g., "Referrals" or "tbl...")</p>
+        </div>
+      </div>
+    <% end %>
+
+    <%= render_card do %>
+      <div class="p-5 border-b border-border">
+        <h2 class="font-semibold flex items-center gap-2">
+          <%= icon :settings, size: 18 %>
+          Field Mappings
+        </h2>
+        <p class="text-sm text-muted-foreground mt-1">Map Airtable fields to Pyramid fields</p>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <% field_mappings = @campaign.airtable_field_mappings || {} %>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <label class="text-sm font-medium">Email Field</label>
+            <input type="text" name="campaign[airtable_field_mappings][email]" value="<%= field_mappings['email'] %>" class="w-full px-3 py-2 rounded-lg border border-input bg-background" placeholder="Email">
+            <p class="text-xs text-muted-foreground">Maps to user's email address</p>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-sm font-medium">Hours Field</label>
+            <input type="text" name="campaign[airtable_field_mappings][hours]" value="<%= field_mappings['hours'] %>" class="w-full px-3 py-2 rounded-lg border border-input bg-background" placeholder="Hours">
+            <p class="text-xs text-muted-foreground">Maps to total hours tracked</p>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-sm font-medium">IDV Status Field</label>
+            <input type="text" name="campaign[airtable_field_mappings][idv_status]" value="<%= field_mappings['idv_status'] %>" class="w-full px-3 py-2 rounded-lg border border-input bg-background" placeholder="IDV Status">
+            <p class="text-xs text-muted-foreground">Maps to identity verification status</p>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-sm font-medium">Projects Shipped Field</label>
+            <input type="text" name="campaign[airtable_field_mappings][projects_shipped]" value="<%= field_mappings['projects_shipped'] %>" class="w-full px-3 py-2 rounded-lg border border-input bg-background" placeholder="Projects Shipped">
+            <p class="text-xs text-muted-foreground">Maps to number of projects shipped</p>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-border">
+          <div class="space-y-2">
+            <label class="text-sm font-medium">Record ID Field (optional)</label>
+            <input type="text" name="campaign[airtable_field_mappings][record_id]" value="<%= field_mappings['record_id'] %>" class="w-full px-3 py-2 rounded-lg border border-input bg-background" placeholder="Record ID">
+            <p class="text-xs text-muted-foreground">Airtable record ID field for linking</p>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <% if @campaign.airtable_sync_working? %>
+      <%= render_card do %>
+        <div class="p-5 border-b border-border">
+          <h2 class="font-semibold flex items-center gap-2">
+            <%= icon :refresh_cw, size: 18 %>
+            Sync Status
+          </h2>
+          <% if @campaign.uses_global_airtable? %>
+            <p class="text-sm text-blue-500 mt-1">Using global Airtable fallback (ENV: AIRTABLE_BASE_ID)</p>
+          <% end %>
+        </div>
+
+        <div class="p-5">
+          <% last_sync = @campaign.airtable_sync_runs.order(created_at: :desc).first %>
+          <% if last_sync %>
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm">Last synced: <span class="font-medium"><%= time_ago_in_words(last_sync.created_at) %> ago</span></p>
+                <p class="text-xs text-muted-foreground">Status: <%= last_sync.status %></p>
+              </div>
+              <%= button_to "Sync Now", admin_campaign_airtable_sync_path(@campaign), method: :post, class: "px-4 py-2 rounded-lg bg-secondary text-foreground font-medium hover:bg-secondary/80 transition-colors" %>
+            </div>
+          <% else %>
+            <div class="flex items-center justify-between">
+              <p class="text-sm text-muted-foreground">Never synced</p>
+              <%= button_to "Run First Sync", admin_campaign_airtable_sync_path(@campaign), method: :post, class: "px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors" %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    <% end %>
+
+    <div class="flex justify-end gap-3">
+      <%= link_to "Cancel", admin_airtable_config_index_path, class: "px-4 py-2 rounded-lg border border-border font-medium hover:bg-secondary transition-colors" %>
+      <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors">
+        Save Configuration
+      </button>
+    </div>
+  <% end %>
+</div>

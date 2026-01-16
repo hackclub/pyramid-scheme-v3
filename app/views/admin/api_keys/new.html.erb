@@ -1,0 +1,51 @@
+<% content_for :title, t("admin.api_keys.new.title") %>
+
+<div class="mb-6">
+  <%= link_to admin_api_keys_path, class: "inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors" do %>
+    <%= icon :chevron_left, size: 16 %>
+    <%= t("admin.api_keys.new.back") %>
+  <% end %>
+</div>
+
+<div class="max-w-2xl">
+  <%= render_card(title: t("admin.api_keys.new.title"), subtitle: t("admin.api_keys.new.subtitle")) do %>
+    <div class="px-6 pb-6">
+      <%= form_with model: [:admin, @api_key], url: admin_api_keys_path, class: "space-y-5" do |f| %>
+        <div class="space-y-2">
+          <%= f.label :name, t("admin.api_keys.form.name.label"), class: "text-sm font-semibold" %>
+          <%= f.text_field :name,
+                class: "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                placeholder: t("admin.api_keys.form.name.placeholder"),
+                required: true %>
+        </div>
+
+        <div class="space-y-2">
+          <%= f.label :campaign_id, t("admin.api_keys.form.campaign.label"), class: "text-sm font-semibold" %>
+          <%= f.select :campaign_id,
+                @campaigns.map { |c| [c.name, c.id] },
+                { include_blank: t("admin.api_keys.form.campaign.placeholder") },
+                { class: "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2", required: true } %>
+        </div>
+
+        <div class="space-y-2">
+          <%= f.label :description, t("admin.api_keys.form.description.label"), class: "text-sm font-semibold" %>
+          <%= f.text_area :description,
+                class: "min-h-[96px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                placeholder: t("admin.api_keys.form.description.placeholder") %>
+        </div>
+
+        <%= render_alert(variant: :attention, title: t("admin.api_keys.new.notice.title")) do %>
+          <%= t("admin.api_keys.new.notice.body") %>
+        <% end %>
+
+        <div class="flex flex-wrap gap-3">
+          <%= f.submit t("admin.api_keys.new.submit"),
+                class: "inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90" %>
+
+          <%= link_to t("common.cancel"), admin_api_keys_path,
+                class: "inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-semibold hover:bg-accent hover:text-accent-foreground" %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

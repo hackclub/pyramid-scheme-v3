@@ -1,0 +1,61 @@
+<% content_for :title, "Upload Asset · #{@campaign.name}" %>
+
+<div class="mb-8">
+  <%= link_to "← Back to Assets", admin_campaign_assets_path(@campaign), class: "text-sm text-muted-foreground hover:text-foreground transition-colors" %>
+</div>
+
+<div class="max-w-2xl">
+  <h1 class="text-3xl font-bold tracking-tight text-foreground mb-8">Upload Asset</h1>
+
+  <%= form_with model: [@campaign, @asset], url: admin_campaign_assets_path(@campaign), class: "space-y-6" do |f| %>
+    <% if @asset.errors.any? %>
+      <div class="rounded-lg bg-destructive/10 border border-destructive/20 p-4">
+        <h3 class="text-sm font-medium text-destructive">Please fix the following errors:</h3>
+        <ul class="mt-2 text-sm text-destructive list-disc list-inside">
+          <% @asset.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="rounded-lg border border-border bg-card shadow-sm p-6 space-y-6">
+      <div>
+        <%= f.label :asset_type, "Asset Type", class: "block text-sm font-medium mb-2" %>
+        <%= f.select :asset_type, CampaignAsset::ASSET_TYPES.map { |t| [t.humanize, t] }, {}, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm" %>
+      </div>
+
+      <div>
+        <%= f.label :name, class: "block text-sm font-medium mb-2" %>
+        <%= f.text_field :name, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm", placeholder: "Asset name" %>
+      </div>
+
+      <div>
+        <%= f.label :variant, "Variant (for poster templates)", class: "block text-sm font-medium mb-2" %>
+        <%= f.select :variant, [["None", nil]] + CampaignAsset::POSTER_VARIANTS.map { |v| [v.humanize, v] }, {}, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm" %>
+        <p class="text-xs text-muted-foreground mt-1">Select a variant for poster templates (color, bw, printer_efficient)</p>
+      </div>
+
+      <div>
+        <%= f.label :description, class: "block text-sm font-medium mb-2" %>
+        <%= f.text_area :description, rows: 2, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm", placeholder: "Optional description..." %>
+      </div>
+
+      <div>
+        <%= f.label :file, class: "block text-sm font-medium mb-2" %>
+        <%= f.file_field :file, class: "w-full text-sm", accept: ".pdf,.png,.jpg,.jpeg,.webp,.svg,.css,.ico" %>
+        <p class="text-xs text-muted-foreground mt-1">Accepted formats: PDF (for templates), PNG, JPG, WebP, SVG, CSS, ICO</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <%= f.check_box :active, checked: true, class: "rounded border-input" %>
+        <%= f.label :active, "Asset is active", class: "text-sm font-medium" %>
+      </div>
+    </div>
+
+    <div class="flex gap-4">
+      <%= f.submit "Upload Asset", class: "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer" %>
+      <%= link_to "Cancel", admin_campaign_assets_path(@campaign), class: "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium border border-border hover:bg-muted transition-colors" %>
+    </div>
+  <% end %>
+</div>

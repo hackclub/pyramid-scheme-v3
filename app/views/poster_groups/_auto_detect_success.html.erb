@@ -1,0 +1,26 @@
+<div class="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+  <div class="flex items-start gap-2">
+    <%= icon :circle_check, size: 16, class_name: "text-green-600 flex-shrink-0 mt-0.5" %>
+    <div class="flex-1 min-w-0">
+      <p class="text-sm font-bold text-green-600">
+        <% if verification_result == :success %>
+          Auto-verified! Poster matched and approved.
+        <% else %>
+          Matched to poster #<%= poster.id %>
+        <% end %>
+      </p>
+      <p class="text-xs campaign-text-secondary mt-1">
+        <% if verification_result == :success %>
+          QR code detected and matched. Shards have been awarded!
+        <% else %>
+          Proof uploaded and submitted for review.
+        <% end %>
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Refresh the page to show updated poster status
+  setTimeout(() => window.location.reload(), 1500);
+</script>

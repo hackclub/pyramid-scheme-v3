@@ -1,0 +1,22 @@
+<div class="campaign-panel-inner p-3" id="poster_<%= poster.id %>">
+  <div class="flex items-center gap-3">
+    <div class="flex items-center gap-2 min-w-0">
+      <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-purple-600 text-white whitespace-nowrap">Digital</span>
+    </div>
+    <div class="flex-1 min-w-0 text-xs truncate">
+      <span class="font-mono campaign-text-muted"><%= poster.referral_code %></span>
+    </div>
+    <div class="flex gap-1.5 flex-shrink-0">
+      <%= link_to download_poster_path(poster), class: "campaign-btn campaign-btn--secondary text-xs h-8 px-3 inline-flex items-center gap-1.5 whitespace-nowrap" do %>
+        <%= icon :download, size: 14 %>
+        Download
+      <% end %>
+    </div>
+  </div>
+  <div class="mt-2 p-2 bg-purple-500/10 rounded-lg">
+    <p class="text-xs text-purple-600 font-medium flex items-center gap-1.5">
+      <%= icon :check_circle, size: 14 %>
+      Marked as digital. Your link is now active!
+    </p>
+  </div>
+</div>

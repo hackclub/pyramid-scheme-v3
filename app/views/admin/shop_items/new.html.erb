@@ -1,0 +1,10 @@
+<% content_for :title, "New Shop Item" %>
+
+<div class="mb-8">
+  <h1 class="text-3xl font-bold tracking-tight text-foreground">New Shop Item</h1>
+  <p class="text-sm text-muted-foreground mt-2">Add a new product to the shop.</p>
+</div>
+
+<div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+  <%= render "form", shop_item: @shop_item %>
+</div>

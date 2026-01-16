@@ -1,0 +1,314 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../config/environment"
+require "webrick"
+require "net/http"
+require "json"
+require "ipaddr"
+
+# Recurring job runner that processes:
+# 1. AirtableSyncJob every minute
+# 2. Pending geocoding jobs (processed synchronously with tracking)
+#
+# Also exposes a health HTTP server for rolling deploys.
+
+# Ensure logging goes to stdout for Docker
+$stdout.sync = true
+
+# Thread-safe tracking of worker state
+$worker_state = {
+  started_at: Time.current,
+  last_cycle_at: nil,
+  last_airtable_sync_at: nil,
+  last_geocode_at: nil,
+  cycles_completed: 0,
+  status: "starting"
+}
+$worker_mutex = Mutex.new
+
+def log(msg)
+  puts "[#{Time.current.strftime('%Y-%m-%d %H:%M:%S')}] #{msg}"
+  Rails.logger.info(msg)
+end
+
+def update_state(updates)
+  $worker_mutex.synchronize { $worker_state.merge!(updates) }
+end
+
+def get_state
+  $worker_mutex.synchronize { $worker_state.dup }
+end
+
+# Start health HTTP server in a background thread
+def start_health_server(port: 4447)
+  Thread.new do
+    server = WEBrick::HTTPServer.new(
+      Port: port,
+      Logger: WEBrick::Log.new("/dev/null"),
+      AccessLog: []
+    )
+
+    # Health check endpoint
+    server.mount_proc "/health" do |req, res|
+      state = get_state
+      res["Content-Type"] = "application/json"
+      res.body = JSON.generate({
+        status: "ok",
+        worker_status: state[:status],
+        started_at: state[:started_at]&.iso8601,
+        last_cycle_at: state[:last_cycle_at]&.iso8601,
+        cycles_completed: state[:cycles_completed],
+        uptime_seconds: (Time.current - state[:started_at]).to_i
+      })
+    end
+
+    # Status endpoint with more details
+    server.mount_proc "/status" do |req, res|
+      state = get_state
+
+      # Get job stats from database
+      stats = {
+        airtable: {
+          last_run: AirtableSyncRun.order(created_at: :desc).first&.as_json(only: [ :id, :started_at, :completed_at, :synced_count, :error_count, :status ]),
+          runs_today: AirtableSyncRun.where("created_at >= ?", Time.current.beginning_of_day).count
+        },
+        geocoding: {
+          pending_referral_logs: ReferralCodeLog.not_geocoded.count,
+          pending_login_logs: LoginLog.not_geocoded.count,
+          last_run: GeocodeRun.order(created_at: :desc).first&.as_json(only: [ :id, :started_at, :finished_at, :status, :processed_count, :success_count, :failure_count ])
+        }
+      }
+
+      res["Content-Type"] = "application/json"
+      res.body = JSON.generate({
+        worker: state,
+        jobs: stats
+      })
+    end
+
+    trap("INT") { server.shutdown }
+    trap("TERM") { server.shutdown }
+
+    log "[HealthServer] Starting health server on port #{port}"
+    server.start
+  end
+end
+
+
+log "[RecurringJobs] Starting recurring job worker"
+
+# Start health server for rolling deploys
+health_port = ENV.fetch("WORKER_HEALTH_PORT", 4447).to_i
+start_health_server(port: health_port)
+update_state(status: "running")
+
+# Log environment setup on startup
+api_key = ENV["GEOCODER_API_KEY"]
+if api_key.present?
+  log "[RecurringJobs] GEOCODER_API_KEY is set (#{api_key.length} chars, starts with: #{api_key[0..10]}...)"
+else
+  log "[RecurringJobs] WARNING: GEOCODER_API_KEY is NOT set - geocoding will fail!"
+end
+
+GEOCODER_API_URL = "https://geocoder.hackclub.com/v1/geoip"
+PRIVATE_IP_RANGES = [
+  IPAddr.new("10.0.0.0/8"),
+  IPAddr.new("172.16.0.0/12"),
+  IPAddr.new("192.168.0.0/16"),
+  IPAddr.new("127.0.0.0/8"),
+  IPAddr.new("169.254.0.0/16"),
+  IPAddr.new("::1/128"),
+  IPAddr.new("fc00::/7"),
+  IPAddr.new("fe80::/10")
+].freeze
+
+def private_ip?(ip_string)
+  return true if ip_string.blank? || ip_string == "unknown"
+  ip = IPAddr.new(ip_string)
+  PRIVATE_IP_RANGES.any? { |range| range.include?(ip) }
+rescue IPAddr::InvalidAddressError
+  true
+end
+
+def fetch_geocoding_data(ip_address)
+  api_key = ENV["GEOCODER_API_KEY"]
+  unless api_key.present?
+    log "[Geocode] GEOCODER_API_KEY not set!"
+    return { error: "missing_api_key" }
+  end
+
+  uri = URI("#{GEOCODER_API_URL}?ip=#{ip_address}&key=#{api_key}")
+  response = Net::HTTP.get_response(uri)
+
+  unless response.is_a?(Net::HTTPSuccess)
+    log "[Geocode] API returned HTTP #{response.code} for #{ip_address}: #{response.body.to_s[0..200]}"
+    return { error: "http_#{response.code}", message: response.body.to_s[0..100] }
+  end
+
+  data = JSON.parse(response.body)
+
+  # Check if API returned an error object
+  if data["error"]
+    log "[Geocode] API error for #{ip_address}: #{data["error"]}"
+    return { error: "api_error", message: data["error"].to_s[0..100] }
+  end
+
+  data
+rescue => e
+  log "[Geocode] API request failed for #{ip_address}: #{e.class} - #{e.message}"
+  { error: "exception", message: e.message[0..100] }
+end
+
+def geocode_record(record)
+  return { status: :skipped } if record.geocoded_at.present?
+
+  ip_address = record.ip_address
+
+  if private_ip?(ip_address)
+    record.update!(geocoded_at: Time.current)
+    return { status: :private_ip }
+  end
+
+  geo_data = fetch_geocoding_data(ip_address)
+
+  # Handle error responses from API
+  if geo_data.is_a?(Hash) && geo_data[:error]
+    return { status: :api_failed, error: geo_data[:error], message: geo_data[:message] }
+  end
+
+  # Base attributes for all models
+  attrs = {
+    latitude: geo_data["lat"],
+    longitude: geo_data["lng"],
+    city: geo_data["city"],
+    region: geo_data["region"],
+    country_name: geo_data["country_name"],
+    country_code: geo_data["country_code"],
+    geocoded_at: Time.current
+  }
+
+  # ReferralCodeLog has additional columns that LoginLog doesn't have
+  if record.is_a?(ReferralCodeLog)
+    attrs[:postal_code] = geo_data["postal_code"]
+    attrs[:timezone] = geo_data["timezone"]
+    attrs[:org] = geo_data["org"]
+  end
+
+  record.update!(attrs)
+  { status: :success, city: geo_data["city"], country: geo_data["country_name"] }
+rescue => e
+  log "[Geocode] Failed to geocode #{record.class}##{record.id}: #{e.message}"
+  { status: :error, message: e.message[0..100] }
+end
+
+def process_pending_geocodes
+  pending_referrals = ReferralCodeLog.not_geocoded.count
+  pending_logins = LoginLog.not_geocoded.count
+  pending_total = pending_referrals + pending_logins
+
+  return if pending_total == 0
+
+  # Create a run record
+  started_at = Time.current
+  run = GeocodeRun.create!(
+    status: "running",
+    started_at: started_at,
+    pending_before: pending_total
+  )
+
+  processed = 0
+  success = 0
+  failures = 0
+  details = { referral_logs: [], login_logs: [] }
+
+  # Process referral code logs (batch of 15)
+  ReferralCodeLog.not_geocoded.limit(15).each do |log|
+    result = geocode_record(log)
+    processed += 1
+    case result[:status]
+    when :success
+      success += 1
+      details[:referral_logs] << { id: log.id, ip: log.ip_address, result: "success", location: "#{result[:city]}, #{result[:country]}" }
+    when :private_ip
+      success += 1
+      details[:referral_logs] << { id: log.id, ip: log.ip_address, result: "private_ip" }
+    when :skipped
+      details[:referral_logs] << { id: log.id, result: "skipped" }
+    else
+      failures += 1
+      details[:referral_logs] << { id: log.id, ip: log.ip_address, result: result[:status].to_s, error: result[:error], message: result[:message] }
+    end
+    sleep 0.1 # Rate limit API calls
+  end
+
+  # Process login logs (batch of 15)
+  LoginLog.not_geocoded.limit(15).each do |log|
+    result = geocode_record(log)
+    processed += 1
+    case result[:status]
+    when :success
+      success += 1
+      details[:login_logs] << { id: log.id, ip: log.ip_address, result: "success", location: "#{result[:city]}, #{result[:country]}" }
+    when :private_ip
+      success += 1
+      details[:login_logs] << { id: log.id, ip: log.ip_address, result: "private_ip" }
+    when :skipped
+      details[:login_logs] << { id: log.id, result: "skipped" }
+    else
+      failures += 1
+      details[:login_logs] << { id: log.id, ip: log.ip_address, result: result[:status].to_s, error: result[:error], message: result[:message] }
+    end
+    sleep 0.1 # Rate limit API calls
+  end
+
+  # Calculate remaining
+  pending_after = ReferralCodeLog.not_geocoded.count + LoginLog.not_geocoded.count
+
+  run.update!(
+    status: failures > 0 && success == 0 ? "failed" : "succeeded",
+    finished_at: Time.current,
+    duration_seconds: Time.current - started_at,
+    processed_count: processed,
+    success_count: success,
+    failure_count: failures,
+    pending_after: pending_after,
+    message: "Processed #{processed} records: #{success} success, #{failures} failed. #{pending_after} remaining.",
+    stats: details
+  )
+
+  log "[Geocode] #{run.message}"
+rescue => e
+  run&.update!(
+    status: "failed",
+    finished_at: Time.current,
+    duration_seconds: Time.current - started_at,
+    message: "Error: #{e.class} - #{e.message}"
+  )
+  log "[Geocode] Run failed: #{e.class} - #{e.message}"
+end
+
+loop do
+  begin
+    log "[RecurringJobs] Starting cycle..."
+    update_state(last_cycle_at: Time.current, status: "processing")
+
+    # Run Airtable sync
+    log "[RecurringJobs] Enqueuing AirtableSyncJob"
+    AirtableSyncJob.perform_now
+    update_state(last_airtable_sync_at: Time.current)
+
+    # Process pending geocodes synchronously
+    process_pending_geocodes
+    update_state(last_geocode_at: Time.current)
+
+    state = get_state
+    update_state(cycles_completed: state[:cycles_completed] + 1, status: "idle")
+    log "[RecurringJobs] Cycle #{state[:cycles_completed] + 1} complete, sleeping 60s..."
+  rescue => e
+    log "[RecurringJobs] Error in job cycle: #{e.class} - #{e.message}"
+    update_state(status: "error")
+  end
+
+  sleep 60
+end

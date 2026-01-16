@@ -1,0 +1,164 @@
+<div data-poster-modal-target="dialog" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" data-state="closed">
+  <!-- Backdrop -->
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" data-action="click->poster-modal#closeOnBackdrop"></div>
+
+  <!-- Modal -->
+  <div class="relative campaign-modal shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+    <!-- Header -->
+    <div class="sticky top-0 campaign-modal-header px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+      <h2 class="campaign-font text-xl sm:text-2xl font-black campaign-text-primary">Generate Poster</h2>
+      <button type="button"
+              data-action="click->poster-modal#close"
+              class="campaign-text-muted hover:campaign-text-primary transition-colors">
+        <%= icon :x, size: 24 %>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="px-4 sm:px-6 py-4 sm:py-6">
+      <!-- Success message placeholder (appears at top when poster is created) -->
+      <turbo-frame id="poster_result" class="mb-4 sm:mb-6"></turbo-frame>
+
+      <%= form_with model: Poster.new, url: posters_path, class: "space-y-4 sm:space-y-5", data: { turbo_frame: "poster_result", poster_modal_target: "form" } do |f| %>
+        <%= f.hidden_field :campaign_id, value: campaign.id %>
+
+        <!-- Info Box -->
+        <div class="campaign-panel-inner p-3 sm:p-4 space-y-2">
+          <p class="campaign-font text-sm font-black campaign-text-primary">You get 1 shard for putting up a poster.</p>
+          <p class="text-xs campaign-text-secondary">Plus 3 shards when someone signs up using your poster!</p>
+        </div>
+
+        <!-- Weekly Paid Posters -->
+        <div class="campaign-panel-inner p-3 sm:p-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <p class="campaign-font text-sm font-black campaign-text-primary">Weekly Paid Posters</p>
+              <p class="text-xs campaign-text-secondary mt-1">You can create unlimited posters but shards are only awarded for your first 10 per week (+5 posters added to this quota per completed referral, i.e, you get 5 extra paid posters per referral).</p>
+            </div>
+            <div class="text-right">
+              <p class="campaign-font text-lg font-black campaign-text-primary tabular-nums">
+                <%= current_user.posters_created_this_week %>/<%= current_user.weekly_paid_poster_limit %>
+              </p>
+              <p class="text-xs campaign-text-secondary">
+                <% if current_user.next_poster_will_be_paid? %>
+                  <%= current_user.remaining_paid_posters_this_week %> paid remaining
+                <% else %>
+                  No shards (over limit)
+                <% end %>
+              </p>
+            </div>
+          </div>
+          <% if current_user.completed_referrals_this_week > 0 %>
+            <p class="text-xs campaign-text-secondary mt-2 pt-2 border-t border-current/10">
+              You've earned +<%= current_user.completed_referrals_this_week * 5 %> bonus paid posters from <%= current_user.completed_referrals_this_week %> completed referral<%= current_user.completed_referrals_this_week == 1 ? '' : 's' %> this week!
+            </p>
+          <% end %>
+        </div>
+
+        <!-- How it Works -->
+        <div class="campaign-panel-inner p-3 sm:p-4 space-y-2">
+          <p class="campaign-font text-xs font-bold campaign-text-primary">How it works:</p>
+          <ul class="text-xs campaign-text-secondary space-y-1 list-disc list-inside">
+            <li>Fill out the form below</li>
+            <li>Download your poster with a unique QR code</li>
+            <li>Print and put it up in a public place</li>
+            <li>Upload proof (photo of the poster in place)</li>
+            <li>Get verified and earn shards!</li>
+          </ul>
+        </div>
+
+        <!-- Poster Type -->
+        <div>
+          <label class="block campaign-font text-sm font-black campaign-text-primary mb-2 sm:mb-3">Choose Poster Style</label>
+          <%
+            # Campaign-specific poster styles
+            poster_styles = case campaign.slug
+            when "aces"
+              [
+                { value: "color", title: "Color Poster", preview: "aces-poster-color-preview.webp" }
+              ]
+            when "construct"
+              [
+                { value: "color", title: "Color Poster", preview: "construct-poster-color-preview.webp" },
+                { value: "bw", title: "Black & White", preview: "construct-poster-bw-preview.webp" },
+                { value: "printer_efficient", title: "Printer Efficient", preview: "construct-poster-printer_efficient-preview.webp" }
+              ]
+            else # flavortown and others
+              [
+                { value: "color", title: "Color Poster", preview: "poster-color-preview.webp" },
+                { value: "bw", title: "Black & White Poster", preview: "poster-bw-preview.webp" },
+                { value: "printer_efficient", title: "Printer Efficient", preview: "poster-printer_efficient-preview.webp" }
+              ]
+            end
+            grid_cols = poster_styles.length == 1 ? "grid-cols-1 max-w-xs mx-auto" : "grid-cols-3"
+          %>
+          <div class="grid <%= grid_cols %> gap-3 sm:gap-4">
+            <% poster_styles.each do |style| %>
+              <label class="relative cursor-pointer block rounded-lg transition-all <%= style[:value] == 'color' ? 'ring-4 ring-current/70 ring-offset-2' : '' %>"
+                     id="poster_style_label_<%= style[:value] %>"
+                     onclick="document.querySelectorAll('[id^=poster_style_label]').forEach(l => l.classList.remove('ring-4', 'ring-current/70', 'ring-offset-2')); this.classList.add('ring-4', 'ring-current/70', 'ring-offset-2');">
+                <%= f.radio_button :poster_type, style[:value],
+                    id: "poster_type_#{style[:value]}",
+                    checked: style[:value] == "color",
+                    required: true,
+                    class: "sr-only" %>
+                <div class="border-4 border-current/20 rounded-lg overflow-hidden transition-all hover:border-current/50">
+                  <img src="/posters/<%= style[:preview] %>"
+                       alt="<%= style[:title] %>"
+                       class="w-full h-auto object-cover" />
+                  <div class="p-3 campaign-surface border-t-4 border-current/15">
+                    <p class="campaign-font text-sm font-black campaign-text-primary text-center"><%= style[:title] %></p>
+                  </div>
+                </div>
+              </label>
+            <% end %>
+          </div>
+          <p class="text-xs campaign-text-muted mt-2 text-center italic"><%= t("posters.credit.designer") %></p>
+        </div>
+
+        <!-- Country (for stats) -->
+        <div>
+          <%= f.label :country_code, "Country", class: "block campaign-font text-sm font-black campaign-text-primary mb-2" %>
+          <%= f.select :country_code,
+                       country_options_for_select,
+                       { include_blank: "Select a country..." },
+                       { required: true, class: "flex h-11 w-full rounded-lg campaign-input px-4 py-2 text-sm" } %>
+        </div>
+
+        <!-- Digital Poster Option -->
+        <div class="campaign-panel-inner p-3 sm:p-4">
+          <label class="flex items-start gap-3 cursor-pointer">
+            <%= f.check_box :mark_as_digital, class: "mt-1 h-5 w-5 rounded border-2 border-current/40 campaign-text-primary focus:ring-2 focus:ring-current/20" %>
+            <div class="flex-1">
+              <p class="campaign-font text-sm font-black campaign-text-primary">Mark as Digital</p>
+              <p class="text-xs campaign-text-secondary mt-1">I'm sharing this digitally (no physical poster). No shards awarded, but your link will work immediately.</p>
+            </div>
+          </label>
+        </div>
+
+        <!-- Instructions Warning -->
+        <div class="campaign-panel-inner p-3 sm:p-4 space-y-2">
+          <p class="campaign-font text-xs font-bold campaign-text-primary">Important Rules:</p>
+          <ul class="text-xs campaign-text-secondary space-y-1 list-disc list-inside">
+            <li>Do not put posters too close to each other</li>
+            <li>AI generated and fake posters will result in severe punishment across all Hack Club services</li>
+            <li>Defrauding Hack Club is severely punishable</li>
+          </ul>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row gap-3 pt-2">
+          <button type="submit" class="flex-1 campaign-btn campaign-btn--primary justify-center">
+            <%= icon :scan_line, size: 20 %>
+            Generate Poster
+          </button>
+          <button type="button"
+                  data-action="click->poster-modal#close"
+                  class="px-6 py-3 campaign-font font-black text-sm campaign-text-muted hover:campaign-text-primary transition-colors text-center">
+            Cancel
+          </button>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

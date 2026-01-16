@@ -1,0 +1,145 @@
+<div data-referral-modal-target="dialog" 
+     data-referral-link="<%= referral_link %>" 
+     data-custom-link-base-url="<%= local_assigns[:custom_link_base_url] || '' %>"
+     class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" 
+     data-state="closed">
+  <!-- Backdrop -->
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" data-action="click->referral-modal#closeOnBackdrop"></div>
+
+  <!-- Modal -->
+  <div class="relative campaign-modal shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+    <!-- Header -->
+    <div class="campaign-modal-header px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between rounded-t-2xl">
+      <h2 class="campaign-font text-xl sm:text-2xl font-black campaign-text-primary">Referral Link</h2>
+      <button type="button"
+              data-action="click->referral-modal#close"
+              class="campaign-text-muted hover:campaign-text-primary transition-colors">
+        <%= icon :x, size: 24 %>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="px-4 sm:px-6 py-4 sm:py-6 space-y-4">
+      <!-- Current Referral Link -->
+      <div class="campaign-panel-inner p-3 sm:p-4">
+        <p class="campaign-font text-sm font-black campaign-text-primary mb-3">Share this link with friends:</p>
+        <div class="campaign-input rounded-lg px-3 py-2.5 flex items-center justify-between gap-2">
+          <code class="text-xs campaign-text-primary break-all font-mono flex-1" data-referral-modal-target="currentLink"><%= referral_link %></code>
+          <button type="button"
+                  data-action="click->referral-modal#copy"
+                  data-referral-link="<%= referral_link %>"
+                  class="flex-shrink-0 p-2 hover:opacity-70 rounded-lg transition-colors"
+                  title="Copy link">
+            <%= icon :copy, size: 16, class_name: "campaign-text-secondary" %>
+          </button>
+        </div>
+      </div>
+
+      <!-- Custom Link Section -->
+      <div class="campaign-panel-inner p-3 sm:p-4" data-controller="custom-link" 
+           data-custom-link-validate-url-value="<%= validate_custom_link_path %>"
+           data-custom-link-update-url-value="<%= custom_link_path %>"
+           data-custom-link-base-url-value="<%= local_assigns[:custom_link_base_url] || '' %>"
+           data-custom-link-is-free-value="<%= local_assigns[:is_free] ? 'true' : 'false' %>"
+           data-custom-link-change-cost-value="<%= local_assigns[:change_cost] || 3 %>"
+           data-custom-link-user-shards-value="<%= local_assigns[:user_shards] || 0 %>">
+        <div class="flex items-center justify-between mb-3">
+          <p class="campaign-font text-sm font-black campaign-text-primary">Custom Link</p>
+          <% if local_assigns[:is_free] %>
+            <span class="inline-flex items-center rounded-full bg-green-500/20 px-2 py-0.5 text-xs font-bold text-green-400">FREE</span>
+          <% else %>
+            <span class="inline-flex items-center rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-bold text-amber-400">
+              <%= local_assigns[:change_cost] || 3 %> shards to change
+            </span>
+          <% end %>
+        </div>
+        
+        <div class="space-y-3">
+          <% if local_assigns[:custom_referral_code].present? %>
+            <div class="campaign-input rounded-lg px-3 py-2.5">
+              <p class="text-xs campaign-text-secondary mb-2">Your custom link:</p>
+              <div class="flex items-center justify-between gap-2">
+                <code class="text-xs campaign-text-primary break-all font-mono font-semibold flex-1"><%= custom_link_base_url %>/?ref=<%= custom_referral_code %></code>
+                <button type="button"
+                        data-action="click->referral-modal#copy"
+                        data-referral-link="<%= custom_link_base_url %>/?ref=<%= custom_referral_code %>"
+                        class="flex-shrink-0 p-2 hover:opacity-70 rounded-lg transition-colors"
+                        title="Copy custom link">
+                  <%= icon :copy, size: 16, class_name: "campaign-text-secondary" %>
+                </button>
+              </div>
+            </div>
+          <% end %>
+          
+          <div>
+            <label class="block text-xs campaign-text-secondary mb-1.5"><%= local_assigns[:custom_referral_code].present? ? "Change to:" : "Set custom link:" %></label>
+            <div class="campaign-input rounded-lg flex items-center overflow-hidden">
+              <span class="text-sm campaign-text-secondary px-3 py-2 bg-black/20 border-r border-white/10 whitespace-nowrap">/?ref=</span>
+              <input type="text" 
+                     data-custom-link-target="input"
+                     data-action="input->custom-link#validate"
+                     placeholder="<%= local_assigns[:custom_referral_code].presence || 'YourCustomLink' %>"
+                     value=""
+                     maxlength="64"
+                     class="flex-1 bg-transparent text-sm campaign-text-primary font-mono px-3 py-2 focus:outline-none min-w-0">
+            </div>
+          </div>
+          
+          <!-- Validation feedback -->
+          <div data-custom-link-target="feedback" class="text-xs hidden"></div>
+          
+          <!-- Rules -->
+          <div class="text-xs campaign-text-secondary space-y-1">
+            <p>• Only letters (a-z, A-Z), up to 64 characters</p>
+            <p>• Cannot use reserved names (YSWS program titles)</p>
+            <% unless local_assigns[:is_free] %>
+              <p class="text-amber-400">• Changing costs <%= local_assigns[:change_cost] || 3 %> shards (you have <%= local_assigns[:user_shards] || 0 %>)</p>
+            <% end %>
+          </div>
+          
+          <!-- Save button -->
+          <button type="button"
+                  data-custom-link-target="saveButton"
+                  data-action="click->custom-link#save"
+                  disabled
+                  class="w-full campaign-btn campaign-btn--secondary inline-flex items-center justify-center gap-2 opacity-50 cursor-not-allowed"
+                  data-custom-link-target="saveButton">
+            <%= icon :link, size: 16 %>
+            <span data-custom-link-target="saveLabel">
+              <% if local_assigns[:is_free] %>
+                Set Custom Link
+              <% else %>
+                Change Custom Link (<%= local_assigns[:change_cost] || 3 %> shards)
+              <% end %>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div class="campaign-panel-inner p-3 sm:p-4 space-y-2">
+        <p class="campaign-font text-sm font-black campaign-text-primary">How to earn shards:</p>
+        <ul class="text-xs campaign-text-secondary space-y-1.5 list-disc list-inside">
+          <li>Your friend signs up using your link</li>
+          <li>They verify their ID (ages 13-18)</li>
+          <li><strong>They track 1 hour of coding time on Hackatime</strong></li>
+        </ul>
+        <p class="text-xs campaign-text-secondary pt-1">Once they complete all steps, you earn <strong>3 shards</strong>!</p>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex flex-col sm:flex-row gap-3 pt-2">
+        <button type="button"
+                data-action="click->referral-modal#copy"
+                data-referral-link="<%= referral_link %>"
+                class="flex-1 campaign-btn campaign-btn--secondary justify-center">
+          <span data-referral-modal-target="copyLabel">Copy Link</span>
+        </button>
+        <button type="button"
+                data-action="click->referral-modal#close"
+                class="px-6 py-3 campaign-font font-black text-sm campaign-text-muted hover:campaign-text-primary transition-colors text-center">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

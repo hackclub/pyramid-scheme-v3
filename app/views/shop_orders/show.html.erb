@@ -1,0 +1,123 @@
+<% content_for :title, "Order ##{@order.id} · #{t('site.name')}" %>
+
+<div class="mb-6">
+  <%= link_to shop_orders_path, class: "inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground" do %>
+    <%= icon :arrow_left, size: 16 %>
+    Back to Orders
+  <% end %>
+</div>
+
+<div class="rounded-xl border border-border bg-card overflow-hidden">
+  <div class="p-6 border-b border-border">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-foreground">Order #<%= @order.id %></h1>
+        <p class="text-muted-foreground">Placed on <%= @order.created_at.strftime("%B %d, %Y at %I:%M %p") %></p>
+      </div>
+      <span class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-full border <%= @order.status_color %> w-fit">
+        <%= @order.status_label %>
+      </span>
+    </div>
+  </div>
+
+  <div class="p-6">
+    <div class="flex flex-col md:flex-row gap-6">
+      <% if @order.shop_item.image_url.present? %>
+        <div class="w-32 h-32 rounded-xl overflow-hidden border border-border/60 flex-shrink-0">
+          <%= image_tag @order.shop_item.image_url, class: "w-full h-full object-cover" %>
+        </div>
+      <% else %>
+        <div class="w-32 h-32 rounded-xl border border-border/60 flex items-center justify-center flex-shrink-0 bg-muted">
+          <%= icon :shopping_bag, size: 32, class_name: "text-muted-foreground" %>
+        </div>
+      <% end %>
+
+      <div class="flex-1">
+        <h2 class="text-xl font-semibold text-foreground"><%= @order.shop_item.name %></h2>
+        <p class="text-muted-foreground mt-1"><%= @order.shop_item.description %></p>
+
+        <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div>
+            <p class="text-xs text-muted-foreground uppercase tracking-wide">Quantity</p>
+            <p class="text-lg font-semibold text-foreground"><%= @order.quantity %></p>
+          </div>
+          <div>
+            <p class="text-xs text-muted-foreground uppercase tracking-wide">Total Cost</p>
+            <p class="text-lg font-semibold text-foreground flex items-center gap-1">
+              <%= icon :pyramid, size: 16 %>
+              <%= number_with_delimiter(@order.total_shards) %>
+            </p>
+          </div>
+          <% if @order.fulfilled_at.present? %>
+            <div>
+              <p class="text-xs text-muted-foreground uppercase tracking-wide">Shipped</p>
+              <p class="text-lg font-semibold text-foreground"><%= @order.fulfilled_at.strftime("%b %d") %></p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <% if @order.status_notes.present? %>
+      <div class="mt-6 p-4 rounded-lg bg-muted/50 border border-border">
+        <p class="text-sm font-medium text-foreground mb-1">Note from team</p>
+        <p class="text-muted-foreground"><%= @order.status_notes %></p>
+      </div>
+    <% end %>
+
+    <% if @order.has_tracking? %>
+      <div class="mt-6 p-4 rounded-lg bg-primary/5 border border-primary/20">
+        <div class="flex items-center gap-2 text-primary mb-2">
+          <%= icon :truck, size: 20 %>
+          <p class="font-medium">Tracking Information</p>
+        </div>
+        <% if @order.tracking_number.present? %>
+          <p class="text-foreground">Tracking Number: <span class="font-mono"><%= @order.tracking_number %></span></p>
+        <% end %>
+        <% if @order.tracking_url.present? %>
+          <%= link_to @order.tracking_url, target: "_blank", rel: "noopener", class: "inline-flex items-center gap-1 mt-2 text-primary hover:underline" do %>
+            Track your package
+            <%= icon :external_link, size: 14 %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <% if @order.status != "cancelled" %>
+    <div class="p-6 border-t border-border bg-muted/30">
+      <p class="text-sm font-medium text-foreground mb-4">Order Progress</p>
+      <div class="flex items-center justify-between">
+        <% steps = [
+          { key: "pending", label: "Order Placed", icon: :shopping_bag },
+          { key: "in_review", label: "In Review", icon: :eye },
+          { key: "approved", label: "Approved", icon: :circle_check },
+          { key: "fulfilled", label: "Shipped", icon: :truck }
+        ] %>
+        <% current_step = steps.find_index { |s| s[:key] == @order.status } || 0 %>
+        <% current_step = steps.length - 1 if @order.status == "fulfilled" %>
+
+        <% steps.each_with_index do |step, idx| %>
+          <div class="flex items-center <%= 'flex-1' unless idx == steps.length - 1 %>">
+            <div class="flex flex-col items-center">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center
+                <%= idx <= current_step ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground border border-border' %>">
+                <% if idx < current_step %>
+                  <%= icon :check, size: 20 %>
+                <% else %>
+                  <%= icon step[:icon], size: 20 %>
+                <% end %>
+              </div>
+              <span class="mt-2 text-xs text-center <%= idx <= current_step ? 'text-foreground font-medium' : 'text-muted-foreground' %>">
+                <%= step[:label] %>
+              </span>
+            </div>
+            <% unless idx == steps.length - 1 %>
+              <div class="flex-1 h-0.5 mx-3 <%= idx < current_step ? 'bg-primary' : 'bg-border' %>"></div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

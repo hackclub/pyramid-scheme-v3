@@ -1,0 +1,183 @@
+<% content_for :title, "#{t('settings.title')} · #{t('site.name')}" %>
+
+<div class="w-full max-w-6xl mx-auto">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold tracking-tight text-foreground"><%= t('settings.title') %></h1>
+    <p class="text-sm text-muted-foreground"><%= t('settings.subtitle') %></p>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-8 lg:items-stretch">
+    <%= form_with model: @user, url: settings_path, method: :patch, html: { class: "contents" } do |f| %>
+      <%# Left column - Profile + Privacy (buttons excluded from height matching) %>
+      <div class="lg:col-span-2 flex flex-col gap-6 h-full">
+        <%# Profile Settings %>
+        <div class="rounded-2xl border border-border bg-card p-6 flex flex-col flex-1">
+          <div class="flex items-center gap-2 mb-5">
+            <%= icon :users, size: 18 %>
+            <h3 class="font-semibold"><%= t('settings.profile.title') %></h3>
+          </div>
+
+          <div class="grid gap-4">
+            <div>
+              <label for="user_display_name" class="block text-sm font-medium text-foreground mb-2"><%= t('settings.profile.display_name') %></label>
+              <%= f.text_field :display_name, class: "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", placeholder: t('settings.profile.display_name_placeholder') %>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-foreground mb-2"><%= t('settings.profile.email') %></label>
+              <input type="email" class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm text-muted-foreground cursor-not-allowed" value="<%= @user.email %>" disabled>
+              <p class="text-xs text-muted-foreground mt-1"><%= t('settings.profile.email_hint') %></p>
+            </div>
+          </div>
+        </div>
+
+        <%# Privacy Settings %>
+        <div class="rounded-2xl border border-border bg-card p-6">
+          <div class="flex items-center gap-2 mb-5">
+            <%= icon :shield, size: 18 %>
+            <h3 class="font-semibold"><%= t('settings.privacy.title') %></h3>
+          </div>
+
+          <label class="flex items-start gap-3 cursor-pointer">
+            <%= f.check_box :leaderboard_opted_out, class: "mt-0.5 h-5 w-5 rounded border-input bg-background" %>
+            <div>
+              <span class="block text-sm font-medium text-foreground"><%= t('settings.privacy.hide_leaderboard') %></span>
+              <span class="block text-xs text-muted-foreground"><%= t('settings.privacy.hide_leaderboard_hint') %></span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <%# Right column - Account Info %>
+      <div class="lg:col-span-1 h-full">
+        <div class="rounded-2xl border border-border bg-card p-6 h-full">
+        <div class="flex items-center gap-2 mb-5">
+          <%= icon :info, size: 18 %>
+          <h3 class="font-semibold"><%= t('settings.account.title') %></h3>
+        </div>
+
+        <div class="space-y-5">
+          <div class="flex items-center gap-3">
+            <% if @user.avatar.present? %>
+              <%= image_tag @user.avatar, class: "w-12 h-12 rounded-full border border-border object-cover", alt: @user.display_name %>
+            <% else %>
+              <div class="w-12 h-12 rounded-full bg-secondary flex items-center justify-center border border-border">
+                <%= icon :user, size: 18, class_name: "text-muted-foreground" %>
+              </div>
+            <% end %>
+            <div class="min-w-0">
+              <p class="font-semibold text-foreground truncate"><%= @user.display_name %></p>
+              <p class="text-xs text-muted-foreground"><%= @user.role.humanize %></p>
+            </div>
+          </div>
+
+          <%# Totals (Referrals + Posters only, stacked) %>
+          <div class="rounded-xl border border-border bg-background p-3">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between gap-4">
+                <div class="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                  <%= icon :users, size: 14 %>
+                  <%= t('settings.account.referrals') %>
+                </div>
+                <div class="font-mono text-xl font-semibold tracking-tight tabular-nums text-foreground"><%= number_with_delimiter(@user.referral_count) %></div>
+              </div>
+              <div class="h-px bg-border/60"></div>
+              <div class="flex items-center justify-between gap-4">
+                <div class="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                  <%= icon :qr_code, size: 14 %>
+                  <%= t('settings.account.posters') %>
+                </div>
+                <div class="font-mono text-xl font-semibold tracking-tight tabular-nums text-foreground"><%= number_with_delimiter(@user.poster_count) %></div>
+              </div>
+            </div>
+          </div>
+
+          <%# Weekly Paid Posters %>
+          <div class="rounded-xl border border-border bg-background p-3">
+            <div class="flex items-center justify-between gap-4 mb-2">
+              <div class="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                <%= icon :calendar, size: 14 %>
+                Weekly Paid Posters
+              </div>
+              <div class="font-mono text-lg font-semibold tracking-tight tabular-nums text-foreground">
+                <%= @user.posters_created_this_week %>/<%= @user.weekly_paid_poster_limit %>
+              </div>
+            </div>
+            <p class="text-xs text-muted-foreground">
+              Shards are only awarded for the first 10 posters/week (you can get shards for 5 extra posters for every referral you get in a week). You can continue putting posters but won't receive a reward after this limit.
+            </p>
+            <div class="mt-2 bg-border/30 rounded-full h-2 overflow-hidden">
+              <div class="bg-foreground/70 rounded-full h-2 transition-all duration-300"
+                   style="width: <%= [(@user.posters_created_this_week.to_f / @user.weekly_paid_poster_limit * 100), 100].min %>%"></div>
+            </div>
+            <p class="text-xs text-muted-foreground mt-1">
+              <% if @user.next_poster_will_be_paid? %>
+                <%= @user.remaining_paid_posters_this_week %> paid remaining this week
+              <% else %>
+                Over limit (no shards for new posters)
+              <% end %>
+            </p>
+          </div>
+
+          <div class="space-y-3">
+            <%# Slack ID (keep visible) + copy %>
+            <div class="flex items-center justify-between gap-3 rounded-xl border border-border bg-background p-3">
+              <div class="min-w-0">
+                <div class="text-xs text-muted-foreground"><%= t('settings.account.slack_id') %></div>
+                <div class="mt-0.5 font-mono text-sm text-foreground truncate"><%= @user.slack_id.presence || t('common.not_available') %></div>
+              </div>
+              <button
+                type="button"
+                class="inline-flex items-center justify-center rounded-lg border border-border p-2 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed data-[copied=true]:text-green-400"
+                <%= @user.slack_id.present? ? '' : 'disabled' %>
+                data-controller="ui--clipboard"
+                data-ui--clipboard-text-value="<%= @user.slack_id.to_s %>"
+                data-action="click->ui--clipboard#copy"
+                aria-label="<%= t('settings.account.copy_slack_id') %>">
+                <%= icon :copy, size: 16 %>
+              </button>
+            </div>
+
+            <%# Email + copy %>
+            <div class="flex items-center justify-between gap-3 rounded-xl border border-border bg-background p-3">
+              <div class="min-w-0">
+                <div class="text-xs text-muted-foreground"><%= t('settings.profile.email') %></div>
+                <div class="mt-0.5 font-mono text-sm text-foreground truncate"><%= @user.email %></div>
+              </div>
+              <button
+                type="button"
+                class="inline-flex items-center justify-center rounded-lg border border-border p-2 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors data-[copied=true]:text-green-400"
+                data-controller="ui--clipboard"
+                data-ui--clipboard-text-value="<%= @user.email.to_s %>"
+                data-action="click->ui--clipboard#copy"
+                aria-label="<%= t('settings.account.copy_email') %>">
+                <%= icon :copy, size: 16 %>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="rounded-xl border border-border bg-background p-3">
+                <div class="text-xs text-muted-foreground"><%= t('settings.account.member_since') %></div>
+                <div class="mt-0.5 font-mono text-sm font-medium text-foreground"><%= @user.created_at.strftime("%b %d, %Y") %></div>
+              </div>
+              <div class="rounded-xl border border-border bg-background p-3">
+                <div class="text-xs text-muted-foreground"><%= t('settings.account.total_earned') %></div>
+                <div class="mt-0.5 font-mono text-sm font-medium text-foreground"><%= number_with_delimiter(@user.shard_transactions.where("amount > 0").sum(:amount)) %> <%= t('nav.shards') %></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+      </div>
+
+      <%# Buttons row (doesn't affect card height matching) %>
+      <div class="lg:col-span-3 mt-6 flex flex-wrap gap-3">
+        <%= f.submit t('settings.save'), class: "inline-flex items-center gap-2 px-5 py-2 text-sm font-medium bg-foreground text-background rounded-lg hover:opacity-90 transition-opacity cursor-pointer" %>
+        <%= link_to campaign_path(current_campaign.slug), class: "inline-flex items-center gap-2 px-5 py-2 text-sm font-medium bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors" do %>
+          <%= t('settings.cancel') %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

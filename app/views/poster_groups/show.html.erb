@@ -1,0 +1,279 @@
+<% content_for :title, "Poster Group · #{@poster_group.name.presence || "Bulk Posters"}" %>
+
+<% theme_class = @poster_group.campaign.theme_class %>
+<% has_custom_theme = @poster_group.campaign.theme.in?(%w[flavortown aces construct sleepover]) %>
+
+<% if has_custom_theme %>
+  <% content_for :main_class, "campaign-surface #{theme_class}" %>
+<% end %>
+
+<div class="<%= theme_class %> min-h-full pb-40" data-controller="group-auto-upload">
+  <div class="container pt-6 pb-10 max-w-4xl">
+    <%# Back link %>
+    <div class="mb-4">
+      <%= link_to campaign_path(@poster_group.campaign.slug), class: "inline-flex items-center gap-1.5 text-sm campaign-text-muted hover:campaign-text-primary transition-colors" do %>
+        <%= icon :chevron_left, size: 14 %>
+        Back to <%= @poster_group.campaign.name %>
+      <% end %>
+    </div>
+
+    <%# Compact Header with Status %>
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+      <div class="flex items-center gap-3">
+        <h1 class="campaign-font text-xl md:text-2xl font-black tracking-tight">
+          <%= @poster_group.name.presence || "Poster Group" %>
+        </h1>
+        <span class="text-xs campaign-text-muted">(<%= @poster_group.poster_count %> posters)</span>
+      </div>
+
+      <div class="flex flex-wrap gap-1.5">
+        <% summary = @poster_group.submission_summary %>
+        <% if summary[:pending] > 0 %>
+          <span class="inline-flex items-center rounded-full bg-yellow-500/20 px-2.5 py-0.5 text-xs font-bold text-yellow-600"><%= summary[:pending] %> pending</span>
+        <% end %>
+        <% if summary[:in_review] > 0 %>
+          <span class="inline-flex items-center rounded-full bg-blue-500/20 px-2.5 py-0.5 text-xs font-bold text-blue-600"><%= summary[:in_review] %> in review</span>
+        <% end %>
+        <% if summary[:success] > 0 %>
+          <span class="inline-flex items-center rounded-full bg-green-500/20 px-2.5 py-0.5 text-xs font-bold text-green-600"><%= summary[:success] %> approved</span>
+        <% end %>
+      </div>
+    </div>
+
+    <%# Auto-Detection Upload Widget %>
+    <% if @poster_group.posters.pending.any? %>
+      <div class="campaign-panel-inner p-5 mb-5">
+        <div class="flex items-start gap-3 mb-4">
+          <%= icon :scan_line, size: 20, class_name: "campaign-text-primary flex-shrink-0 mt-0.5" %>
+          <div class="flex-1 min-w-0">
+            <p class="campaign-font text-sm font-black campaign-text-primary">Quick Upload with Auto-Detection</p>
+            <p class="text-xs campaign-text-secondary mt-0.5">Upload a proof photo and we'll automatically match it to the correct poster in this group. If we are unable to detect, please manually upload proof for that specific poster!</p>
+          </div>
+        </div>
+        
+        <%= form_with url: auto_detect_poster_group_path(@poster_group), method: :post, multipart: true, 
+            data: { group_auto_upload_target: "form", action: "submit->group-auto-upload#submit" },
+            class: "space-y-3" do |f| %>
+          <div class="space-y-3" data-group-auto-upload-target="inputsContainer">
+            <div>
+              <label class="block text-xs campaign-text-secondary mb-1.5">Proof Photo <span class="text-red-500">(required)</span></label>
+              <%= f.file_field :proof_image,
+                  accept: "image/jpeg,image/png,image/heic,image/heif,image/webp",
+                  required: true,
+                  data: { group_auto_upload_target: "fileInput" },
+                  class: "flex h-10 w-full rounded-lg campaign-input px-3 py-2 text-xs file:border-0 file:bg-transparent file:text-xs file:font-medium" %>
+            </div>
+            <div>
+              <label class="block text-xs campaign-text-secondary mb-1.5">Location Description <span class="text-red-500">(required)</span></label>
+              <%= f.text_field :location_description,
+                  placeholder: "Where is this poster?",
+                  required: true,
+                  class: "flex h-10 w-full rounded-lg campaign-input px-3 py-2 text-xs" %>
+            </div>
+            <div>
+              <label class="block text-xs campaign-text-secondary mb-1.5">Supporting Evidence (Optional)</label>
+              <%= f.file_field :supporting_evidence,
+                  multiple: true,
+                  accept: "image/jpeg,image/png,image/heic,image/heif,image/webp,application/pdf,video/mp4,video/quicktime",
+                  class: "flex h-10 w-full rounded-lg campaign-input px-3 py-2 text-xs file:border-0 file:bg-transparent file:text-xs file:font-medium" %>
+              <p class="text-xs campaign-text-muted mt-1">Images, PDFs, or videos to help verify this poster (max 50MB per file)</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-2 p-3 rounded-lg bg-amber-500/20">
+            <%= icon :alert_triangle, size: 14, class_name: "flex-shrink-0 mt-0.5 text-amber-600" %>
+            <p class="text-xs text-amber-700">
+              <strong>Important:</strong> This only works if your QR code is valid! Please make sure you take a clear photo of the QR code and its surroundings.
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <button type="submit" 
+                    data-group-auto-upload-target="submitBtn"
+                    class="campaign-btn campaign-btn--primary text-sm inline-flex items-center justify-center gap-2 flex-1 h-10 whitespace-nowrap">
+              <%= icon :upload, size: 16 %>
+              <span data-group-auto-upload-target="submitText">Auto-Match & Submit</span>
+            </button>
+          </div>
+        <% end %>
+        <turbo-frame id="auto_detect_result" class="block mt-3" data-action="turbo:frame-load->group-auto-upload#checkForError"></turbo-frame>
+      </div>
+    <% end %>
+
+    <%# Group Settings - Compact Row %>
+    <div class="flex flex-col sm:flex-row gap-3 mb-5">
+      <div class="campaign-panel-inner p-4 flex-1">
+        <%= form_with model: @poster_group, url: poster_group_path(@poster_group), method: :patch, class: "flex gap-2 items-center" do |f| %>
+          <%= f.text_field :name,
+              placeholder: "Group name (optional)",
+              class: "flex-1 h-9 rounded-lg campaign-input px-3 py-2 text-xs" %>
+          <%= button_tag type: "submit", class: "campaign-btn campaign-btn--secondary text-xs h-9 px-4 inline-flex items-center gap-1.5" do %>
+            <%= icon :save, size: 14 %>
+            Save Name
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+
+    <%# Posters List - Compact Cards %>
+    <div class="space-y-2">
+      <% @posters.each_with_index do |poster, index| %>
+        <% raw_status = poster.verification_status %>
+        <% status_label, status_classes = case raw_status.to_s
+          when "pending" then ["Pending", "bg-yellow-500 text-white"]
+          when "in_review" then ["In Review", "bg-blue-600 text-white"]
+          when "success" then ["Approved", "bg-green-600 text-white"]
+          when "digital" then ["Digital", "bg-purple-600 text-white"]
+          when "on_hold" then ["On Hold", "bg-orange-500 text-white"]
+          when "rejected" then ["Rejected", "bg-red-600 text-white"]
+          else [raw_status.to_s.humanize, "bg-gray-600 text-white"]
+        end %>
+        <% is_pending = raw_status.to_s == "pending" %>
+
+        <div class="campaign-panel-inner p-3" id="poster_<%= poster.id %>">
+          <%# Main row - always visible %>
+          <div class="flex items-center gap-3">
+            <%# Poster number and status %>
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="campaign-font text-sm font-black campaign-text-primary w-6">#<%= index + 1 %></span>
+              <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold <%= status_classes %> whitespace-nowrap"><%= status_label %></span>
+            </div>
+
+            <%# Location or code %>
+            <div class="flex-1 min-w-0 text-xs truncate">
+              <% if poster.location_description.present? %>
+                <span class="campaign-text-secondary">Location: <%= poster.location_description %></span>
+                <span class="font-mono campaign-text-muted ml-2">(<%= poster.referral_code %>)</span>
+              <% else %>
+                <span class="font-mono campaign-text-muted"><%= poster.referral_code %></span>
+              <% end %>
+            </div>
+
+            <%# Actions %>
+            <div class="flex gap-1.5 flex-shrink-0">
+              <%= link_to download_poster_path(poster), class: "campaign-btn campaign-btn--secondary text-xs h-8 px-3 inline-flex items-center gap-1.5 whitespace-nowrap" do %>
+                <%= icon :download, size: 14 %>
+                Download
+              <% end %>
+              
+              <% if is_pending %>
+                <button type="button"
+                        onclick="document.getElementById('poster_expand_<%= poster.id %>').classList.toggle('hidden')"
+                        class="campaign-btn campaign-btn--secondary text-xs h-8 px-2 inline-flex items-center gap-1 whitespace-nowrap">
+                  <%= icon :chevron_down, size: 14 %>
+                </button>
+              <% end %>
+            </div>
+          </div>
+
+          <%# Expandable section for pending posters %>
+          <% if is_pending %>
+            <div id="poster_expand_<%= poster.id %>" class="hidden mt-3 pt-3 border-t border-current/10" data-controller="poster-submit">
+              <%= form_with url: submit_poster_path(poster), method: :post, multipart: true, data: { turbo_frame: "submit_result_#{poster.id}", action: "turbo:submit-start->poster-submit#disableForm turbo:submit-end->poster-submit#enableForm" } do |f| %>
+                <div class="space-y-3">
+                  <%# Location field %>
+                  <div>
+                    <label class="block text-xs campaign-text-muted mb-1.5">Location Description <span class="text-red-500">(required)</span></label>
+                    <%= f.text_field :location_description,
+                        value: poster.location_description,
+                        placeholder: "Where is this poster?",
+                        required: true,
+                        data: { poster_submit_target: "input" },
+                        class: "flex h-9 w-full rounded-lg campaign-input px-3 py-2 text-xs" %>
+                  </div>
+
+                  <%# Proof photo upload %>
+                  <div>
+                    <label class="block text-xs campaign-text-muted mb-1.5">Proof Photo <span class="text-red-500">(required)</span></label>
+                    <%= f.file_field :proof_image,
+                        accept: "image/jpeg,image/png,image/heic,image/heif,image/webp",
+                        required: !poster.proof_image.attached?,
+                        data: { poster_submit_target: "input" },
+                        class: "flex h-9 w-full rounded-lg campaign-input px-3 py-2 text-xs file:border-0 file:bg-transparent file:text-xs file:font-medium" %>
+                    <% if poster.proof_image.attached? %>
+                      <p class="text-xs campaign-text-muted mt-1">Current: <%= poster.proof_image.filename %></p>
+                    <% end %>
+                  </div>
+
+                  <%# Supporting evidence upload %>
+                  <div>
+                    <label class="block text-xs campaign-text-muted mb-1.5">Supporting Evidence (Optional)</label>
+                    <%= f.file_field :supporting_evidence,
+                        multiple: true,
+                        accept: "image/jpeg,image/png,image/heic,image/heif,image/webp,application/pdf,video/mp4,video/quicktime",
+                        data: { poster_submit_target: "input" },
+                        class: "flex h-9 w-full rounded-lg campaign-input px-3 py-2 text-xs file:border-0 file:bg-transparent file:text-xs file:font-medium" %>
+                    <p class="text-xs campaign-text-muted mt-1">Images, PDFs, or videos to help verify this poster (max 50MB per file)</p>
+                  </div>
+
+                  <%# Display existing supporting evidence %>
+                  <% if poster.supporting_evidence.attached? %>
+                    <div class="pt-2 border-t border-current/10">
+                      <p class="text-xs campaign-text-muted mb-2">Existing Evidence (<%= poster.supporting_evidence.count %> file<%= poster.supporting_evidence.count == 1 ? '' : 's' %>)</p>
+                      <div class="space-y-1.5">
+                        <% poster.supporting_evidence.each do |file| %>
+                          <div class="flex items-center justify-between rounded-md border border-current/20 bg-current/5 px-2.5 py-1.5">
+                            <div class="flex items-center gap-2 min-w-0">
+                              <%= icon :paperclip, size: 14, class_name: "campaign-text-muted flex-shrink-0" %>
+                              <div class="min-w-0 text-xs truncate">
+                                <p class="campaign-text-primary truncate"><%= file.filename.to_s %></p>
+                                <p class="campaign-text-muted text-[10px]"><%= number_to_human_size(file.byte_size) %></p>
+                              </div>
+                            </div>
+                            <%= link_to "Open", url_for(file), target: "_blank", class: "text-xs campaign-text-primary hover:underline whitespace-nowrap flex-shrink-0 ml-2" %>
+                          </div>
+                        <% end %>
+                      </div>
+                    </div>
+                  <% end %>
+                </div>
+
+                <%# Action buttons %>
+                <div class="mt-3 pt-3 border-t border-current/10 flex justify-end gap-4">
+                  <%= f.button type: "submit", data: { poster_submit_target: "submitBtn" }, class: "campaign-text-primary hover:opacity-70 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer" do %>
+                    <%= icon :send, size: 12 %>
+                    <span data-poster-submit-target="submitText">Submit</span>
+                    <span data-poster-submit-target="spinner" class="hidden">
+                      <%= icon :loader_2, size: 12, class_name: "animate-spin" %>
+                    </span>
+                  <% end %>
+
+                  <%= button_to mark_digital_poster_path(poster), method: :post,
+                      data: { turbo_confirm: "Mark as digital? No shards awarded.", turbo_frame: "poster_#{poster.id}" },
+                      class: "campaign-text-primary hover:opacity-70 text-xs font-medium inline-flex items-center gap-1 cursor-pointer" do %>
+                    <%= icon :monitor, size: 12 %>
+                    Mark digital
+                  <% end %>
+
+                  <%= button_to poster_path(poster), method: :delete,
+                      data: { turbo_confirm: "Delete this poster? This cannot be undone!", turbo_frame: "poster_#{poster.id}" },
+                      class: "campaign-text-muted hover:opacity-70 text-xs font-medium inline-flex items-center gap-1 cursor-pointer" do %>
+                    <%= icon :trash_2, size: 12 %>
+                    Delete
+                  <% end %>
+                </div>
+              <% end %>
+              <turbo-frame id="submit_result_<%= poster.id %>" class="block mt-2"></turbo-frame>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <%# Footer actions %>
+    <div class="mt-6 flex flex-wrap gap-3 justify-between items-center">
+      <% unless @poster_group.has_submitted_posters? %>
+        <%= button_to poster_group_path(@poster_group), method: :delete,
+            data: { turbo_confirm: "Delete group and all #{@poster_group.poster_count} posters? This cannot be undone!" },
+            class: "campaign-btn campaign-btn--secondary text-xs h-9 px-4 inline-flex items-center gap-1.5 hover:!bg-red-500 hover:!text-white transition-colors" do %>
+          <%= icon :trash_2, size: 14 %>
+          Delete Entire Group
+        <% end %>
+      <% else %>
+        <div></div>
+      <% end %>
+      <%= link_to campaign_path(@poster_group.campaign.slug), class: "text-xs campaign-text-muted hover:campaign-text-primary transition-colors inline-flex items-center gap-1" do %>
+        <%= icon :arrow_left, size: 14 %>
+        Back to Campaign
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,626 @@
+<% content_for :title, "Geographic Data" %>
+
+<% content_for :head do %>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<% end %>
+
+<div class="mb-6">
+  <h1 class="text-2xl font-bold tracking-tight text-foreground">Geographic Insights</h1>
+  <p class="text-sm text-muted-foreground mt-1">
+    <% if @date_range == "all" %>
+      Tracking activity from around the world
+    <% elsif @date_range == "today" %>
+      Today's activity from <%= @countries_count %> <%= "country".pluralize(@countries_count) %>
+    <% elsif @date_range == "week" %>
+      This week's activity from <%= @countries_count %> <%= "country".pluralize(@countries_count) %>
+    <% elsif @date_range == "month" %>
+      This month's activity from <%= @countries_count %> <%= "country".pluralize(@countries_count) %>
+    <% elsif @date_range == "year" %>
+      This year's activity from <%= @countries_count %> <%= "country".pluralize(@countries_count) %>
+    <% end %>
+  </p>
+</div>
+
+<div class="grid gap-4 md:grid-cols-4 mb-6">
+  <div class="rounded-lg border border-border bg-card p-4 shadow-sm">
+    <div class="text-2xl font-bold text-foreground"><%= number_with_delimiter(@total_records) %></div>
+    <div class="text-xs text-muted-foreground mt-1">
+      <%=
+        case @tab
+        when "proxy" then "Total proxy hits"
+        when "logins" then "Registrations & new logins"
+        when "posters" then "Total poster scans"
+        when "activity" then "Active users"
+        end
+      %>
+      <% if @date_range != "all" %>
+        <span class="text-primary">
+          <%=
+            case @date_range
+            when "today" then "today"
+            when "week" then "this week"
+            when "month" then "this month"
+            when "year" then "this year"
+            end
+          %>
+        </span>
+      <% end %>
+    </div>
+  </div>
+  <div class="rounded-lg border border-border bg-card p-4 shadow-sm">
+    <div class="text-2xl font-bold text-foreground"><%= number_with_delimiter(@total_geocoded) %></div>
+    <div class="text-xs text-muted-foreground mt-1">Successfully geocoded locations</div>
+  </div>
+  <div class="rounded-lg border border-border bg-card p-4 shadow-sm">
+    <div class="text-2xl font-bold text-foreground"><%= @pending_geocoding %></div>
+    <div class="text-xs text-muted-foreground mt-1">
+      <%= @pending_geocoding == 0 ? "All caught up!" : "Waiting for geocoding" %>
+    </div>
+  </div>
+  <div class="rounded-lg border border-border bg-card p-4 shadow-sm">
+    <div class="text-2xl font-bold text-foreground"><%= @countries_count %></div>
+    <div class="text-xs text-muted-foreground mt-1">
+      <%= "Country".pluralize(@countries_count) %> represented
+    </div>
+  </div>
+</div>
+
+<%# Geocode Job Runs %>
+<% if @geocode_runs.present? %>
+  <div class="rounded-lg border border-border bg-card shadow-sm mb-6">
+    <div class="p-4 border-b border-border flex items-center justify-between">
+      <div>
+        <h3 class="text-sm font-semibold text-foreground">Geocoding Jobs</h3>
+        <p class="text-xs text-muted-foreground mt-1">Worker processes pending records every minute</p>
+      </div>
+      <% latest = @geocode_runs.first %>
+      <% if latest %>
+        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium <%= latest.succeeded? ? 'bg-green-500/10 text-green-500' : latest.running? ? 'bg-blue-500/10 text-blue-500' : 'bg-red-500/10 text-red-500' %>">
+          <%= latest.status.capitalize %>
+        </span>
+      <% end %>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="border-b border-border">
+          <tr class="text-left text-xs text-muted-foreground">
+            <th class="px-4 py-2">Status</th>
+            <th class="px-4 py-2">Processed</th>
+            <th class="px-4 py-2">Success</th>
+            <th class="px-4 py-2">Failed</th>
+            <th class="px-4 py-2">Remaining</th>
+            <th class="px-4 py-2">Duration</th>
+            <th class="px-4 py-2">When</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <% @geocode_runs.each_with_index do |run, idx| %>
+            <tr class="hover:bg-muted/30 cursor-pointer" onclick="toggleRunDetails(<%= idx %>)">
+              <td class="px-4 py-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <%= run.succeeded? ? 'bg-green-500/10 text-green-500' : run.running? ? 'bg-blue-500/10 text-blue-500' : 'bg-red-500/10 text-red-500' %>">
+                  <%= run.status.capitalize %>
+                </span>
+              </td>
+              <td class="px-4 py-2 text-foreground font-medium"><%= run.processed_count %></td>
+              <td class="px-4 py-2 text-green-500"><%= run.success_count %></td>
+              <td class="px-4 py-2 <%= run.failure_count > 0 ? 'text-red-500' : 'text-muted-foreground' %>"><%= run.failure_count %></td>
+              <td class="px-4 py-2 text-muted-foreground"><%= run.pending_after %></td>
+              <td class="px-4 py-2 text-muted-foreground"><%= run.duration_display || '-' %></td>
+              <td class="px-4 py-2 text-muted-foreground text-xs" title="<%= run.started_at&.strftime('%B %d, %Y at %I:%M:%S %p') %>">
+                <%= run.started_at ? time_ago_in_words(run.started_at) + " ago" : '-' %>
+                <svg class="inline w-3 h-3 ml-1 transition-transform" id="chevron-<%= idx %>" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </td>
+            </tr>
+            <tr id="run-details-<%= idx %>" class="hidden">
+              <td colspan="7" class="px-4 py-3 bg-muted/20">
+                <% if run.stats.present? && (run.stats["referral_logs"].present? || run.stats["login_logs"].present?) %>
+                  <div class="grid grid-cols-2 gap-4 text-xs">
+                    <% if run.stats["referral_logs"].present? %>
+                      <div>
+                        <div class="font-medium text-foreground mb-2">Referral Logs (<%= run.stats["referral_logs"].size %>)</div>
+                        <div class="space-y-1 max-h-32 overflow-y-auto">
+                          <% run.stats["referral_logs"].each do |log| %>
+                            <div class="flex items-center gap-2">
+                              <span class="font-mono text-muted-foreground"><%= log["ip"] %></span>
+                              <span class="<%= log["result"] == "success" ? 'text-green-500' : log["result"] == "private_ip" ? 'text-blue-500' : 'text-red-500' %>">
+                                <%= log["result"] %>
+                              </span>
+                              <% if log["error"] %>
+                                <span class="text-red-400" title="<%= log["message"] %>"><%= log["error"] %></span>
+                              <% end %>
+                            </div>
+                          <% end %>
+                        </div>
+                      </div>
+                    <% end %>
+                    <% if run.stats["login_logs"].present? %>
+                      <div>
+                        <div class="font-medium text-foreground mb-2">Login Logs (<%= run.stats["login_logs"].size %>)</div>
+                        <div class="space-y-1 max-h-32 overflow-y-auto">
+                          <% run.stats["login_logs"].each do |log| %>
+                            <div class="flex items-center gap-2">
+                              <span class="font-mono text-muted-foreground"><%= log["ip"] %></span>
+                              <span class="<%= log["result"] == "success" ? 'text-green-500' : log["result"] == "private_ip" ? 'text-blue-500' : 'text-red-500' %>">
+                                <%= log["result"] %>
+                              </span>
+                              <% if log["error"] %>
+                                <span class="text-red-400" title="<%= log["message"] %>"><%= log["error"] %></span>
+                              <% end %>
+                            </div>
+                          <% end %>
+                        </div>
+                      </div>
+                    <% end %>
+                  </div>
+                <% elsif run.message.present? %>
+                  <div class="text-muted-foreground"><%= run.message %></div>
+                <% else %>
+                  <div class="text-muted-foreground">No details available</div>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    function toggleRunDetails(idx) {
+      const details = document.getElementById('run-details-' + idx);
+      const chevron = document.getElementById('chevron-' + idx);
+      if (details.classList.contains('hidden')) {
+        details.classList.remove('hidden');
+        chevron.style.transform = 'rotate(180deg)';
+      } else {
+        details.classList.add('hidden');
+        chevron.style.transform = 'rotate(0deg)';
+      }
+    }
+  </script>
+<% end %>
+
+<%# Filters and Navigation %>
+<div class="flex flex-col sm:flex-row gap-4 mb-6">
+  <%# Tab navigation %>
+  <div class="flex gap-2">
+    <%= link_to admin_geo_path(tab: "proxy", date_range: @date_range, search: @search),
+        class: "px-4 py-2 text-sm font-medium rounded-lg transition-colors #{@tab == 'proxy' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'}" do %>
+      Proxy Hits
+    <% end %>
+    <%= link_to admin_geo_path(tab: "logins", date_range: @date_range, search: @search),
+        class: "px-4 py-2 text-sm font-medium rounded-lg transition-colors #{@tab == 'logins' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'}" do %>
+      Registrations & New Logins
+    <% end %>
+    <%= link_to admin_geo_path(tab: "posters", date_range: @date_range, search: @search),
+        class: "px-4 py-2 text-sm font-medium rounded-lg transition-colors #{@tab == 'posters' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'}" do %>
+      Poster Scans
+    <% end %>
+    <%= link_to admin_geo_path(tab: "activity", date_range: @date_range, search: @search),
+        class: "px-4 py-2 text-sm font-medium rounded-lg transition-colors #{@tab == 'activity' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'}" do %>
+      User Activity
+    <% end %>
+  </div>
+
+  <%# Date range filter %>
+  <div class="flex gap-2 ml-auto">
+    <%= link_to "All Time", admin_geo_path(tab: @tab, date_range: "all", search: @search),
+        class: "px-3 py-2 text-xs font-medium rounded-md transition-colors #{@date_range == 'all' ? 'bg-primary/10 text-primary' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}" %>
+    <%= link_to "Today", admin_geo_path(tab: @tab, date_range: "today", search: @search),
+        class: "px-3 py-2 text-xs font-medium rounded-md transition-colors #{@date_range == 'today' ? 'bg-primary/10 text-primary' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}" %>
+    <%= link_to "Week", admin_geo_path(tab: @tab, date_range: "week", search: @search),
+        class: "px-3 py-2 text-xs font-medium rounded-md transition-colors #{@date_range == 'week' ? 'bg-primary/10 text-primary' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}" %>
+    <%= link_to "Month", admin_geo_path(tab: @tab, date_range: "month", search: @search),
+        class: "px-3 py-2 text-xs font-medium rounded-md transition-colors #{@date_range == 'month' ? 'bg-primary/10 text-primary' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}" %>
+    <%= link_to "Year", admin_geo_path(tab: @tab, date_range: "year", search: @search),
+        class: "px-3 py-2 text-xs font-medium rounded-md transition-colors #{@date_range == 'year' ? 'bg-primary/10 text-primary' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}" %>
+  </div>
+</div>
+
+<%# Search bar %>
+<div class="mb-6">
+  <%= form_with url: admin_geo_path, method: :get, class: "flex gap-2" do |f| %>
+    <%= f.hidden_field :tab, value: @tab %>
+    <%= f.hidden_field :date_range, value: @date_range %>
+    <div class="flex-1 max-w-md">
+      <%= f.text_field :search, value: @search, placeholder: "Search by #{@tab == 'proxy' ? 'IP address or referral code' : @tab == 'activity' ? 'name or email' : 'IP address'}...", class: "w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary" %>
+    </div>
+    <%= f.submit "Search", class: "px-4 py-2 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors" %>
+    <% if @search.present? %>
+      <%= link_to "Clear", admin_geo_path(tab: @tab, date_range: @date_range), class: "px-4 py-2 text-sm font-medium rounded-lg border border-border bg-background hover:bg-muted transition-colors" %>
+    <% end %>
+  <% end %>
+</div>
+
+<%# Map visualization %>
+<% if @map_data.present? && @map_data.any? %>
+  <div class="rounded-lg border border-border bg-card shadow-sm mb-6">
+    <div class="p-4 border-b border-border flex items-center justify-between">
+      <div>
+        <h3 class="text-sm font-semibold text-foreground">Activity Heat Map</h3>
+        <p class="text-xs text-muted-foreground mt-1"><%= @map_data.size %> locations visualized</p>
+      </div>
+      <div class="flex items-center gap-2 text-xs text-muted-foreground">
+        <span class="inline-block w-3 h-3 rounded-full bg-blue-500/50"></span> Low
+        <span class="inline-block w-3 h-3 rounded-full bg-yellow-500/70"></span> Medium
+        <span class="inline-block w-3 h-3 rounded-full bg-red-500"></span> High
+      </div>
+    </div>
+    <div id="map" style="height: 400px; width: 100%;"></div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const mapData = <%= raw @map_data.to_json %>;
+
+      // Initialize map with dark-friendly styling
+      const map = L.map('map', {
+        zoomControl: true,
+        scrollWheelZoom: true
+      }).setView([20, 0], 2);
+
+      // Use CartoDB dark matter for better heat map visibility
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        maxZoom: 19,
+        subdomains: 'abcd'
+      }).addTo(map);
+
+      // Prepare heat data - [lat, lng, intensity]
+      // Group by approximate location to create intensity
+      const locationCounts = {};
+      mapData.forEach(point => {
+        // Convert to numbers (decimals come as strings from Rails JSON)
+        const lat = parseFloat(point[0]);
+        const lng = parseFloat(point[1]);
+        if (isNaN(lat) || isNaN(lng)) return;
+        // Round to 1 decimal for grouping nearby points
+        const key = `${lat.toFixed(1)},${lng.toFixed(1)}`;
+        locationCounts[key] = (locationCounts[key] || 0) + 1;
+      });
+
+      // Create heat data with intensity based on count
+      const heatData = Object.entries(locationCounts).map(([key, count]) => {
+        const [lat, lng] = key.split(',').map(Number);
+        // Normalize intensity (0.3 to 1.0 based on count)
+        const intensity = Math.min(0.3 + (count / 10) * 0.7, 1.0);
+        return [lat, lng, intensity];
+      });
+
+      // Add heat layer
+      const heat = L.heatLayer(heatData, {
+        radius: 25,
+        blur: 15,
+        maxZoom: 10,
+        max: 1.0,
+        gradient: {
+          0.0: '#3b82f6',   // blue-500
+          0.3: '#06b6d4',   // cyan-500
+          0.5: '#22c55e',   // green-500
+          0.7: '#eab308',   // yellow-500
+          0.9: '#f97316',   // orange-500
+          1.0: '#ef4444'    // red-500
+        }
+      }).addTo(map);
+
+      // Fit bounds if we have data
+      if (heatData.length > 0) {
+        const bounds = L.latLngBounds(heatData.map(p => [p[0], p[1]]));
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 6 });
+      }
+
+      // Add click handler to show nearby info
+      map.on('click', function(e) {
+        const clickLat = e.latlng.lat;
+        const clickLng = e.latlng.lng;
+
+        // Find points within ~50km of click
+        const nearby = mapData.filter(point => {
+          const lat = parseFloat(point[0]);
+          const lng = parseFloat(point[1]);
+          if (isNaN(lat) || isNaN(lng)) return false;
+          const dist = Math.sqrt(Math.pow(lat - clickLat, 2) + Math.pow(lng - clickLng, 2));
+          return dist < 2; // ~2 degrees
+        });
+
+        if (nearby.length > 0) {
+          // Group by city
+          const cities = {};
+          nearby.forEach(point => {
+            const [lat, lng, city, country, extra] = point;
+            const cityKey = city || 'Unknown';
+            if (!cities[cityKey]) {
+              cities[cityKey] = { country: country, count: 0, items: [] };
+            }
+            cities[cityKey].count++;
+            if (extra && cities[cityKey].items.length < 5) {
+              cities[cityKey].items.push(extra);
+            }
+          });
+
+          let content = '<div class="text-sm" style="max-width: 250px;">';
+          content += `<strong>${nearby.length} activities nearby</strong><br><br>`;
+
+          Object.entries(cities).slice(0, 5).forEach(([city, data]) => {
+            content += `<div class="mb-2">`;
+            content += `<strong>${city}</strong>`;
+            if (data.country) content += `, ${data.country}`;
+            content += ` <span style="color: #888;">(${data.count})</span>`;
+            <% if @tab == "proxy" || @tab == "logins" %>
+            if (data.items.length > 0) {
+              content += `<br><small style="color: #666;">`;
+              content += data.items.join(', ');
+              content += `</small>`;
+            }
+            <% end %>
+            content += `</div>`;
+          });
+
+          if (Object.keys(cities).length > 5) {
+            content += `<div style="color: #888;">...and ${Object.keys(cities).length - 5} more cities</div>`;
+          }
+          content += '</div>';
+
+          L.popup()
+            .setLatLng(e.latlng)
+            .setContent(content)
+            .openOn(map);
+        }
+      });
+    });
+  </script>
+<% end %>
+
+<div class="grid gap-6 lg:grid-cols-3">
+  <%# Country breakdown %>
+  <div class="rounded-lg border border-border bg-card shadow-sm">
+    <div class="p-4 border-b border-border">
+      <h3 class="text-sm font-semibold text-foreground">Top Countries</h3>
+    </div>
+    <div class="p-4">
+      <% if @country_stats.present? && @country_stats.any? %>
+        <div class="space-y-2">
+          <% @country_stats.each do |key, count| %>
+            <%
+              if key.is_a?(Array)
+                country_code, country_name = key
+              else
+                country_code = key
+                country_name = nil
+              end
+              display_name = country_name || country_name_from_code(country_code)
+            %>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-lg"><%= country_code_to_flag(country_code) %></span>
+                <span class="text-sm text-foreground"><%= display_name %></span>
+              </div>
+              <span class="text-sm font-medium text-muted-foreground"><%= number_with_delimiter(count) %></span>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="text-sm text-muted-foreground">No geographic data yet</p>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Records table %>
+  <div class="lg:col-span-2 rounded-lg border border-border bg-card shadow-sm">
+    <div class="p-4 border-b border-border">
+      <h3 class="text-sm font-semibold text-foreground">Recent Activity</h3>
+      <p class="text-xs text-muted-foreground mt-1">
+        <% if @records.present? %>
+          Showing <%= @pagy.from %> - <%= @pagy.to %> of <%= number_with_delimiter(@pagy.count) %>
+          <%=
+            case @tab
+            when "proxy" then "proxy hits"
+            when "logins" then "registrations & new logins"
+            when "posters" then "poster scans"
+            when "activity" then "active users"
+            end
+          %>
+        <% end %>
+      </p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="border-b border-border">
+          <tr class="text-left text-xs text-muted-foreground">
+            <% if @tab == "activity" %>
+              <th class="px-4 py-2">User</th>
+              <th class="px-4 py-2">IP Address</th>
+              <th class="px-4 py-2">Location</th>
+              <th class="px-4 py-2">Referrals</th>
+              <th class="px-4 py-2">Last Seen</th>
+            <% else %>
+              <th class="px-4 py-2">IP Address</th>
+              <th class="px-4 py-2">Location</th>
+              <% if @tab == "proxy" %>
+                <th class="px-4 py-2">Referral Code</th>
+              <% elsif @tab == "logins" %>
+                <th class="px-4 py-2">User</th>
+              <% elsif @tab == "posters" %>
+                <th class="px-4 py-2">Poster</th>
+                <th class="px-4 py-2">Type</th>
+                <th class="px-4 py-2">Referrer</th>
+              <% end %>
+              <th class="px-4 py-2">Time</th>
+            <% end %>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <% if @records.present? %>
+            <% @records.each do |record| %>
+              <tr class="hover:bg-muted/30">
+                <% if @tab == "activity" %>
+                  <td class="px-4 py-2">
+                    <%= link_to record.display_name, admin_user_path(record), class: "text-primary hover:underline text-xs font-medium" %>
+                  </td>
+                  <td class="px-4 py-2 font-mono text-xs text-muted-foreground">
+                    <%= record.try(:last_ip_address) || "—" %>
+                  </td>
+                  <td class="px-4 py-2 text-muted-foreground">
+                    <% if record.respond_to?(:location_display) && record.location_display.present? %>
+                      <div class="flex items-center gap-2">
+                        <% if record.country_code.present? %>
+                          <span class="text-base"><%= country_code_to_flag(record.country_code) if respond_to?(:country_code_to_flag) %></span>
+                        <% end %>
+                        <span class="text-xs"><%= record.location_display %></span>
+                      </div>
+                    <% elsif record.country_code.present? %>
+                      <div class="flex items-center gap-2">
+                        <span class="text-base"><%= country_code_to_flag(record.country_code) if respond_to?(:country_code_to_flag) %></span>
+                        <span class="text-xs"><%= record.country_code %></span>
+                      </div>
+                    <% else %>
+                      <span class="text-muted-foreground/50 text-xs">Unknown location</span>
+                    <% end %>
+                  </td>
+                  <td class="px-4 py-2 text-xs text-foreground"><%= record.referral_count || 0 %></td>
+                  <td class="px-4 py-2 text-muted-foreground text-xs" title="<%= record.last_seen_at.strftime('%B %d, %Y at %I:%M %p') %>">
+                    <%= time_ago_in_words(record.last_seen_at) %> ago
+                  </td>
+                <% else %>
+                  <td class="px-4 py-2 font-mono text-xs text-foreground"><%= record.ip_address %></td>
+                  <td class="px-4 py-2 text-muted-foreground">
+                  <% if record.respond_to?(:location_display) && record.location_display.present? %>
+                    <div class="flex items-center gap-2">
+                      <% if record.country_code.present? %>
+                        <span class="text-base"><%= country_code_to_flag(record.country_code) if respond_to?(:country_code_to_flag) %></span>
+                      <% end %>
+                      <span class="text-xs"><%= record.location_display %></span>
+                    </div>
+                  <% elsif record.respond_to?(:country_code) && record.country_code.present? %>
+                    <div class="flex items-center gap-2">
+                      <span class="text-base"><%= country_code_to_flag(record.country_code) if respond_to?(:country_code_to_flag) %></span>
+                      <span class="text-xs"><%= record.country_code %></span>
+                    </div>
+                  <% else %>
+                    <span class="text-muted-foreground/50 text-xs">Unknown location</span>
+                  <% end %>
+                </td>
+                <% if @tab == "proxy" %>
+                  <td class="px-4 py-2 font-mono text-xs text-primary"><%= record.referral_code %></td>
+                <% elsif @tab == "logins" %>
+                  <td class="px-4 py-2">
+                    <%= link_to record.user.display_name, admin_user_path(record.user), class: "text-primary hover:underline text-xs" %>
+                  </td>
+                <% elsif @tab == "posters" %>
+                  <td class="px-4 py-2">
+                    <% if record.poster.present? %>
+                      <%= link_to record.poster.referral_code || record.poster.qr_code_token[0..7], admin_poster_path(record.poster), class: "text-primary hover:underline text-xs font-mono" %>
+                    <% else %>
+                      <span class="text-muted-foreground/50 text-xs">Deleted poster</span>
+                    <% end %>
+                  </td>
+                  <td class="px-4 py-2">
+                    <%
+                      scan_type = record.metadata&.dig("referral_type") || "unknown"
+                      type_label = case scan_type
+                      when "qr_scan" then "QR Code"
+                      when "poster_referral" then "Link"
+                      when "poster_proxy" then "Proxy"
+                      else "Unknown"
+                      end
+                      type_color = case scan_type
+                      when "qr_scan" then "bg-blue-500/10 text-blue-500"
+                      when "poster_referral" then "bg-green-500/10 text-green-500"
+                      when "poster_proxy" then "bg-purple-500/10 text-purple-500"
+                      else "bg-muted text-muted-foreground"
+                      end
+                    %>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <%= type_color %>">
+                      <%= type_label %>
+                    </span>
+                  </td>
+                  <td class="px-4 py-2">
+                    <%
+                      referrer = record.metadata&.dig("referrer")
+                      if referrer.present?
+                        referrer_domain = URI.parse(referrer).host rescue nil
+                    %>
+                      <span class="text-xs text-muted-foreground" title="<%= referrer %>">
+                        <%= referrer_domain || referrer %>
+                      </span>
+                    <% else %>
+                      <span class="text-muted-foreground/50 text-xs">Direct</span>
+                    <% end %>
+                  </td>
+                <% end %>
+                <% if @tab != "activity" %>
+                  <td class="px-4 py-2 text-muted-foreground text-xs" title="<%= record.created_at.strftime('%B %d, %Y at %I:%M %p') %>">
+                    <%= time_ago_in_words(record.created_at) %> ago
+                  </td>
+                <% end %>
+                <% end %>
+              </tr>
+            <% end %>
+          <% else %>
+            <tr>
+              <td colspan="<%= @tab == 'posters' ? 6 : @tab == 'activity' ? 4 : 4 %>" class="px-4 py-8 text-center text-muted-foreground">
+                <% if @search.present? %>
+                  No results found for "<%= @search %>"
+                <% elsif @date_range != "all" %>
+                  No activity
+                  <%=
+                    case @date_range
+                    when "today" then "today"
+                    when "week" then "this week"
+                    when "month" then "this month"
+                    when "year" then "this year"
+                    end
+                  %>
+                <% else %>
+                  No records yet
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <% if @pagy && @pagy.pages > 1 %>
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-border">
+        <div class="flex items-center gap-2">
+          <%= link_to "First", admin_geo_path(page: 1, tab: @tab, date_range: @date_range, search: @search),
+              class: "inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors #{@pagy.page == 1 ? 'opacity-50 pointer-events-none' : ''}" %>
+
+          <% if @pagy.page > 1 %>
+            <%= link_to "Previous", admin_geo_path(page: @pagy.page - 1, tab: @tab, date_range: @date_range, search: @search), class: "inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
+          <% else %>
+            <span class="inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium border border-border bg-background opacity-50 cursor-not-allowed">Previous</span>
+          <% end %>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <span class="text-sm text-muted-foreground">Page <%= @pagy.page %> of <%= @pagy.pages %></span>
+          <%= form_with url: admin_geo_path, method: :get, class: "flex items-center gap-2" do |f| %>
+            <%= f.hidden_field :tab, value: @tab %>
+            <%= f.hidden_field :date_range, value: @date_range %>
+            <%= f.hidden_field :search, value: @search %>
+            <%= f.number_field :page, value: @pagy.page, min: 1, max: @pagy.pages,
+                class: "w-16 px-2 py-1 text-sm text-center border border-border rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary" %>
+            <%= f.submit "Go", class: "px-3 py-1 text-sm font-medium rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors" %>
+          <% end %>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <% if @pagy.page < @pagy.pages %>
+            <%= link_to "Next", admin_geo_path(page: @pagy.page + 1, tab: @tab, date_range: @date_range, search: @search), class: "inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
+          <% else %>
+            <span class="inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium border border-border bg-background opacity-50 cursor-not-allowed">Next</span>
+          <% end %>
+
+          <%= link_to "Last", admin_geo_path(page: @pagy.pages, tab: @tab, date_range: @date_range, search: @search),
+              class: "inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors #{@pagy.page == @pagy.pages ? 'opacity-50 pointer-events-none' : ''}" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

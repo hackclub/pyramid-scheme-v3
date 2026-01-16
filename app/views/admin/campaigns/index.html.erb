@@ -1,0 +1,132 @@
+<% content_for :title, "Campaigns" %>
+
+<div class="flex justify-between items-center mb-8">
+  <div>
+    <h1 class="text-3xl font-bold tracking-tight text-foreground">Campaigns</h1>
+    <p class="text-sm text-muted-foreground mt-2">Manage all Pyramid campaigns.</p>
+  </div>
+  <%= link_to "New Campaign", new_admin_campaign_path, class: "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors" %>
+</div>
+
+<div class="grid gap-6 lg:grid-cols-3 mb-8">
+  <%# Shard Distribution Pie Chart %>
+  <div class="rounded-xl border border-border bg-card p-5"
+       data-controller="shard-pie-chart"
+       data-shard-pie-chart-data-value="<%= @shards_by_campaign.to_json %>">
+    <div class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-4">Shards by Campaign</div>
+    <div class="relative aspect-square max-w-[180px] mx-auto">
+      <canvas id="shardPieChart"></canvas>
+    </div>
+    <div class="mt-4 space-y-2">
+      <% colors = %w[#8b5cf6 #06b6d4 #f59e0b #ec4899 #10b981 #6366f1] %>
+      <% @shards_by_campaign.each_with_index do |(name, amount), index| %>
+        <div class="flex items-center justify-between text-sm">
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 rounded-full" style="background-color: <%= colors[index % colors.length] %>"></div>
+            <span class="text-muted-foreground"><%= name %></span>
+          </div>
+          <span class="font-semibold text-foreground tabular-nums"><%= number_with_delimiter(amount) %></span>
+        </div>
+      <% end %>
+      <% if @shards_by_campaign.empty? %>
+        <p class="text-sm text-muted-foreground text-center py-4">No shards distributed yet</p>
+      <% end %>
+    </div>
+  </div>
+
+  <%# API Keys by Campaign %>
+  <div class="lg:col-span-2 rounded-xl border border-border bg-card">
+    <div class="p-5 border-b border-border flex items-center justify-between">
+      <div class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">API Keys by Campaign</div>
+      <%= link_to "Manage All", admin_api_keys_path, class: "text-xs text-primary hover:underline" %>
+    </div>
+    <div class="p-5">
+      <% if @campaigns.any? %>
+        <div class="space-y-4">
+          <% @campaigns.each do |campaign| %>
+            <% campaign_keys = @api_keys_by_campaign[campaign.id] || [] %>
+            <div class="flex items-center justify-between py-2 border-b border-border last:border-0">
+              <div class="flex items-center gap-3">
+                <span class="font-medium text-foreground"><%= campaign.name %></span>
+                <span class="text-xs px-2 py-0.5 rounded-full <%= campaign.active? ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground' %>">
+                  <%= campaign.active? ? 'Active' : 'Inactive' %>
+                </span>
+              </div>
+              <div class="flex items-center gap-3">
+                <% if campaign_keys.any? %>
+                  <div class="flex items-center gap-2">
+                    <% campaign_keys.each do |key| %>
+                      <span class="text-xs font-mono bg-muted px-2 py-1 rounded" title="<%= key.name %>">
+                        <%= key.key_prefix %>...
+                      </span>
+                    <% end %>
+                  </div>
+                <% else %>
+                  <span class="text-xs text-muted-foreground">No API keys</span>
+                <% end %>
+                <%= link_to "View", admin_campaign_path(campaign), class: "text-xs text-primary hover:underline ml-2" %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="text-sm text-muted-foreground text-center py-8">No campaigns found.</p>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div class="rounded-lg border border-border bg-card shadow-sm">
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead class="border-b border-border">
+        <tr class="text-left">
+          <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Name</th>
+          <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Slug</th>
+          <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Theme</th>
+          <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Status</th>
+          <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Dates</th>
+          <th class="px-6 py-3 text-sm font-medium text-muted-foreground"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-border">
+        <% @campaigns.each do |campaign| %>
+          <tr class="hover:bg-muted/50 transition-colors">
+            <td class="px-6 py-4">
+              <div class="font-medium text-foreground"><%= campaign.name %></div>
+            </td>
+            <td class="px-6 py-4 text-sm text-muted-foreground"><%= campaign.slug %></td>
+            <td class="px-6 py-4 text-sm text-foreground"><%= campaign.theme.humanize %></td>
+            <td class="px-6 py-4">
+              <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium <%= campaign.active? ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground' %>">
+                <%= campaign.active? ? 'Active' : 'Inactive' %>
+              </span>
+            </td>
+            <td class="px-6 py-4 text-sm text-muted-foreground">
+              <% if campaign.starts_at && campaign.ends_at %>
+                <%= campaign.starts_at.strftime("%b %d") %> - <%= campaign.ends_at.strftime("%b %d, %Y") %>
+              <% elsif campaign.starts_at %>
+                From <%= campaign.starts_at.strftime("%b %d, %Y") %>
+              <% elsif campaign.ends_at %>
+                Until <%= campaign.ends_at.strftime("%b %d, %Y") %>
+              <% else %>
+                No dates set
+              <% end %>
+            </td>
+            <td class="px-6 py-4 text-sm">
+              <%= link_to "View", admin_campaign_path(campaign), class: "text-primary hover:underline font-medium" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if @campaigns.empty? %>
+    <div class="text-center py-12">
+      <p class="text-sm text-muted-foreground">No campaigns found.</p>
+    </div>
+  <% end %>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

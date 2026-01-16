@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Account Banned</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1, width=device-width">
+    <meta name="robots" content="noindex, nofollow">
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: #FFF;
+        color: #261B23;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        text-align: center;
+        padding: 2rem;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #101010;
+          color: #e0e0e0;
+        }
+        .reason-box {
+          background: #1a1a1a;
+          border-color: #dc2626;
+        }
+        .contact-link {
+          color: #f87171;
+        }
+        .contact-link:hover {
+          color: #fca5a5;
+        }
+      }
+
+      .error-container {
+        max-width: 500px;
+      }
+
+      .error-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+      }
+
+      .error-code {
+        font-size: 3rem;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+        color: #dc2626;
+      }
+
+      .error-message {
+        font-size: 1.25rem;
+        font-weight: 400;
+        margin-bottom: 1.5rem;
+      }
+
+      .reason-box {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        text-align: left;
+      }
+
+      .reason-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #dc2626;
+        margin-bottom: 0.25rem;
+      }
+
+      .reason-text {
+        font-size: 0.875rem;
+        color: #7f1d1d;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .reason-text {
+          color: #fca5a5;
+        }
+      }
+
+      .contact-section {
+        font-size: 0.875rem;
+        color: #6b7280;
+      }
+
+      .contact-link {
+        color: #dc2626;
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .contact-link:hover {
+        text-decoration: underline;
+      }
+
+      .logout-link {
+        display: inline-block;
+        margin-top: 1.5rem;
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        color: #6b7280;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        text-decoration: none;
+        transition: all 0.15s;
+      }
+
+      .logout-link:hover {
+        background: #f3f4f6;
+        border-color: #9ca3af;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .logout-link {
+          color: #9ca3af;
+          border-color: #374151;
+        }
+        .logout-link:hover {
+          background: #1f2937;
+          border-color: #4b5563;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="error-container">
+      <div class="error-icon">&#128683;</div>
+      <div class="error-code">Banned</div>
+      <div class="error-message">Your account has been suspended</div>
+
+      <% if @reason.present? %>
+        <div class="reason-box">
+          <div class="reason-label">Reason</div>
+          <div class="reason-text"><%= @reason %></div>
+        </div>
+      <% end %>
+
+      <div class="contact-section">
+        If you believe this is a mistake, please contact<br>
+        <a href="mailto:<%= @contact_email %>" class="contact-link"><%= @contact_email %></a>
+      </div>
+
+      <%= link_to "Sign Out", logout_path, method: :delete, class: "logout-link", data: { turbo_method: :delete } %>
+    </div>
+  </body>
+</html>

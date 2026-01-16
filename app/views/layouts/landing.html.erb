@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title><%= content_for?(:title) ? yield(:title) : t("site.name") %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="<%= t('site.description') %>">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <link rel="icon" href="/logo.png" type="image/png">
+    <link rel="apple-touch-icon" href="/logo.png">
+
+    <link rel="preconnect" href="https://rsms.me/">
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+
+    <%# Landing hero background image is above-the-fold and heavily impacts LCP. %>
+    <link rel="preload" as="image" href="/landing/pyramid_of_cheops.jpg" fetchpriority="high">
+
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body class="min-h-screen bg-background font-sans antialiased">
+    <%= render "shared/toast" %>
+
+    <%= yield %>
+
+    <footer class="border-t border-border bg-background">
+      <div class="w-full px-4 py-8 md:px-6">
+        <p class="mx-auto max-w-7xl text-center text-sm text-foreground/80">
+          <span><%= t('site.copyright', year: Time.current.year) %></span>
+          <span class="mx-2 text-foreground/30">|</span>
+          <%= link_to t('nav.faq'), root_path(anchor: 'faq'), class: "hover:text-foreground transition-colors" %>
+          <span class="mx-2 text-foreground/30">·</span>
+          <%= link_to t("footer.hack_club"), "https://hackclub.com", class: "hover:text-foreground transition-colors", target: "_blank" %>
+          <span class="mx-2 text-foreground/30">·</span>
+          <%= link_to t("footer.github"), "https://github.com/hackclub", class: "hover:text-foreground transition-colors", target: "_blank" %>
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

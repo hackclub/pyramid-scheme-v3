@@ -1,0 +1,82 @@
+# PostgreSQL. Versions 9.3 and up are supported.
+#
+# Install the pg driver:
+#   gem install pg
+# On macOS with Homebrew:
+#   gem install pg -- --with-pg-config=/opt/homebrew/bin/pg_config
+# On Windows:
+#   gem install pg
+#       Choose the win32 build.
+#       Install PostgreSQL and put its /bin directory on your path.
+#
+# Configure Using Gemfile
+# gem "pg"
+#
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  # For details on connection pooling, see Rails configuration guide
+  # https://guides.rubyonrails.org/configuring.html#database-pooling
+  max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+
+
+development:
+  <<: *default
+  url: <%= ENV.fetch("DATABASE_URL") { "postgres://pyramid:pyramid_dev@localhost:6373/pyramid_development" } %>
+
+# Warning: The database defined as "test" will be erased and
+# re-generated from your development database when you run "rake".
+# Do not set this db to the same as development or production.
+test:
+  <<: *default
+  # In Docker/dev we often set DATABASE_URL for convenience. Rails will
+  # apply DATABASE_URL across environments, which can cause the test
+  # environment to accidentally point at the development DB.
+  #
+  # Prefer an explicit TEST_DATABASE_URL, otherwise derive one from
+  # DATABASE_URL by swapping the DB name.
+  url: <%= ENV["TEST_DATABASE_URL"] || (ENV["DATABASE_URL"] && ENV["DATABASE_URL"].sub(%r{/[^/]+\z}, "/pyramid_test")) || "postgres://pyramid:pyramid_dev@localhost:6373/pyramid_test" %>
+
+# As with config/credentials.yml, you never want to store sensitive information,
+# like your database password, in your source code. If your source code is
+# ever seen by anyone, they now have access to your database.
+#
+# Instead, provide the password or a full connection URL as an environment
+# variable when you boot the app. For example:
+#
+#   DATABASE_URL="postgres://myuser:mypass@localhost/somedatabase"
+#
+# If the connection URL is provided in the special DATABASE_URL environment
+# variable, Rails will automatically merge its configuration values on top of
+# the values provided in this file. Alternatively, you can specify a connection
+# URL environment variable explicitly:
+#
+#   production:
+#     url: <%= ENV["MY_APP_DATABASE_URL"] %>
+#
+# Connection URLs for non-primary databases can also be configured using
+# environment variables. The variable name is formed by concatenating the
+# connection name with `_DATABASE_URL`. For example:
+#
+#   CACHE_DATABASE_URL="postgres://cacheuser:cachepass@localhost/cachedatabase"
+#
+# Read https://guides.rubyonrails.org/configuring.html#configuring-a-database
+# for a full overview on how database connection configuration can be specified.
+#
+production:
+  url: <%= ENV["DATABASE_URL"] %>
+
+cable:
+  url: <%= ENV["DATABASE_URL"] %>
+
+queue:
+    url: <%= ENV["DATABASE_URL"] %>
+
+cache:
+    url: <%= ENV["DATABASE_URL"] %>
+
+# Legacy Pyramid V2 database - optional, only needed for historical stats
+# If not configured, PyramidV2StatsService will return zeros
+pyramid_v2:
+  <<: *default
+  url: <%= ENV["PYRAMID_V2_DATABASE_URL"] %>

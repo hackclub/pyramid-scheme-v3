@@ -1,0 +1,180 @@
+<div data-poster-modal-target="dialog" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" data-state="closed">
+  <!-- Backdrop -->
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" data-action="click->poster-modal#closeOnBackdrop"></div>
+
+  <!-- Modal -->
+  <div class="relative campaign-modal shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+    <!-- Header -->
+    <div class="sticky top-0 campaign-modal-header px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+      <h2 class="campaign-font text-xl sm:text-2xl font-black campaign-text-primary">Generate Posters</h2>
+      <button type="button"
+              data-action="click->poster-modal#close"
+              class="campaign-text-muted hover:campaign-text-primary transition-colors">
+        <%= icon :x, size: 24 %>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="px-4 sm:px-6 py-4 sm:py-6">
+      <!-- Success message placeholder (appears at top when poster is created) -->
+      <turbo-frame id="poster_result" class="block mb-6"></turbo-frame>
+
+      <%= form_with model: PosterGroup.new, url: poster_groups_path, class: "space-y-4 sm:space-y-5", data: { turbo_frame: "poster_result", poster_modal_target: "form", action: "turbo:submit-start->poster-modal#startSubmit turbo:submit-end->poster-modal#endSubmit" } do |f| %>
+        <%= f.hidden_field :campaign_id, value: campaign.id %>
+
+        <!-- Physical vs Digital Warning -->
+        <div class="campaign-panel-inner p-3 sm:p-4 border-2 border-current/20">
+          <div class="flex items-start gap-3">
+            <%= icon :alert_triangle, size: 20, class_name: "campaign-text-muted flex-shrink-0 mt-0.5" %>
+            <div class="flex-1 space-y-2">
+              <div>
+                <p class="campaign-font text-sm font-black campaign-text-primary">PHYSICAL POSTERS:</p>
+                <p class="text-xs campaign-text-secondary mt-1">Print and post them in real life. YOU MUST SUBMIT PROOF to get the bonus shard! Make sure your proof image shows the QR code clearly for auto approval</p>
+              </div>
+              <div class="pt-2 border-t border-current/10">
+                <p class="campaign-font text-sm font-black campaign-text-primary">DIGITAL POSTERS:</p>
+                <p class="text-xs campaign-text-secondary mt-1">Share online (social media, Discord, etc). <strong class="font-black">MARK AS DIGITAL</strong> instead of submitting. <strong class="font-black">NOT ELIGIBLE FOR BONUS SHARD! Please do not submit them.</strong></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <% max_allowed = [current_user.remaining_paid_posters_this_week, PosterGroup::MAX_POSTERS_PER_GROUP].min %>
+        <% max_allowed = [max_allowed, 1].max %>
+
+        <!-- Number of Posters -->
+        <div>
+          <label class="block campaign-font text-sm font-black campaign-text-primary mb-2">Number of Posters</label>
+          <p class="text-xs campaign-text-secondary mb-2">Generate 1 to <%= PosterGroup::MAX_POSTERS_PER_GROUP %> posters at once</p>
+          <div class="flex items-center gap-3">
+            <%= f.number_field :count,
+                min: 1,
+                max: PosterGroup::MAX_POSTERS_PER_GROUP,
+                value: 1,
+                required: true,
+                data: { action: "input->poster-modal#toggleNameField", poster_modal_target: "countField" },
+                class: "flex h-11 w-24 rounded-lg campaign-input px-4 py-2 text-sm text-center font-bold" %>
+            <span class="text-sm campaign-text-muted">poster<span class="poster-plural-suffix">s</span> (max <%= PosterGroup::MAX_POSTERS_PER_GROUP %>)</span>
+          </div>
+        </div>
+
+        <!-- Group Name (Optional) -->
+        <div data-poster-modal-target="nameFieldContainer" class="hidden">
+          <label class="block campaign-font text-sm font-black campaign-text-primary mb-2">Name (Optional)</label>
+          <p class="text-xs campaign-text-secondary mb-2">Give this poster batch a name for easy identification</p>
+          <%= f.text_field :name,
+              placeholder: "e.g., Coffee Shop Downtown, School Bulletin Board",
+              class: "flex h-11 w-full rounded-lg campaign-input px-4 py-2 text-sm" %>
+        </div>
+
+        <!-- Poster Type -->
+        <div>
+          <label class="block campaign-font text-sm font-black campaign-text-primary mb-2 sm:mb-3">Choose Poster Style</label>
+          <%
+            # Campaign-specific poster styles - all campaigns get all styles with campaign-specific previews
+            poster_styles = case campaign.slug
+            when "aces"
+              [
+                { value: "color", title: "Color Poster", preview: "aces-poster-color-preview.webp" },
+                { value: "bw", title: "Black & White", preview: "aces-poster-bw-preview.webp" },
+                { value: "printer_efficient", title: "Printer Efficient", preview: "aces-poster-printer_efficient-preview.webp" }
+              ]
+            when "construct"
+              [
+                { value: "color", title: "Color Poster", preview: "construct-poster-color-preview.webp" },
+                { value: "bw", title: "Black & White", preview: "construct-poster-bw-preview.webp" },
+                { value: "printer_efficient", title: "Printer Efficient", preview: "construct-poster-printer_efficient-preview.webp" }
+              ]
+            else # flavortown and others
+              [
+                { value: "color", title: "Color Poster", preview: "poster-color-preview.webp" },
+                { value: "bw", title: "Black & White", preview: "poster-bw-preview.webp" },
+                { value: "printer_efficient", title: "Printer Efficient", preview: "poster-printer_efficient-preview.webp" }
+              ]
+            end
+            grid_cols = poster_styles.length == 2 ? "grid-cols-2 max-w-md mx-auto" : (poster_styles.length == 1 ? "grid-cols-1 max-w-xs mx-auto" : "grid-cols-3")
+            designer_credit = campaign.slug == "construct" ? "Posters by Shayaan" : t("posters.credit.designer")
+          %>
+          <div class="grid <%= grid_cols %> gap-3 sm:gap-4">
+            <% poster_styles.each do |style| %>
+              <label class="relative cursor-pointer block rounded-lg transition-all <%= style[:value] == 'color' ? 'ring-4 ring-current/70 ring-offset-2' : '' %>"
+                     id="poster_style_label_<%= style[:value] %>"
+                     onclick="document.querySelectorAll('[id^=poster_style_label]').forEach(l => l.classList.remove('ring-4', 'ring-current/70', 'ring-offset-2')); this.classList.add('ring-4', 'ring-current/70', 'ring-offset-2');">
+                <%= f.radio_button :poster_type, style[:value],
+                    id: "poster_type_#{style[:value]}",
+                    checked: style[:value] == "color",
+                    required: true,
+                    class: "sr-only" %>
+                <div class="border-4 border-current/20 rounded-lg overflow-hidden transition-all hover:border-current/50">
+                  <img src="/posters/<%= style[:preview] %>"
+                       alt="<%= style[:title] %>"
+                       class="w-full h-auto object-cover" />
+                  <div class="p-3 campaign-surface border-t-4 border-current/15">
+                    <p class="campaign-font text-sm font-black campaign-text-primary text-center"><%= style[:title] %></p>
+                  </div>
+                </div>
+              </label>
+            <% end %>
+          </div>
+          <p class="text-xs campaign-text-muted mt-2 text-center italic"><%= designer_credit %></p>
+        </div>
+
+        <!-- Country (for stats) -->
+        <div>
+          <%= f.label :country_code, "Country", class: "block campaign-font text-sm font-black campaign-text-primary mb-2" %>
+          <%= f.select :country_code,
+                       country_options_for_select,
+                       { include_blank: "Select a country..." },
+                       { class: "flex h-11 w-full rounded-lg campaign-input px-4 py-2 text-sm" } %>
+        </div>
+
+        <!-- Digital Poster Option -->
+        <div class="campaign-panel-inner p-3 sm:p-4">
+          <label class="flex items-start gap-3 cursor-pointer">
+            <%= f.check_box :mark_as_digital, class: "mt-1 h-5 w-5 rounded border-2 border-current/40 campaign-text-primary focus:ring-2 focus:ring-current/20" %>
+            <div class="flex-1">
+              <p class="campaign-font text-sm font-black campaign-text-primary">Mark as Digital</p>
+              <p class="text-xs campaign-text-secondary mt-1">I'm sharing this digitally (no physical poster). No shards awarded, but your link will work immediately.</p>
+            </div>
+          </label>
+        </div>
+
+        <!-- Instructions Warning -->
+        <div class="campaign-panel-inner p-3 sm:p-4 space-y-2">
+          <p class="campaign-font text-xs font-bold campaign-text-primary">Important Rules:</p>
+          <ul class="text-xs campaign-text-secondary space-y-1 list-disc list-inside">
+            <li>Do not put posters too close to each other</li>
+            <li>AI generated and fake posters will result in severe punishment across all Hack Club services</li>
+            <li>Defrauding Hack Club is severely punishable</li>
+            <li>Each poster needs its own unique location and proof photo</li>
+          </ul>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row gap-3 pt-2">
+          <button type="submit"
+                  data-poster-modal-target="submitButton"
+                  class="flex-1 campaign-btn campaign-btn--primary justify-center">
+            <span data-poster-modal-target="submitText" class="inline-flex items-center gap-2">
+              <%= icon :scan_line, size: 20 %>
+              Generate Posters
+            </span>
+            <span data-poster-modal-target="loadingText" class="hidden">
+              <svg class="animate-spin h-5 w-5 inline-block mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Generating...
+            </span>
+          </button>
+          <button type="button"
+                  data-action="click->poster-modal#close"
+                  data-poster-modal-target="cancelButton"
+                  class="px-6 py-3 campaign-font font-black text-sm campaign-text-muted hover:campaign-text-primary transition-colors text-center">
+            Cancel
+          </button>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,174 @@
+<% content_for :title, "Order ##{@order.id}" %>
+
+<div class="mb-6">
+  <%= link_to admin_shop_orders_path(status: params[:status] || @order.status), class: "inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors" do %>
+    <%= icon :chevron_left, size: 16 %>
+    Back to Orders
+  <% end %>
+</div>
+
+<div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight text-foreground">Order #<%= @order.id %></h1>
+    <p class="text-sm text-muted-foreground">
+      <%= @order.shop_item.name %> · placed <%= time_ago_in_words(@order.created_at) %> ago
+    </p>
+  </div>
+  <div class="flex items-center gap-3">
+    <div class="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-semibold text-foreground">
+      <%= icon :pyramid, size: 16 %>
+      <%= number_with_delimiter(@order.total_shards) %> shards
+    </div>
+    <span class="inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium <%= order_status_badge_class(@order.status) %>">
+      <%= @order.status.humanize %>
+    </span>
+  </div>
+</div>
+
+<div class="grid gap-6 lg:grid-cols-3">
+  <div class="lg:col-span-2 space-y-6">
+    <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h2 class="text-lg font-semibold text-foreground">Order details</h2>
+          <p class="text-sm text-muted-foreground">Customer and item info.</p>
+        </div>
+        <% if @order.fulfilled_at.present? %>
+          <span class="text-xs text-muted-foreground">Fulfilled <%= time_ago_in_words(@order.fulfilled_at) %> ago</span>
+        <% end %>
+      </div>
+      <dl class="grid md:grid-cols-2 gap-4">
+        <div class="flex flex-col gap-1 rounded-md border border-border/60 bg-secondary/30 p-3">
+          <dt class="text-xs uppercase tracking-wide text-muted-foreground">User</dt>
+          <dd class="text-sm text-foreground font-semibold"><%= @order.user.display_name %></dd>
+          <dd class="text-xs text-muted-foreground"><%= @order.user.email %></dd>
+        </div>
+        <div class="flex flex-col gap-1 rounded-md border border-border/60 bg-secondary/30 p-3">
+          <dt class="text-xs uppercase tracking-wide text-muted-foreground">Item</dt>
+          <dd class="text-sm text-foreground font-semibold"><%= @order.shop_item.name %></dd>
+          <dd class="text-xs text-muted-foreground">Qty: <%= @order.quantity %></dd>
+        </div>
+        <div class="flex flex-col gap-1 rounded-md border border-border/60 bg-secondary/30 p-3">
+          <dt class="text-xs uppercase tracking-wide text-muted-foreground">Placed at</dt>
+          <dd class="text-sm text-foreground"><%= @order.created_at.strftime("%b %d, %Y %H:%M") %></dd>
+        </div>
+        <div class="flex flex-col gap-1 rounded-md border border-border/60 bg-secondary/30 p-3">
+          <dt class="text-xs uppercase tracking-wide text-muted-foreground">Fulfilled by</dt>
+          <dd class="text-sm text-foreground"><%= @order.fulfilled_by&.display_name || "—" %></dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="grid gap-6 md:grid-cols-2">
+      <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-foreground mb-3">Shipping</h3>
+        <% if @order.shipping_address.present? %>
+          <pre class="whitespace-pre-wrap text-sm text-foreground"><%= @order.shipping_address %></pre>
+        <% else %>
+          <p class="text-sm text-muted-foreground">No shipping address provided.</p>
+        <% end %>
+      </div>
+
+      <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-foreground mb-3">Customer note</h3>
+        <% if @order.notes.present? %>
+          <pre class="whitespace-pre-wrap text-sm text-foreground"><%= @order.notes %></pre>
+        <% else %>
+          <p class="text-sm text-muted-foreground">No notes from customer.</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="space-y-6">
+    <div class="rounded-lg border border-border bg-card p-6 shadow-sm space-y-3">
+      <h3 class="text-lg font-semibold text-foreground">Actions</h3>
+      <% if @order.status == "pending" %>
+        <%= button_to mark_in_review_admin_shop_order_path(@order), method: :post,
+            class: "w-full inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors",
+            data: { turbo_confirm: "Mark this order for review?" } do %>
+          <%= icon :eye, size: 16, class_name: "mr-2" %> Mark for review
+        <% end %>
+        <%= button_to mark_on_hold_admin_shop_order_path(@order), method: :post,
+            class: "w-full inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-medium bg-orange-600 text-white hover:bg-orange-700 transition-colors",
+            data: { turbo_confirm: "Put this order on hold?" } do %>
+          <%= icon :pause, size: 16, class_name: "mr-2" %> Put on hold
+        <% end %>
+        <%= button_to approve_admin_shop_order_path(@order), method: :post,
+            class: "w-full inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors",
+            data: { turbo_confirm: "Approve this order?" } do %>
+          <%= icon :check, size: 16, class_name: "mr-2" %> Approve order
+        <% end %>
+        <%= button_to cancel_admin_shop_order_path(@order), method: :post,
+            class: "w-full inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors",
+            data: { turbo_confirm: "Cancel and refund shards?" } do %>
+          <%= icon :ban, size: 16, class_name: "mr-2" %> Cancel & refund
+        <% end %>
+      <% elsif @order.status == "in_review" %>
+        <%= button_to approve_admin_shop_order_path(@order), method: :post,
+            class: "w-full inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors",
+            data: { turbo_confirm: "Approve this order?" } do %>
+          <%= icon :check, size: 16, class_name: "mr-2" %> Approve order
+        <% end %>
+        <%= button_to mark_on_hold_admin_shop_order_path(@order), method: :post,
+            class: "w-full inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-medium bg-orange-600 text-white hover:bg-orange-700 transition-colors",
+            data: { turbo_confirm: "Put this order on hold?" } do %>
+          <%= icon :pause, size: 16, class_name: "mr-2" %> Put on hold
+        <% end %>
+        <%= button_to cancel_admin_shop_order_path(@order), method: :post,
+            class: "w-full inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors",
+            data: { turbo_confirm: "Cancel and refund shards?" } do %>
+          <%= icon :ban, size: 16, class_name: "mr-2" %> Cancel & refund
+        <% end %>
+      <% elsif @order.status == "on_hold" %>
+        <%= button_to mark_in_review_admin_shop_order_path(@order), method: :post,
+            class: "w-full inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors",
+            data: { turbo_confirm: "Mark this order for review?" } do %>
+          <%= icon :eye, size: 16, class_name: "mr-2" %> Mark for review
+        <% end %>
+        <%= button_to approve_admin_shop_order_path(@order), method: :post,
+            class: "w-full inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors",
+            data: { turbo_confirm: "Approve this order?" } do %>
+          <%= icon :check, size: 16, class_name: "mr-2" %> Approve order
+        <% end %>
+        <%= button_to cancel_admin_shop_order_path(@order), method: :post,
+            class: "w-full inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors",
+            data: { turbo_confirm: "Cancel and refund shards?" } do %>
+          <%= icon :ban, size: 16, class_name: "mr-2" %> Cancel & refund
+        <% end %>
+      <% elsif @order.status == "approved" %>
+        <%= button_to fulfill_admin_shop_order_path(@order), method: :post,
+            class: "w-full inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition-colors",
+            data: { turbo_confirm: "Mark as fulfilled and deduct stock?" } do %>
+          <%= icon :package, size: 16, class_name: "mr-2" %> Mark fulfilled
+        <% end %>
+        <%= button_to cancel_admin_shop_order_path(@order), method: :post,
+            class: "w-full inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors",
+            data: { turbo_confirm: "Cancel and refund shards?" } do %>
+          <%= icon :ban, size: 16, class_name: "mr-2" %> Cancel & refund
+        <% end %>
+      <% elsif @order.status == "fulfilled" %>
+        <div class="rounded-md border border-green-500/20 bg-green-500/10 px-3 py-2 text-sm text-green-700">
+          Fulfilled <%= @order.fulfilled_at&.strftime("%b %d, %Y") || "recently" %>.
+        </div>
+      <% elsif @order.status == "cancelled" %>
+        <div class="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          Order cancelled and shards refunded.
+        </div>
+      <% end %>
+    </div>
+
+    <div class="rounded-lg border border-border bg-card p-6 shadow-sm space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-foreground">Admin notes</h3>
+        <span class="text-xs text-muted-foreground">Visible only in admin</span>
+      </div>
+      <%= form_with url: update_notes_admin_shop_order_path(@order), method: :patch, class: "space-y-3" do %>
+        <textarea name="admin_notes" rows="4" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" placeholder="Add internal notes..."><%= @order.admin_notes %></textarea>
+        <button type="submit" class="w-full inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors">
+          <%= icon :save, size: 16, class_name: "mr-2" %> Save notes
+        </button>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,17 @@
+<% if defined?(error) && error %>
+  <div class="text-xs text-red-600"><%= error %></div>
+<% else %>
+  <div class="flex items-center justify-between">
+    <span class="text-xs campaign-text-muted">Virality Check:</span>
+    <% if submission.metadata["virality_check_requested"] %>
+      <span class="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded">Requested</span>
+    <% else %>
+      <%= button_to video_submission_virality_check_path(submission), 
+                   method: :post,
+                   class: "text-xs campaign-btn campaign-btn--secondary px-2 py-1",
+                   data: { turbo: true } do %>
+        Check Virality
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

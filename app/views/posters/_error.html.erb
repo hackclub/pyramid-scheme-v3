@@ -1,0 +1,17 @@
+<div class="campaign-panel-inner p-4 mt-4 border-2 border-red-500/30">
+  <div class="flex items-center gap-3">
+    <div class="flex-shrink-0">
+      <%= icon :circle_alert, size: 24, class_name: "text-red-600" %>
+    </div>
+    <div>
+      <p class="campaign-font text-sm font-black text-red-600">Error submitting poster</p>
+      <% if poster.errors.any? %>
+        <ul class="text-xs campaign-text-secondary mt-1 list-disc list-inside">
+          <% poster.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      <% end %>
+    </div>
+  </div>
+</div>

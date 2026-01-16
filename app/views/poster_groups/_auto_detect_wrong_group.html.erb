@@ -1,0 +1,22 @@
+<div class="p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+  <div class="flex items-start gap-2">
+    <%= icon :circle_x, size: 16, class_name: "text-red-600 flex-shrink-0 mt-0.5" %>
+    <div class="flex-1 min-w-0">
+      <p class="text-sm font-bold text-red-600">Wrong Poster Group</p>
+      <p class="text-xs campaign-text-secondary mt-1">
+        This QR code belongs to poster #<%= matched_poster.id %>
+        <% if matched_poster.poster_group.present? %>
+          in "<%= matched_poster.poster_group.name.presence || "Poster Group ##{matched_poster.poster_group.id}" %>", not this group.
+          <%= link_to "Go to that group", poster_group_path(matched_poster.poster_group), class: "text-blue-600 hover:underline" %>
+        <% else %>
+          (a standalone poster), not this group.
+        <% end %>
+      </p>
+      <% if defined?(detected_qr_codes) && detected_qr_codes.present? %>
+        <p class="text-xs campaign-text-secondary mt-2">
+          Detected: <code class="text-xs bg-black/10 px-1 py-0.5 rounded"><%= detected_qr_codes.first %></code>
+        </p>
+      <% end %>
+    </div>
+  </div>
+</div>

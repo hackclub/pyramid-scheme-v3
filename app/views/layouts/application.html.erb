@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title><%= content_for?(:title) ? yield(:title) : t("site.name") %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="<%= content_for(:description) || t("site.description") %>">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="<%= t("site.name") %>">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/logo.png" type="image/png">
+    <link rel="apple-touch-icon" href="/logo.png">
+	
+    <link rel="preconnect" href="https://rsms.me/">
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+    
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body class="min-h-screen bg-background font-sans antialiased">
+    <div class="relative flex min-h-screen flex-col">
+      <%# Impersonation banner %>
+      <% if impersonating? %>
+        <div class="bg-amber-500 text-amber-950 px-4 py-2 text-center text-sm font-medium">
+          <div class="container flex items-center justify-center gap-4">
+            <span>
+              <%= icon :eye, size: 16, class_name: "inline-block" %>
+              You are impersonating <strong><%= current_user.display_name %></strong>
+            </span>
+            <%= button_to admin_stop_impersonating_path, method: :delete, class: "inline-flex items-center gap-1 rounded bg-amber-950 px-3 py-1 text-xs font-bold text-amber-100 hover:bg-amber-900 transition-colors" do %>
+              <%= icon :x, size: 14 %>
+              Stop Impersonating
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <nav class="sticky top-0 z-50 w-full border-b border-border bg-background/92 backdrop-blur">
+        <div class="container flex h-16 items-center justify-between gap-8 px-4 md:px-6">
+          <%= link_to root_path, class: "flex items-center gap-2 text-foreground hover:opacity-90 transition-opacity" do %>
+            <%= christmas_pyramid_icon(size: 44) %>
+          <% end %>
+
+          <% if user_signed_in? %>
+            <div class="hidden md:flex flex-1 items-center justify-end gap-8 lg:gap-14">
+              <div class="hidden lg:flex items-center gap-6 text-sm font-semibold tracking-tight">
+                <%= link_to campaign_path('flavortown'), class: "#{(current_page?(campaigns_path) || request.path.start_with?('/c/')) ? 'text-foreground' : 'text-foreground/70 hover:text-foreground transition-colors'} inline-flex items-center gap-2" do %>
+                  <%= icon :flag, size: 16 %>
+                  <%= t('nav.campaigns') %>
+                <% end %>
+                <%= link_to shop_path, class: "#{current_page?(shop_path) ? 'text-foreground' : 'text-foreground/70 hover:text-foreground transition-colors'} inline-flex items-center gap-2 relative" do %>
+                  <%= icon :shopping_bag, size: 16 %>
+                  <%= t('nav.shop') %>
+                  <span class="inline-flex items-center gap-1 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wide"
+                        style="display: none;"
+                        data-controller="new-badge"
+                        data-new-badge-key-value="shop-open">
+                    Open!
+                    <button type="button" class="hover:text-white/70 transition-colors" data-action="click->new-badge#dismiss">
+                      <%= icon :x, size: 10 %>
+                    </button>
+                  </span>
+                <% end %>
+                <%= link_to leaderboard_path, class: "#{current_page?(leaderboard_path) ? 'text-foreground' : 'text-foreground/70 hover:text-foreground transition-colors'} inline-flex items-center gap-2" do %>
+                  <%= icon :trophy, size: 16 %>
+                  <%= t('nav.leaderboard') %>
+                <% end %>
+                <%= link_to settings_path, class: "#{current_page?(settings_path) ? 'text-foreground' : 'text-foreground/70 hover:text-foreground transition-colors'} inline-flex items-center gap-2" do %>
+                  <%= icon :settings, size: 16 %>
+                  <%= t('nav.settings') %>
+                <% end %>
+                <% if current_user.fulfiller? %>
+                  <%= link_to admin_root_path, class: "#{current_page?(admin_root_path) ? 'text-foreground' : 'text-foreground/70 hover:text-foreground transition-colors'} inline-flex items-center gap-2" do %>
+                    <%= icon :shield, size: 16 %>
+                    <%= t('nav.admin') %>
+                  <% end %>
+                <% end %>
+              </div>
+
+              <div class="flex items-center gap-3 lg:gap-4 lg:pl-8 lg:border-l border-border text-sm font-semibold">
+                <details class="relative inline-block">
+                  <summary class="list-none inline-flex items-center justify-between gap-4 rounded-lg border border-border bg-card/60 px-3 py-2 text-foreground hover:bg-card transition-colors cursor-pointer">
+                    <span class="inline-flex items-center gap-3 min-w-0">
+                      <% if current_user.avatar.present? %>
+                        <%= image_tag current_user.avatar, class: "w-8 h-8 rounded-full border border-border object-cover flex-shrink-0", alt: current_user.display_name %>
+                      <% else %>
+                        <span class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+                          <%= icon :user, size: 16, class_name: "text-muted-foreground" %>
+                        </span>
+                      <% end %>
+
+                      <span class="min-w-0 flex flex-col leading-tight">
+                        <span class="max-w-[12rem] truncate"><%= current_user.display_name %></span>
+                        <span class="inline-flex items-center gap-1 text-xs font-semibold text-foreground/70">
+                          <%= icon :pyramid, size: 14, class_name: "text-foreground/70" %>
+                          <span class="tabular-nums"><%= number_with_delimiter(current_user.total_shards) %></span>
+                          <span class="hidden sm:inline"><%= t('nav.shards') %></span>
+                        </span>
+                      </span>
+                    </span>
+
+                    <%= icon :chevron_down, size: 16, class_name: "text-muted-foreground flex-shrink-0" %>
+                  </summary>
+
+                  <div class="absolute right-0 mt-2 min-w-full overflow-hidden rounded-lg border border-border bg-popover text-popover-foreground shadow-md">
+                    <%= button_to logout_path, method: :delete, class: "w-full", form_class: "w-full" do %>
+                      <span class="flex w-full items-center gap-2 px-4 py-3 text-sm font-semibold hover:bg-secondary transition-colors">
+                        <%= icon :log_out, size: 16 %>
+                        <%= t("nav.logout") %>
+                      </span>
+                    <% end %>
+                  </div>
+                </details>
+              </div>
+            </div>
+          <% else %>
+            <%= link_to auth_path, class: "inline-flex items-center gap-2 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors", data: { turbo: false } do %>
+              <%= icon :log_in, size: 18 %>
+              <%= t("nav.login") %>
+            <% end %>
+          <% end %>
+        </div>
+      </nav>
+
+      <main class="flex-1 <%= content_for?(:main_class) ? yield(:main_class) : '' %>">
+        <% if content_for?(:skip_container) %>
+          <%= yield %>
+        <% else %>
+          <div class="container py-6 md:py-8 lg:py-10">
+            <%= yield %>
+          </div>
+        <% end %>
+      </main>
+
+      <%= render "shared/toast" %>
+
+      <% unless content_for?(:skip_footer) %>
+        <footer class="hidden lg:block border-t border-border bg-background">
+          <div class="w-full px-4 py-8 md:px-6">
+            <p class="mx-auto max-w-7xl text-center text-sm text-foreground/80">
+              <span><%= t('site.copyright', year: Time.current.year) %></span>
+              <span class="mx-2 text-foreground/30">|</span>
+              <%= link_to t('nav.faq'), root_path(anchor: 'faq'), class: "hover:text-foreground transition-colors" %>
+              <span class="mx-2 text-foreground/30">·</span>
+              <%= link_to t("footer.hack_club"), "https://hackclub.com", class: "hover:text-foreground transition-colors", target: "_blank" %>
+              <span class="mx-2 text-foreground/30">·</span>
+              <%= link_to t("footer.github"), "https://github.com/hackclub", class: "hover:text-foreground transition-colors", target: "_blank" %>
+            </p>
+          </div>
+        </footer>
+      <% end %>
+
+      <% if user_signed_in? %>
+        <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background">
+          <div class="flex h-16">
+            <%= link_to campaign_path('flavortown'), class: "flex-1 flex flex-col items-center justify-center gap-1 #{(current_page?(campaigns_path) || request.path.start_with?('/c/')) ? 'text-foreground' : 'text-muted-foreground'}" do %>
+              <%= icon :flag, size: 20 %>
+              <span class="text-[10px]"><%= t("nav.campaigns") %></span>
+            <% end %>
+            <%= link_to shop_path, class: "flex-1 flex flex-col items-center justify-center gap-1 #{current_page?(shop_path) ? 'text-foreground' : 'text-muted-foreground'} relative" do %>
+              <%= icon :shopping_bag, size: 20 %>
+              <div class="flex items-center gap-1">
+                <span class="text-[10px]"><%= t("nav.shop") %></span>
+                <span class="inline-flex items-center gap-0.5 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[8px] font-bold text-white uppercase tracking-wide"
+                      style="display: none;"
+                      data-controller="new-badge"
+                      data-new-badge-key-value="shop-open">
+                  Open!
+                  <button type="button" class="hover:text-white/70 transition-colors" data-action="click->new-badge#dismiss">
+                    <%= icon :x, size: 8 %>
+                  </button>
+                </span>
+              </div>
+            <% end %>
+            <%= link_to leaderboard_path, class: "flex-1 flex flex-col items-center justify-center gap-1 #{current_page?(leaderboard_path) ? 'text-foreground' : 'text-muted-foreground'}" do %>
+              <%= icon :trophy, size: 20 %>
+              <span class="text-[10px]"><%= t("nav.ranks") %></span>
+            <% end %>
+            <%= link_to settings_path, class: "flex-1 flex flex-col items-center justify-center gap-1 #{current_page?(settings_path) ? 'text-foreground' : 'text-muted-foreground'}" do %>
+              <%= icon :settings, size: 20 %>
+              <span class="text-[10px]"><%= t("nav.settings") %></span>
+            <% end %>
+            <% if current_user.fulfiller? %>
+              <%= link_to admin_root_path, class: "flex-1 flex flex-col items-center justify-center gap-1 #{current_page?(admin_root_path) || request.path.start_with?('/admin') ? 'text-foreground' : 'text-muted-foreground'}" do %>
+                <%= icon :shield, size: 20 %>
+                <span class="text-[10px]"><%= t("nav.admin") %></span>
+              <% end %>
+            <% end %>
+          </div>
+        </nav>
+        <div class="lg:hidden h-16"></div>
+      <% end %>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,97 @@
+<% content_for :title, t("admin.nav.orders") %>
+
+<div class="flex justify-between items-center mb-8">
+  <div>
+    <h1 class="text-3xl font-bold tracking-tight text-foreground">Orders</h1>
+    <p class="text-sm text-muted-foreground mt-2">Review and fulfill shop orders.</p>
+  </div>
+</div>
+
+<div class="flex gap-2 border-b border-border mb-6">
+  <% status_labels = {
+    "pending" => "Pending",
+    "in_review" => "In Review",
+    "on_hold" => "On Hold",
+    "approved" => "Approved",
+    "fulfilled" => "Fulfilled",
+    "cancelled" => "Cancelled"
+  } %>
+  <% status_labels.each do |key, label| %>
+    <% active = @status == key %>
+    <%= link_to label,
+        admin_shop_orders_path(status: key),
+        class: "px-4 py-2 text-sm font-medium transition-colors #{active ? 'text-foreground border-b-2 border-primary -mb-px' : 'text-muted-foreground hover:text-foreground'}" %>
+  <% end %>
+</div>
+
+<div class="rounded-lg border border-border bg-card shadow-sm">
+  <% if @orders.any? %>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="border-b border-border">
+          <tr class="text-left">
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Order</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">User</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Item</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Quantity</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Total</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Placed</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Status</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <% @orders.each do |order| %>
+            <tr class="hover:bg-muted/50 transition-colors">
+              <td class="px-6 py-4 text-sm font-mono text-foreground">#<%= order.id %></td>
+              <td class="px-6 py-4">
+                <div class="flex flex-col">
+                  <span class="text-sm font-medium text-foreground"><%= order.user.display_name %></span>
+                  <span class="text-xs text-muted-foreground"><%= order.user.email %></span>
+                </div>
+              </td>
+              <td class="px-6 py-4 text-sm text-foreground"><%= order.shop_item.name %></td>
+              <td class="px-6 py-4 text-sm text-foreground"><%= order.quantity %></td>
+              <td class="px-6 py-4 text-sm text-foreground inline-flex items-center gap-1">
+                <%= icon :pyramid, size: 14 %>
+                <span><%= number_with_delimiter(order.total_shards) %> shards</span>
+              </td>
+              <td class="px-6 py-4 text-sm text-muted-foreground"><%= time_ago_in_words(order.created_at) %> ago</td>
+              <td class="px-6 py-4">
+                <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium <%= order_status_badge_class(order.status) %>">
+                  <%= order.status.humanize %>
+                </span>
+              </td>
+              <td class="px-6 py-4 text-sm text-right">
+                <%= link_to "View", admin_shop_order_path(order, status: @status), class: "inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="text-center py-12">
+      <p class="text-sm text-muted-foreground">No orders in this queue.</p>
+    </div>
+  <% end %>
+
+  <% if @pagy.pages > 1 %>
+    <div class="flex items-center justify-center gap-2 p-6 border-t border-border">
+      <% if @pagy.page > 1 %>
+        <%= link_to "Previous", admin_shop_orders_path(page: @pagy.page - 1, status: @status), class: "inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
+      <% end %>
+      <% (1..@pagy.pages).each do |page_num| %>
+        <% if page_num <= 3 || page_num > @pagy.pages - 3 || (page_num >= @pagy.page - 1 && page_num <= @pagy.page + 1) %>
+          <%= link_to page_num, admin_shop_orders_path(page: page_num, status: @status),
+              class: "inline-flex items-center justify-center rounded-md w-9 h-9 text-sm font-medium #{page_num == @pagy.page ? 'bg-primary text-primary-foreground' : 'border border-border bg-background hover:bg-muted'} transition-colors" %>
+        <% elsif page_num == 4 || page_num == @pagy.pages - 3 %>
+          <span class="inline-flex items-center justify-center w-9 h-9 text-sm text-muted-foreground">...</span>
+        <% end %>
+      <% end %>
+      <% if @pagy.page < @pagy.pages %>
+        <%= link_to "Next", admin_shop_orders_path(page: @pagy.page + 1, status: @status), class: "inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

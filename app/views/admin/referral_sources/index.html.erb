@@ -1,0 +1,145 @@
+<% content_for :title, "Referral Sources" %>
+
+<div class="flex justify-between items-center mb-8">
+  <div>
+    <h1 class="text-3xl font-bold tracking-tight text-foreground">Referral Sources</h1>
+    <p class="text-sm text-muted-foreground mt-2">Track where users discovered Pyramid through ?ref= parameters.</p>
+  </div>
+</div>
+
+<%# Overall Stats %>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+  <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+    <div class="text-sm font-medium text-muted-foreground">Total Users with Ref</div>
+    <div class="text-3xl font-bold text-foreground mt-2"><%= number_with_delimiter(@total_users_with_ref) %></div>
+    <div class="text-xs text-muted-foreground mt-1"><%= @percentage_with_ref %>% of all users</div>
+  </div>
+  <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+    <div class="text-sm font-medium text-muted-foreground">Total Users</div>
+    <div class="text-3xl font-bold text-foreground mt-2"><%= number_with_delimiter(@total_users) %></div>
+  </div>
+  <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+    <div class="text-sm font-medium text-muted-foreground">Unique Sources</div>
+    <div class="text-3xl font-bold text-foreground mt-2"><%= @ref_stats.length %></div>
+  </div>
+</div>
+
+<%# Search %>
+<div class="rounded-lg border border-border bg-card p-6 shadow-sm mb-6">
+  <%= form_with url: admin_referral_sources_path, method: :get, class: "flex gap-3" do %>
+    <input type="text" name="search" value="<%= @search_query %>" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" placeholder="Search by ref source, user name, or email..." style="flex: 1;">
+    <button type="submit" class="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">Search</button>
+    <% if @search_query.present? %>
+      <%= link_to "Clear", admin_referral_sources_path, class: "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
+    <% end %>
+  <% end %>
+</div>
+
+<%# Referral Sources Table %>
+<div class="rounded-lg border border-border bg-card shadow-sm mb-6">
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead class="border-b border-border">
+        <tr class="text-left">
+          <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Referral Source</th>
+          <th class="px-6 py-3 text-sm font-medium text-muted-foreground text-right">Users</th>
+          <th class="px-6 py-3 text-sm font-medium text-muted-foreground">First Signup</th>
+          <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Last Signup</th>
+          <th class="px-6 py-3 text-sm font-medium text-muted-foreground"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-border">
+        <% if @ref_stats.any? %>
+          <% @ref_stats.each do |stat| %>
+            <tr class="hover:bg-muted/50 transition-colors">
+              <td class="px-6 py-4">
+                <code class="text-sm font-mono bg-muted px-2 py-1 rounded text-foreground"><%= stat.signup_ref_source %></code>
+              </td>
+              <td class="px-6 py-4 text-sm font-semibold text-foreground text-right">
+                <%= number_with_delimiter(stat.user_count) %>
+              </td>
+              <td class="px-6 py-4 text-sm text-muted-foreground">
+                <%= stat.first_signup.strftime("%b %d, %Y") %>
+              </td>
+              <td class="px-6 py-4 text-sm text-muted-foreground">
+                <%= stat.last_signup.strftime("%b %d, %Y") %>
+              </td>
+              <td class="px-6 py-4 text-sm">
+                <%= link_to "View Users", admin_referral_sources_path(ref: stat.signup_ref_source), 
+                    class: "text-primary hover:underline font-medium" %>
+              </td>
+            </tr>
+          <% end %>
+        <% else %>
+          <tr>
+            <td colspan="5" class="px-6 py-8 text-center text-muted-foreground">
+              No referral sources found.
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%# Selected Ref Source User Details %>
+<% if @selected_ref.present? && @users.present? %>
+  <div class="rounded-lg border border-border bg-card shadow-sm">
+    <div class="px-6 py-4 border-b border-border">
+      <div class="flex justify-between items-center">
+        <h2 class="text-xl font-semibold text-foreground">
+          Users from <code class="text-sm font-mono bg-muted px-2 py-1 rounded"><%= @selected_ref %></code>
+        </h2>
+        <%= link_to "Clear Filter", admin_referral_sources_path, 
+            class: "inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="border-b border-border">
+          <tr class="text-left">
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">User</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Email</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Campaigns</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Referrals Given</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Shards</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Joined</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <% @users.each do |user| %>
+            <tr class="hover:bg-muted/50 transition-colors">
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                  <% if user.avatar.present? %>
+                    <%= image_tag user.avatar, class: "w-8 h-8 rounded-full" %>
+                  <% end %>
+                  <div>
+                    <div class="font-medium text-foreground"><%= user.display_name %></div>
+                    <% if user.is_banned? %>
+                      <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-red-500/10 text-red-500">Banned</span>
+                    <% end %>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 text-sm text-muted-foreground"><%= user.email %></td>
+              <td class="px-6 py-4 text-sm text-foreground"><%= user.user_emblems.count %></td>
+              <td class="px-6 py-4 text-sm text-foreground"><%= user.referral_count %></td>
+              <td class="px-6 py-4 text-sm text-foreground"><%= number_with_delimiter(user.total_shards) %></td>
+              <td class="px-6 py-4 text-sm text-muted-foreground"><%= user.created_at.strftime("%b %d, %Y") %></td>
+              <td class="px-6 py-4 text-sm">
+                <%= link_to "View", admin_user_path(user), class: "text-primary hover:underline font-medium" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <% if @users.count >= 100 %>
+      <div class="px-6 py-4 border-t border-border text-center text-sm text-muted-foreground">
+        Showing first 100 users. Use search to filter further.
+      </div>
+    <% end %>
+  </div>
+<% end %>

@@ -1,0 +1,156 @@
+<% content_for :title, @campaign.persisted? ? "Edit #{@campaign.name}" : "New Campaign" %>
+
+<div class="mb-8">
+  <%= link_to "← Back to Campaigns", admin_campaigns_path, class: "text-sm text-muted-foreground hover:text-foreground transition-colors" %>
+</div>
+
+<div class="max-w-4xl">
+  <h1 class="text-3xl font-bold tracking-tight text-foreground mb-8">
+    <%= @campaign.persisted? ? "Edit Campaign" : "New Campaign" %>
+  </h1>
+
+  <%= form_with model: [:admin, @campaign], class: "space-y-8" do |f| %>
+    <% if @campaign.errors.any? %>
+      <div class="rounded-lg bg-destructive/10 border border-destructive/20 p-4">
+        <h3 class="text-sm font-medium text-destructive">Please fix the following errors:</h3>
+        <ul class="mt-2 text-sm text-destructive list-disc list-inside">
+          <% @campaign.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <!-- Basic Info -->
+    <div class="rounded-lg border border-border bg-card shadow-sm">
+      <div class="p-6 border-b border-border">
+        <h2 class="text-lg font-semibold">Basic Information</h2>
+      </div>
+      <div class="p-6 space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <%= f.label :name, class: "block text-sm font-medium mb-2" %>
+            <%= f.text_field :name, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm", placeholder: "Campaign Name" %>
+          </div>
+          <div>
+            <%= f.label :slug, class: "block text-sm font-medium mb-2" %>
+            <%= f.text_field :slug, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono", placeholder: "campaign-slug" %>
+            <p class="text-xs text-muted-foreground mt-1">Used in URLs: /c/campaign-slug</p>
+          </div>
+        </div>
+
+        <div>
+          <%= f.label :description, class: "block text-sm font-medium mb-2" %>
+          <%= f.text_area :description, rows: 3, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm", placeholder: "Campaign description..." %>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <%= f.label :subdomain, class: "block text-sm font-medium mb-2" %>
+            <div class="flex">
+              <%= f.text_field :subdomain, class: "flex-1 rounded-l-md border border-r-0 border-input bg-background px-3 py-2 text-sm font-mono", placeholder: "subdomain" %>
+              <span class="inline-flex items-center px-3 rounded-r-md border border-input bg-muted text-sm text-muted-foreground">.hack.club</span>
+            </div>
+            <p class="text-xs text-muted-foreground mt-1">Optional: Custom subdomain for referral links</p>
+          </div>
+          <div>
+            <%= f.label :base_url, "Custom Base URL", class: "block text-sm font-medium mb-2" %>
+            <%= f.text_field :base_url, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono", placeholder: "https://custom.domain.com" %>
+            <p class="text-xs text-muted-foreground mt-1">Optional: Override the referral base URL entirely</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <%= f.label :status, class: "block text-sm font-medium mb-2" %>
+            <%= f.select :status, [
+              ["Open", "open"],
+              ["Coming Soon", "coming_soon"],
+              ["Closed", "closed"]
+            ], {}, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm" %>
+            <p class="text-xs text-muted-foreground mt-1">Coming Soon: only visible to admins. Closed: hidden from everyone.</p>
+          </div>
+          <div class="flex items-center gap-3 pt-8">
+            <%= f.check_box :active, class: "rounded border-input" %>
+            <%= f.label :active, "Campaign is active", class: "text-sm font-medium" %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Theme -->
+    <div class="rounded-lg border border-border bg-card shadow-sm">
+      <div class="p-6 border-b border-border">
+        <h2 class="text-lg font-semibold">Theme</h2>
+      </div>
+      <div class="p-6 space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <%= f.label :theme, class: "block text-sm font-medium mb-2" %>
+            <%= f.select :theme, [
+              ["Default", "default"],
+              ["Flavortown", "flavortown"],
+              ["Aces", "aces"],
+              ["Dark", "dark"],
+              ["Light", "light"]
+            ], {}, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm" %>
+          </div>
+        </div>
+
+        <div>
+          <%= f.label :custom_css, class: "block text-sm font-medium mb-2" %>
+          <%= f.text_area :custom_css, rows: 6, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono", placeholder: "/* Custom CSS for this campaign */\n.campaign-page {\n  --primary: #ff0000;\n}" %>
+          <p class="text-xs text-muted-foreground mt-1">Optional: Custom CSS that will be injected into campaign pages</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schedule -->
+    <div class="rounded-lg border border-border bg-card shadow-sm">
+      <div class="p-6 border-b border-border">
+        <h2 class="text-lg font-semibold">Schedule</h2>
+      </div>
+      <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <%= f.label :starts_at, "Start Date", class: "block text-sm font-medium mb-2" %>
+            <%= f.datetime_local_field :starts_at, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm" %>
+          </div>
+          <div>
+            <%= f.label :ends_at, "End Date", class: "block text-sm font-medium mb-2" %>
+            <%= f.datetime_local_field :ends_at, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm" %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rewards -->
+    <div class="rounded-lg border border-border bg-card shadow-sm">
+      <div class="p-6 border-b border-border">
+        <h2 class="text-lg font-semibold">Rewards</h2>
+      </div>
+      <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <%= f.label :referral_shards, "Shards per Referral", class: "block text-sm font-medium mb-2" %>
+            <%= f.number_field :referral_shards, min: 0, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm" %>
+          </div>
+          <div>
+            <%= f.label :poster_shards, "Shards per Poster", class: "block text-sm font-medium mb-2" %>
+            <%= f.number_field :poster_shards, min: 0, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm" %>
+          </div>
+          <div>
+            <%= f.label :required_coding_minutes, "Required Coding Minutes", class: "block text-sm font-medium mb-2" %>
+            <%= f.number_field :required_coding_minutes, min: 1, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm" %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="flex gap-4">
+      <%= f.submit @campaign.persisted? ? "Update Campaign" : "Create Campaign", class: "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer" %>
+      <%= link_to "Cancel", admin_campaigns_path, class: "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium border border-border hover:bg-muted transition-colors" %>
+    </div>
+  <% end %>
+</div>

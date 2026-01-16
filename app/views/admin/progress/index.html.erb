@@ -1,0 +1,348 @@
+<% content_for :title, "Progress" %>
+
+<div class="mb-8">
+  <h1 class="text-2xl font-bold tracking-tight text-foreground">Progress Comparison</h1>
+  <p class="text-sm text-muted-foreground mt-1">How Pyramid v3 compares to v2 at the same point in time</p>
+</div>
+
+<%# View Tabs %>
+<div class="flex gap-2 mb-6">
+  <%= link_to "Charts", admin_progress_path, class: "px-4 py-2 text-sm font-medium rounded-lg transition-colors #{params[:view].nil? ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}" %>
+  <%= link_to "v2 Posters", admin_progress_path(view: "v2_posters"), class: "px-4 py-2 text-sm font-medium rounded-lg transition-colors #{params[:view] == 'v2_posters' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}" %>
+  <%= link_to "v2 Referrals", admin_progress_path(view: "v2_referrals"), class: "px-4 py-2 text-sm font-medium rounded-lg transition-colors #{params[:view] == 'v2_referrals' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}" %>
+</div>
+
+<% if params[:view].nil? %>
+  <%# Charts View %>
+  <%# Info Card %>
+  <div class="rounded-xl border border-border bg-card p-5 mb-6">
+    <div class="flex items-start gap-4">
+      <div class="flex-shrink-0">
+        <%= icon :info, size: 20, class_name: "text-blue-500" %>
+      </div>
+      <div class="flex-1">
+        <h3 class="text-sm font-semibold text-foreground mb-1">About This Comparison</h3>
+        <p class="text-sm text-muted-foreground">
+          This page compares Pyramid v3 (current) performance against Pyramid v2 performance at the same number of days since launch.
+          <span class="font-medium text-foreground">Pyramid v2 launched on <%= @v2_start_date.strftime("%B %d, %Y") %></span> and
+          <span class="font-medium text-foreground">v3 launched on <%= @v3_start_date.strftime("%B %d, %Y") %></span>.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <%# Charts Grid %>
+  <div class="grid gap-6 lg:grid-cols-2">
+    <%# Referrals Chart %>
+    <div class="rounded-lg border border-border bg-card shadow-sm">
+      <div class="p-5 border-b border-border">
+        <h3 class="text-sm font-semibold text-foreground">Total Referrals</h3>
+        <p class="text-xs text-muted-foreground mt-1">All referral signups over time</p>
+      </div>
+      <div class="p-5">
+        <div data-controller="progress-chart" data-progress-chart-metric-value="referrals" class="h-[300px]">
+          <canvas></canvas>
+        </div>
+      </div>
+    </div>
+
+    <%# Completed Referrals Chart %>
+    <div class="rounded-lg border border-border bg-card shadow-sm">
+      <div class="p-5 border-b border-border">
+        <h3 class="text-sm font-semibold text-foreground">Completed Referrals</h3>
+        <p class="text-xs text-muted-foreground mt-1">Referrals that met requirements</p>
+      </div>
+      <div class="p-5">
+        <div data-controller="progress-chart" data-progress-chart-metric-value="completed_referrals" class="h-[300px]">
+          <canvas></canvas>
+        </div>
+      </div>
+    </div>
+
+    <%# Posters Chart %>
+    <div class="rounded-lg border border-border bg-card shadow-sm">
+      <div class="p-5 border-b border-border">
+        <h3 class="text-sm font-semibold text-foreground">Total Posters</h3>
+        <p class="text-xs text-muted-foreground mt-1">All poster submissions over time</p>
+      </div>
+      <div class="p-5">
+        <div data-controller="progress-chart" data-progress-chart-metric-value="posters" class="h-[300px]">
+          <canvas></canvas>
+        </div>
+      </div>
+    </div>
+
+    <%# Completed Posters Chart %>
+    <div class="rounded-lg border border-border bg-card shadow-sm">
+      <div class="p-5 border-b border-border">
+        <h3 class="text-sm font-semibold text-foreground">Verified Posters</h3>
+        <p class="text-xs text-muted-foreground mt-1">Posters that were approved</p>
+      </div>
+      <div class="p-5">
+        <div data-controller="progress-chart" data-progress-chart-metric-value="completed_posters" class="h-[300px]">
+          <canvas></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# Legend %>
+  <div class="mt-6 rounded-xl border border-border bg-card p-5">
+    <div class="flex items-center justify-center gap-8 text-sm">
+      <div class="flex items-center gap-2">
+        <div class="w-4 h-0.5 bg-indigo-500"></div>
+        <span class="text-muted-foreground">Pyramid v2</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-4 h-0.5 bg-green-500"></div>
+        <span class="text-muted-foreground">Pyramid v3 (Current)</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<% elsif params[:view] == "v2_posters" %>
+  <%# v2 Posters Browser %>
+  <div class="rounded-lg border border-border bg-card shadow-sm mb-6">
+    <div class="p-5 border-b border-border">
+      <h3 class="text-sm font-semibold text-foreground">Filters & Sorting</h3>
+    </div>
+    <div class="p-5">
+      <%= form_with url: admin_progress_path, method: :get, class: "grid grid-cols-1 md:grid-cols-4 gap-4" do |f| %>
+        <%= f.hidden_field :view, value: "v2_posters" %>
+
+        <div>
+          <%= f.label :status, "Status", class: "block text-xs font-medium text-muted-foreground mb-1" %>
+          <%= f.select :status, options_for_select([["All", ""], ["Approved", "approved"], ["Rejected", "rejected"]], params[:status]), {}, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm" %>
+        </div>
+
+        <div>
+          <%= f.label :sort, "Sort By", class: "block text-xs font-medium text-muted-foreground mb-1" %>
+          <%= f.select :sort, options_for_select([["Date", "created_at"], ["Status", "status"], ["Location", "location_description"]], params[:sort]), {}, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm" %>
+        </div>
+
+        <div>
+          <%= f.label :direction, "Direction", class: "block text-xs font-medium text-muted-foreground mb-1" %>
+          <%= f.select :direction, options_for_select([["Newest First", "desc"], ["Oldest First", "asc"]], params[:direction]), {}, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm" %>
+        </div>
+
+        <div>
+          <%= f.label :per_page, "Per Page", class: "block text-xs font-medium text-muted-foreground mb-1" %>
+          <%= f.select :per_page, options_for_select([["20", 20], ["50", 50], ["100", 100]], params[:per_page] || 20), {}, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm" %>
+        </div>
+
+        <div class="md:col-span-4 flex gap-2">
+          <%= f.submit "Apply Filters", class: "px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90" %>
+          <%= link_to "Reset", admin_progress_path(view: "v2_posters"), class: "px-4 py-2 text-sm font-medium rounded-md border border-border hover:bg-muted" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="rounded-lg border border-border bg-card shadow-sm">
+    <div class="p-5 border-b border-border">
+      <h3 class="text-sm font-semibold text-foreground">Pyramid v2 Poster Submissions</h3>
+      <p class="text-xs text-muted-foreground mt-1">Total: <%= number_with_delimiter(@total_count) %> posters</p>
+    </div>
+
+    <% if @v2_posters&.any? %>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-5">
+        <% @v2_posters.each do |poster| %>
+          <div class="rounded-lg border border-border bg-muted/20 p-4">
+            <div class="aspect-video bg-muted rounded-lg mb-3 flex items-center justify-center overflow-hidden">
+              <% image_url = poster.image_url %>
+              <% if image_url.present? %>
+                <img src="<%= image_url %>"
+                     alt="Poster <%= poster.id %>"
+                     class="w-full h-full object-cover"
+                     onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'text-xs text-muted-foreground\'>Image unavailable</span>'">
+              <% else %>
+                <span class="text-xs text-muted-foreground">No image</span>
+              <% end %>
+            </div>
+            <div class="space-y-1">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-muted-foreground">Status</span>
+                <span class="px-2 py-0.5 rounded-full text-xs font-medium <%= poster.status == 'approved' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500' %>">
+                  <%= poster.status %>
+                </span>
+              </div>
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-muted-foreground">Location</span>
+                <span class="text-foreground truncate ml-2" title="<%= poster.location_description %>"><%= poster.location_description&.truncate(20) || "N/A" %></span>
+              </div>
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-muted-foreground">Submitted</span>
+                <span class="text-foreground"><%= poster.created_at.strftime("%b %d, %Y") %></span>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <%# Pagination %>
+      <div class="p-5 border-t border-border flex items-center justify-between">
+        <div class="text-sm text-muted-foreground">
+          Showing <%= (@page - 1) * @per_page + 1 %>-<%= [@page * @per_page, @total_count].min %> of <%= number_with_delimiter(@total_count) %>
+        </div>
+        <div class="flex gap-2">
+          <% if @page > 1 %>
+            <%= link_to "Previous", admin_progress_path(params.permit!.to_h.merge(page: @page - 1)), class: "px-3 py-1.5 text-sm font-medium rounded-md border border-border hover:bg-muted" %>
+          <% end %>
+          <% if @page * @per_page < @total_count %>
+            <%= link_to "Next", admin_progress_path(params.permit!.to_h.merge(page: @page + 1)), class: "px-3 py-1.5 text-sm font-medium rounded-md border border-border hover:bg-muted" %>
+          <% end %>
+        </div>
+      </div>
+    <% else %>
+      <div class="p-12 text-center">
+        <p class="text-sm text-muted-foreground">No posters found</p>
+      </div>
+    <% end %>
+  </div>
+
+<% elsif params[:view] == "v2_referrals" %>
+  <%# v2 Referrals Browser %>
+  <div class="rounded-lg border border-border bg-card shadow-sm mb-6">
+    <div class="p-5 border-b border-border">
+      <h3 class="text-sm font-semibold text-foreground">Filters & Sorting</h3>
+    </div>
+    <div class="p-5">
+      <%= form_with url: admin_progress_path, method: :get, class: "grid grid-cols-1 md:grid-cols-4 gap-4" do |f| %>
+        <%= f.hidden_field :view, value: "v2_referrals" %>
+
+        <div>
+          <%= f.label :qualified, "Qualified", class: "block text-xs font-medium text-muted-foreground mb-1" %>
+          <%= f.select :qualified, options_for_select([["All", ""], ["Qualified", "yes"], ["Not Qualified", "no"]], params[:qualified]), {}, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm" %>
+        </div>
+
+        <div>
+          <%= f.label :signed_up, "Signed Up", class: "block text-xs font-medium text-muted-foreground mb-1" %>
+          <%= f.select :signed_up, options_for_select([["All", ""], ["Signed Up", "yes"], ["Not Signed Up", "no"]], params[:signed_up]), {}, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm" %>
+        </div>
+
+        <div>
+          <%= f.label :suspicious, "Suspicious", class: "block text-xs font-medium text-muted-foreground mb-1" %>
+          <%= f.select :suspicious, options_for_select([["All", ""], ["Batch Imports", "yes"]], params[:suspicious]), {}, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm" %>
+        </div>
+
+        <div>
+          <%= f.label :sort, "Sort By", class: "block text-xs font-medium text-muted-foreground mb-1" %>
+          <%= f.select :sort, options_for_select([["Created", "created_at"], ["Signed Up", "signup_detected_at"], ["Qualified", "qualified_detected_at"], ["Email", "email"]], params[:sort]), {}, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm" %>
+        </div>
+
+        <div>
+          <%= f.label :direction, "Direction", class: "block text-xs font-medium text-muted-foreground mb-1" %>
+          <%= f.select :direction, options_for_select([["Newest First", "desc"], ["Oldest First", "asc"]], params[:direction]), {}, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm" %>
+        </div>
+
+        <div>
+          <%= f.label :per_page, "Per Page", class: "block text-xs font-medium text-muted-foreground mb-1" %>
+          <%= f.select :per_page, options_for_select([["20", 20], ["50", 50], ["100", 100]], params[:per_page] || 20), {}, class: "w-full rounded-md border border-input bg-background px-3 py-2 text-sm" %>
+        </div>
+
+        <div class="md:col-span-4 flex gap-2">
+          <%= f.submit "Apply Filters", class: "px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90" %>
+          <%= link_to "Reset", admin_progress_path(view: "v2_referrals"), class: "px-4 py-2 text-sm font-medium rounded-md border border-border hover:bg-muted" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Suspicious Data Warning %>
+  <% if params[:suspicious].blank? %>
+    <div class="rounded-xl border border-amber-500/20 bg-amber-500/10 p-5 mb-6">
+      <div class="flex items-start gap-4">
+        <div class="flex-shrink-0">
+          <%= icon :alert_triangle, size: 20, class_name: "text-amber-500" %>
+        </div>
+        <div class="flex-1">
+          <h3 class="text-sm font-semibold text-amber-500 mb-1">Suspicious Data Detected</h3>
+          <p class="text-sm text-muted-foreground">
+            Pyramid v2 data shows large batch imports on <strong>June 16 (122 signups)</strong>, <strong>June 17 (242 signups at 3am)</strong>, and <strong>June 18 (474 signups at 9am)</strong>.
+            Many timestamps are on exact hour boundaries (00:00, 03:00, etc.), suggesting historical data imports rather than organic signups.
+            <%= link_to "Filter to see suspicious entries", admin_progress_path(view: "v2_referrals", suspicious: "yes"), class: "text-amber-500 font-medium hover:underline" %>
+          </p>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="rounded-lg border border-border bg-card shadow-sm">
+    <div class="p-5 border-b border-border">
+      <h3 class="text-sm font-semibold text-foreground">Pyramid v2 Referral Signups</h3>
+      <p class="text-xs text-muted-foreground mt-1">Total: <%= number_with_delimiter(@total_count) %> referrals</p>
+    </div>
+
+    <% if @v2_referrals&.any? %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="border-b border-border">
+            <tr class="text-left text-xs text-muted-foreground">
+              <th class="px-4 py-3">Email</th>
+              <th class="px-4 py-3">Status</th>
+              <th class="px-4 py-3">Signed Up</th>
+              <th class="px-4 py-3">Qualified</th>
+              <th class="px-4 py-3">Flags</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <% @v2_referrals.each do |referral| %>
+              <tr class="hover:bg-muted/30">
+                <td class="px-4 py-3 text-foreground"><%= referral.email || "N/A" %></td>
+                <td class="px-4 py-3">
+                  <% if referral.qualified_detected_at.present? %>
+                    <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/10 text-green-500">
+                      Qualified
+                    </span>
+                  <% elsif referral.signup_detected_at.present? %>
+                    <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-500/10 text-yellow-500">
+                      Signed Up
+                    </span>
+                  <% else %>
+                    <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                      Pending
+                    </span>
+                  <% end %>
+                </td>
+                <td class="px-4 py-3 text-muted-foreground">
+                  <%= referral.signup_detected_at&.strftime("%b %d, %Y %H:%M") || "-" %>
+                </td>
+                <td class="px-4 py-3 text-muted-foreground">
+                  <%= referral.qualified_detected_at&.strftime("%b %d, %Y %H:%M") || "-" %>
+                </td>
+                <td class="px-4 py-3">
+                  <% if referral.signup_detected_at&.sec && referral.signup_detected_at.sec < 5 %>
+                    <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-500" title="Timestamp on exact hour/minute boundary - likely batch import">
+                      Suspicious
+                    </span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <%# Pagination %>
+      <div class="p-5 border-t border-border flex items-center justify-between">
+        <div class="text-sm text-muted-foreground">
+          Showing <%= (@page - 1) * @per_page + 1 %>-<%= [@page * @per_page, @total_count].min %> of <%= number_with_delimiter(@total_count) %>
+        </div>
+        <div class="flex gap-2">
+          <% if @page > 1 %>
+            <%= link_to "Previous", admin_progress_path(params.permit!.to_h.merge(page: @page - 1)), class: "px-3 py-1.5 text-sm font-medium rounded-md border border-border hover:bg-muted" %>
+          <% end %>
+          <% if @page * @per_page < @total_count %>
+            <%= link_to "Next", admin_progress_path(params.permit!.to_h.merge(page: @page + 1)), class: "px-3 py-1.5 text-sm font-medium rounded-md border border-border hover:bg-muted" %>
+          <% end %>
+        </div>
+      </div>
+    <% else %>
+      <div class="p-12 text-center">
+        <p class="text-sm text-muted-foreground">No referrals found</p>
+      </div>
+    <% end %>
+  </div>
+<% end %>

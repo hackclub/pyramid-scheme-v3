@@ -1,0 +1,71 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+flavortown:
+  name: Flavortown
+  slug: flavortown
+  theme: flavortown
+  description: Welcome to Flavortown! Spread the word about Hack Club.
+  active: true
+  status: open
+  referral_shards: 3
+  poster_shards: 1
+  required_coding_minutes: 60
+  subdomain: flavortown
+  theme_config:
+    primary_color: "#ff6b35"
+  poster_qr_coordinates: {}
+  airtable_field_mappings: {}
+  i18n_overrides: {}
+  poster_templates: {}
+
+aces:
+  name: Aces
+  slug: aces
+  theme: aces
+  description: The Aces campaign - coming soon!
+  active: true
+  status: coming_soon
+  referral_shards: 3
+  poster_shards: 1
+  required_coding_minutes: 60
+  subdomain: aces
+  theme_config:
+    primary_color: "#ffd700"
+  poster_qr_coordinates: {}
+  airtable_field_mappings: {}
+  i18n_overrides: {}
+  poster_templates: {}
+
+construct:
+  name: Construct
+  slug: construct
+  theme: construct
+  description: Build hardware projects!
+  active: true
+  status: open
+  referral_shards: 3
+  poster_shards: 1
+  required_coding_minutes: 0
+  subdomain: construct
+  theme_config:
+    primary_color: "#00bcd4"
+  poster_qr_coordinates: {}
+  airtable_field_mappings: {}
+  i18n_overrides: {}
+  poster_templates: {}
+
+closed_campaign:
+  name: Closed Campaign
+  slug: closed-campaign
+  theme: flavortown
+  description: A closed campaign
+  active: false
+  status: closed
+  referral_shards: 3
+  poster_shards: 1
+  required_coding_minutes: 60
+  theme_config: {}
+  poster_qr_coordinates: {}
+  airtable_field_mappings: {}
+  i18n_overrides: {}
+  poster_templates: {}

@@ -1,0 +1,144 @@
+<% content_for :title, "#{@item.name} · #{t('shop.title')} · #{t('site.name')}" %>
+
+<div class="mb-6">
+  <%= link_to shop_path, class: "inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors" do %>
+    <%= icon :chevron_left, size: 16 %>
+    Back to Shop
+  <% end %>
+</div>
+
+<div class="max-w-4xl mx-auto">
+  <div class="grid md:grid-cols-2 gap-6">
+    <div>
+      <% if @item.image_url.present? %>
+        <div class="aspect-square rounded-lg overflow-hidden border border-border/40 bg-white">
+          <%= image_tag @item.image_url, class: "w-full h-full object-contain p-4" %>
+        </div>
+      <% else %>
+        <div class="aspect-square rounded-lg border border-border/40 flex items-center justify-center bg-white">
+          <%= icon :shopping_bag, size: 64, class_name: "text-muted-foreground" %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="space-y-4">
+      <div>
+        <% if @item.on_sale? %>
+          <div class="inline-flex items-center gap-2 mb-2 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+            <%= icon :sparkles, size: 14 %>
+            SALE <%= @item.savings_percentage %>% OFF
+          </div>
+        <% end %>
+        <h1 class="text-2xl font-bold text-foreground mb-2"><%= @item.name %></h1>
+        <p class="text-sm text-muted-foreground leading-relaxed"><%= @item.description %></p>
+      </div>
+
+      <div class="flex items-center justify-between gap-4 py-4">
+        <div>
+          <div class="text-sm text-muted-foreground mb-1">Price</div>
+          <div class="flex items-center gap-2">
+            <%= icon :pyramid, size: 20 %>
+            <% if @item.on_sale? && @item.sale_price_shards.present? %>
+              <span class="text-lg text-muted-foreground line-through"><%= number_with_delimiter(@item.price_shards) %></span>
+              <span class="text-2xl font-bold text-foreground" data-purchase-confirm-target="unitPrice" data-unit-price="<%= @item.current_price %>"><%= number_with_delimiter(@item.current_price) %></span>
+            <% else %>
+              <span class="text-2xl font-bold text-foreground" data-purchase-confirm-target="unitPrice" data-unit-price="<%= @item.current_price %>"><%= number_with_delimiter(@item.current_price) %></span>
+            <% end %>
+          </div>
+          <div class="text-xs text-muted-foreground mt-1">
+            Total: <span data-purchase-confirm-target="totalPrice"><%= number_with_delimiter(@item.current_price) %></span> shards
+          </div>
+        </div>
+
+        <div class="text-right">
+          <div class="text-sm text-muted-foreground mb-1">Your balance</div>
+          <div class="flex items-center justify-end gap-2 text-2xl font-bold text-foreground">
+            <%= icon :pyramid, size: 20 %>
+            <span><%= number_with_delimiter(current_user.total_shards) %></span>
+          </div>
+        </div>
+      </div>
+
+      <% item_price = @item.current_price %>
+      <% max_affordable = item_price > 0 ? (current_user.total_shards / item_price).to_i : 0 %>
+      <% if @item.in_stock? && max_affordable > 0 %>
+        <%= form_with url: shop_orders_path, method: :post, class: "space-y-3", data: { controller: "purchase-confirm", action: "submit->purchase-confirm#confirmPurchase" } do |f| %>
+          <%= f.hidden_field :shop_item_id, value: @item.id %>
+          
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-1.5">Quantity</label>
+            <% if @item.physical? %>
+              <% max_qty = @item.max_quantity_per_order || 10 %>
+              <% max_available = @item.unlimited_stock? ? max_qty : [@item.stock_quantity, max_qty].min %>
+              <select name="quantity" id="quantity" required class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-foreground/20 transition-all" data-action="change->purchase-confirm#updateTotal">
+                <% (1..[max_available, max_affordable].min).each do |qty| %>
+                  <option value="<%= qty %>"><%= qty %></option>
+                <% end %>
+              </select>
+              <p class="text-xs text-muted-foreground mt-1">Maximum 10 per order for physical items</p>
+            <% else %>
+              <% max_stock = @item.unlimited_stock? ? max_affordable : @item.stock_quantity %>
+              <input type="number" 
+                     name="quantity" 
+                     id="quantity" 
+                     value="1" 
+                     min="1" 
+                     max="<%= [max_stock, max_affordable].min %>"
+                     required 
+                     class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-foreground/20 transition-all" 
+                     data-action="change->purchase-confirm#updateTotal input->purchase-confirm#updateTotal">
+              <p class="text-xs text-muted-foreground mt-1">You can afford up to <%= number_with_delimiter(max_affordable) %> at <%= number_with_delimiter(item_price) %> shards each</p>
+            <% end %>
+          </div>
+          
+          <div data-controller="address-selector">
+            <label class="block text-xs font-medium text-foreground mb-1.5">Shipping Address</label>
+            <div id="address-selector" class="space-y-2">
+              <select name="shop_order[shipping_address]" id="address_select" data-address-selector-target="select" required class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-foreground/20 transition-all">
+                <option value="">Loading addresses...</option>
+              </select>
+            </div>
+            <a href="https://auth.hackclub.com/addresses" target="_blank" class="text-xs text-muted-foreground hover:text-foreground mt-1.5 inline-flex items-center gap-1 transition-colors">
+              <span>Manage Addresses</span>
+              <%= icon :external_link, size: 10 %>
+            </a>
+
+            <a href="<%= auth_path %>" data-address-selector-target="reauth" class="hidden text-xs text-muted-foreground hover:text-foreground mt-1.5 inline-flex items-center gap-1 transition-colors">
+              <span>Reconnect Hack Club Auth</span>
+              <%= icon :external_link, size: 10 %>
+            </a>
+          </div>
+
+          <%= f.submit "Buy →", class: "w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg bg-white hover:bg-white/90 text-black border border-border transition-all", data: { disable_with: "Processing..." } %>
+        <% end %>
+      <% elsif !@item.in_stock? %>
+        <div class="p-3 rounded-lg border border-border/40 bg-background">
+          <p class="text-sm font-semibold text-foreground">Out of Stock</p>
+          <p class="text-xs text-muted-foreground mt-0.5">This item is currently unavailable.</p>
+        </div>
+      <% else %>
+        <div class="p-3 rounded-lg border border-border/40 bg-background">
+          <p class="text-sm font-semibold text-foreground">Insufficient Shards</p>
+          <p class="text-xs text-muted-foreground mt-0.5">You need <%= number_with_delimiter(@item.current_price - current_user.total_shards) %> more shards to purchase this item.</p>
+        </div>
+      <% end %>
+
+      <div class="pt-3 border-t border-border/40">
+        <div class="flex gap-6 text-sm">
+          <% unless @item.unlimited_stock? %>
+            <div>
+              <p class="text-xs text-muted-foreground mb-0.5">In Stock</p>
+              <p class="font-medium text-foreground"><%= @item.stock_quantity || 0 %></p>
+            </div>
+          <% end %>
+          <% if @item.max_per_user %>
+            <div>
+              <p class="text-xs text-muted-foreground mb-0.5">Limit Per User</p>
+              <p class="font-medium text-foreground"><%= @item.max_per_user %></p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

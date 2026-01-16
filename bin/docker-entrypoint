@@ -1,0 +1,84 @@
+#!/bin/bash -e
+
+cmd="$1"
+
+should_prepare_db=false
+
+ensure_node_modules() {
+  # docker-compose mounts a named volume at /rails/node_modules.
+  # When that volume is freshly created it is empty and overrides the
+  # node_modules installed at image build time, which breaks Tailwind builds.
+  if ! command -v npm >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if [[ -f "./package-lock.json" ]]; then
+    if [[ ! -d "./node_modules" ]] || [[ -z "$(ls -A ./node_modules 2>/dev/null)" ]]; then
+      echo "[docker-entrypoint] Installing Node dependencies (npm ci)…"
+      npm ci
+    fi
+  elif [[ -f "./package.json" ]]; then
+    if [[ ! -d "./node_modules" ]] || [[ -z "$(ls -A ./node_modules 2>/dev/null)" ]]; then
+      echo "[docker-entrypoint] Installing Node dependencies (npm install)…"
+      npm install
+    fi
+  fi
+}
+
+rebuild_assets() {
+  echo "[docker-entrypoint] Rebuilding assets on start…"
+  ./bin/rebuild-assets
+}
+
+# `bin/rails server ...` (with or without leading ./)
+if [[ "$cmd" =~ ^(\./)?bin/rails$ ]] && [[ " $* " == *" server "* || " $* " == *" server"* ]]; then
+  should_prepare_db=true
+  rebuild_assets
+fi
+
+# `bin/jobs` (Solid Queue worker)
+if [[ "$cmd" =~ ^(\./)?bin/jobs$ ]]; then
+  should_prepare_db=true
+fi
+
+# `bin/dev` (foreman)
+if [[ "$cmd" =~ ^(\./)?bin/dev$ ]]; then
+  should_prepare_db=true
+  rebuild_assets
+fi
+
+# `foreman start ...`
+if [[ "$cmd" == "foreman" ]]; then
+  should_prepare_db=true
+  rebuild_assets
+fi
+
+if [[ "$should_prepare_db" == "true" ]]; then
+  ensure_node_modules
+
+  # Avoid "A server is already running" loops when the container restarts.
+  rm -f ./tmp/pids/server.pid
+
+  # NOTE: Disabled solid_queue - now using ActiveJob async adapter
+  # ./bin/rails solid_queue:install 2>/dev/null || true
+
+  # Prepare primary database
+  ./bin/rails db:prepare
+
+  # NOTE: Disabled solid_queue table creation - now using ActiveJob async adapter
+  # echo "[docker-entrypoint] Ensuring Solid Queue tables exist..."
+  # ./bin/rails runner "
+  #   unless ActiveRecord::Base.connection.table_exists?('solid_queue_jobs')
+  #     puts 'Creating Solid Queue tables...'
+  #     load Rails.root.join('db/queue_schema.rb')
+  #   else
+  #     puts 'Solid Queue tables already exist.'
+  #   end
+  # "
+
+  if [[ "${RAILS_ENV:-development}" == "development" ]]; then
+    ./bin/rails db:seed
+  fi
+fi
+
+exec "${@}"

@@ -1,0 +1,48 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+pending_referral:
+  referrer: regular_user
+  campaign: flavortown
+  referred_identifier: pending@example.com
+  referral_type: link
+  status: 0  # pending
+  tracked_minutes: 0
+  created_at: <%= 1.day.ago.to_fs(:db) %>
+  updated_at: <%= 1.day.ago.to_fs(:db) %>
+  metadata: {}
+
+verified_referral:
+  referrer: regular_user
+  campaign: flavortown
+  referred_identifier: verified@example.com
+  referral_type: link
+  status: 1  # id_verified
+  tracked_minutes: 30
+  verified_at: <%= 12.hours.ago.to_fs(:db) %>
+  created_at: <%= 2.days.ago.to_fs(:db) %>
+  updated_at: <%= 12.hours.ago.to_fs(:db) %>
+  metadata: {}
+
+completed_referral:
+  referrer: admin
+  campaign: flavortown
+  referred_identifier: completed@example.com
+  referral_type: link
+  status: 2  # completed
+  tracked_minutes: 120
+  verified_at: <%= 1.day.ago.to_fs(:db) %>
+  completed_at: <%= 6.hours.ago.to_fs(:db) %>
+  created_at: <%= 5.days.ago.to_fs(:db) %>
+  updated_at: <%= 6.hours.ago.to_fs(:db) %>
+  metadata: {}
+
+poster_referral:
+  referrer: poster_champion
+  campaign: flavortown
+  referred_identifier: poster-referred@example.com
+  referral_type: poster
+  status: 0  # pending
+  tracked_minutes: 0
+  created_at: <%= 1.hour.ago.to_fs(:db) %>
+  updated_at: <%= 1.hour.ago.to_fs(:db) %>
+  metadata: {}

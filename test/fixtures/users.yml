@@ -1,0 +1,75 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+admin:
+  email: admin@hackclub.test
+  display_name: Test Admin
+  role: 2  # admin
+  slack_id: UADMIN12345
+  referral_code: ADMIN123
+  total_shards: 1000
+  poster_count: 0
+  referral_count: 0
+  leaderboard_opted_out: false
+  is_banned: false
+
+fulfiller:
+  email: fulfiller@hackclub.test
+  display_name: Test Fulfiller
+  role: 1  # fulfiller
+  slack_id: UFULFI12345
+  referral_code: FULFIL12
+  total_shards: 50
+  poster_count: 0
+  referral_count: 0
+  leaderboard_opted_out: false
+  is_banned: false
+
+regular_user:
+  email: user@hackclub.test
+  display_name: Regular User
+  role: 0  # user
+  slack_id: UUSER12345
+  referral_code: REGULAR1
+  total_shards: 25
+  poster_count: 5
+  referral_count: 3
+  leaderboard_opted_out: false
+  is_banned: false
+
+poster_champion:
+  email: champion@hackclub.test
+  display_name: Poster Champion
+  role: 0  # user
+  slack_id: UCHAMP12345
+  referral_code: CHAMPIO1
+  total_shards: 150
+  poster_count: 15
+  referral_count: 0
+  leaderboard_opted_out: false
+  is_banned: false
+
+banned_user:
+  email: banned@hackclub.test
+  display_name: Banned User
+  role: 0  # user
+  slack_id: UBANNE12345
+  referral_code: BANNED12
+  total_shards: 0
+  poster_count: 0
+  referral_count: 0
+  leaderboard_opted_out: false
+  is_banned: true
+  banned_at: <%= 1.day.ago.to_fs(:db) %>
+  banned_reason: "Testing banned functionality"
+
+opted_out_user:
+  email: optedout@hackclub.test
+  display_name: Opted Out User
+  role: 0  # user
+  slack_id: UOPTOU12345
+  referral_code: OPTEDOU1
+  total_shards: 100
+  poster_count: 10
+  referral_count: 5
+  leaderboard_opted_out: true
+  is_banned: false

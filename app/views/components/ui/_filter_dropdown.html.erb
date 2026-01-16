@@ -1,0 +1,36 @@
+<% options ||= [] %>
+<% selected_value ||= "" %>
+<% form_id ||= "" %>
+<% name ||= "" %>
+<% placeholder ||= "Select..." %>
+
+<% current_label = options.find { |value, label| value == selected_value }&.last || placeholder %>
+
+<%= render_dropdown_menu do %>
+  <%= dropdown_menu_trigger do %>
+    <button type="button" class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+      <span class="<%= selected_value.present? ? '' : 'text-muted-foreground' %>"><%= current_label %></span>
+      <svg class="h-4 w-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+      </svg>
+    </button>
+  <% end %>
+  
+  <%= dropdown_menu_content do %>
+    <% options.each do |value, label| %>
+      <button type="button" 
+        class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+        data-action="click->filter-dropdown#select" 
+        data-filter-dropdown-param="<%= value %>" 
+        data-filter-dropdown-form-id="<%= form_id %>" 
+        data-filter-dropdown-name="<%= name %>">
+        <span><%= label %></span>
+        <% if value == selected_value %>
+          <svg class="ml-auto h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+        <% end %>
+      </button>
+    <% end %>
+  <% end %>
+<% end %>

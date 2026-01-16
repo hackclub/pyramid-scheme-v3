@@ -1,0 +1,179 @@
+<% content_for :title, "#{t('leaderboard.title')} · #{t('site.name')}" %>
+
+<div class="w-full max-w-5xl mx-auto space-y-6">
+  <%# Header %>
+  <div class="space-y-3">
+    <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-foreground"><%= t('leaderboard.title') %></h1>
+    <p class="text-muted-foreground"><%= raw t('leaderboard.subtitle') %></p>
+  </div>
+
+  <%# Category tabs - mobile-first design with 3 tabs %>
+  <div class="flex items-center gap-1 p-1.5 bg-secondary rounded-lg w-full max-w-lg">
+    <%= link_to leaderboard_path(category: "referrals", q: params[:q]),
+        class: "flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-semibold rounded-md transition-colors #{@category == 'referrals' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'}" do %>
+      <%= icon :users, size: 16 %>
+      <span><%= t('leaderboard.category.referrals') %></span>
+    <% end %>
+    <%= link_to leaderboard_path(category: "posters", q: params[:q]),
+        class: "flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-semibold rounded-md transition-colors #{@category == 'posters' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'}" do %>
+      <%= icon :qr_code, size: 16 %>
+      <span><%= t('leaderboard.category.posters') %></span>
+    <% end %>
+    <%= link_to leaderboard_path(category: "shards", q: params[:q]),
+        class: "flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-semibold rounded-md transition-colors #{@category == 'shards' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'}" do %>
+      <%= icon :pyramid, size: 16 %>
+      <span><%= t('leaderboard.category.shards') %></span>
+    <% end %>
+  </div>
+
+  <%# Search bar %>
+  <div class="relative w-full max-w-md">
+    <input type="text"
+           placeholder="<%= t('leaderboard.search.placeholder') %>"
+           value="<%= params[:q] %>"
+           class="flex h-11 w-full rounded-md border border-input bg-background pl-10 pr-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+           onkeydown="if(event.key==='Enter'){const q = this.value.trim(); const url = new URL('<%= leaderboard_path(category: @category) %>', window.location.origin); if(q) url.searchParams.set('q', q); window.location.href = url.toString();}">
+    <div class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+      <%= icon :search, size: 16 %>
+    </div>
+  </div>
+
+  <%# Leaderboard %>
+  <% if @leaders.any? %>
+    <%= render_card class: "w-full overflow-hidden" do %>
+      <div class="divide-y divide-border">
+        <% @leaders.each_with_index do |user, index| %>
+          <%
+            # Use calculated rank for referrals, or simple position for other categories
+            if @category == "referrals" && @ranks[user.id]
+              rank = @ranks[user.id][:rank]
+            else
+              rank = @pagy.offset + index + 1
+            end
+
+            # Check if this user is in top 3 for referrals giveaway
+            prize = @category == "referrals" && @pagy.page == 1 ? @referral_prizes[user.id] : nil
+            is_prize_winner = prize.present?
+            is_redacted = user.leaderboard_opted_out?
+          %>
+          <% is_top_3 = rank <= 3 && @category == "referrals" %>
+          <div class="flex items-center gap-3 md:gap-4 py-3 px-3 md:px-5 <%= is_top_3 ? 'bg-white' : 'hover:bg-muted/30' %> transition-colors">
+            <%# Rank with crown for top 3 in referrals %>
+            <div class="w-10 md:w-12 text-center flex-shrink-0">
+              <% if is_top_3 %>
+                <div class="relative inline-flex flex-col items-center">
+                  <%= icon :crown, size: 14, class_name: "text-zinc-800 mb-0.5" %>
+                  <span class="text-lg md:text-xl font-bold text-black" style="font-family: 'Phantom Sans', sans-serif;">
+                    <%= rank %>
+                  </span>
+                </div>
+              <% elsif rank <= 3 %>
+                <span class="text-lg md:text-xl font-bold text-foreground" style="font-family: 'Phantom Sans', sans-serif;">
+                  <%= rank %>
+                </span>
+              <% else %>
+                <span class="text-base text-muted-foreground"><%= rank %></span>
+              <% end %>
+            </div>
+
+            <%# Avatar %>
+            <% if is_redacted %>
+              <div class="w-10 h-10 md:w-11 md:h-11 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+                <%= icon :eye_off, size: 18, class_name: "text-muted-foreground" %>
+              </div>
+            <% elsif user.avatar.present? %>
+              <%= image_tag user.avatar, class: "w-10 h-10 md:w-11 md:h-11 rounded-full border border-border flex-shrink-0 object-cover", alt: user.display_name %>
+            <% else %>
+              <div class="w-10 h-10 md:w-11 md:h-11 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+                <%= icon :user, size: 18, class_name: "text-muted-foreground" %>
+              </div>
+            <% end %>
+
+            <%# Name, badge, and prize indicator %>
+            <div class="min-w-0 flex-1 flex items-center gap-2">
+              <% if is_redacted %>
+                <span class="text-sm md:text-[15px] font-semibold text-muted-foreground italic truncate">(Redacted)</span>
+              <% else %>
+                <span class="text-sm md:text-[15px] font-semibold <%= is_top_3 ? 'text-black' : 'text-foreground' %> truncate"><%= user.display_name %></span>
+              <% end %>
+              <% if user == current_user %>
+                <span class="text-[10px] md:text-xs px-2 py-0.5 <%= is_top_3 ? 'bg-black text-white' : 'bg-foreground text-background' %> rounded-full flex-shrink-0 font-semibold whitespace-nowrap"><%= t('leaderboard.you_badge') %></span>
+              <% end %>
+              <% if prize %>
+                <span class="hidden md:inline-flex items-center gap-1 text-[10px] px-2 py-0.5 bg-black text-white rounded-full flex-shrink-0 font-semibold whitespace-nowrap">
+                  <%= icon :pyramid, size: 10 %>
+                  +<%= prize[:shards] %>
+                </span>
+              <% end %>
+            </div>
+
+            <%# Count with prize for mobile %>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <% if prize %>
+                <span class="md:hidden inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 bg-black text-white rounded-full flex-shrink-0 font-bold">
+                  <%= icon :pyramid, size: 10 %>
+                  +<%= prize[:shards] %>
+                </span>
+              <% end %>
+              <div class="flex items-center gap-1.5 md:gap-2 font-bold <%= is_top_3 ? 'text-black' : 'text-foreground' %>">
+                <%
+                  display_icon = case @category
+                    when "referrals" then :users
+                    when "posters" then :qr_code
+                    when "shards" then :pyramid
+                  end
+                  display_value = case @category
+                    when "referrals" then user.respond_to?(:campaign_referral_count) ? user.campaign_referral_count : user.referral_count
+                    when "posters" then user.poster_count
+                    when "shards" then user.total_shards
+                  end
+                %>
+                <%= icon(display_icon, size: 16) %>
+                <span class="text-base md:text-lg tabular-nums"><%= number_with_delimiter(display_value) %></span>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <%# Pagination %>
+      <% if @pagy.pages > 1 %>
+        <div class="flex items-center justify-between md:justify-center gap-4 px-4 py-4 border-t border-border bg-muted/20">
+          <% if @pagy.page > 1 %>
+            <%= link_to leaderboard_path(page: @pagy.page - 1, category: @category, q: params[:q]), class: "inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-foreground hover:text-foreground/80 transition-colors" do %>
+              <%= icon :chevron_left, size: 16 %>
+              <span class="hidden md:inline"><%= t('common.previous') %></span>
+            <% end %>
+          <% else %>
+            <div class="w-[70px] md:w-[90px]"></div>
+          <% end %>
+
+          <span class="text-sm font-medium text-muted-foreground tabular-nums">
+            <%= t('common.page_of', page: @pagy.page, pages: @pagy.pages) %>
+          </span>
+
+          <% if @pagy.page < @pagy.pages %>
+            <%= link_to leaderboard_path(page: @pagy.page + 1, category: @category, q: params[:q]), class: "inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-foreground hover:text-foreground/80 transition-colors" do %>
+              <span class="hidden md:inline"><%= t('common.next') %></span>
+              <%= icon :chevron_right, size: 16 %>
+            <% end %>
+          <% else %>
+            <div class="w-[70px] md:w-[90px]"></div>
+          <% end %>
+        </div>
+      <% end %>
+    <% end %>
+  <% else %>
+    <%# Empty state %>
+    <div class="text-center py-16 md:py-20">
+      <%= icon :trophy, size: 48, class_name: "mx-auto text-muted-foreground/50 mb-4" %>
+      <% if params[:q].present? %>
+        <p class="text-lg font-semibold text-foreground mb-1"><%= t('leaderboard.empty.search.title') %></p>
+        <p class="text-sm text-muted-foreground"><%= t('leaderboard.empty.search.subtitle') %></p>
+      <% else %>
+        <p class="text-lg font-semibold text-foreground mb-1"><%= t('leaderboard.empty.blank.title') %></p>
+        <p class="text-sm text-muted-foreground"><%= t('leaderboard.empty.blank.subtitle') %></p>
+      <% end %>
+    </div>
+  <% end %>
+</div>

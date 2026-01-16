@@ -1,0 +1,11 @@
+<div class="campaign-panel-inner p-4">
+  <div class="flex items-start gap-3">
+    <div class="flex-shrink-0">
+      <%= icon :circle_check, size: 20, class_name: "text-green-600" %>
+    </div>
+    <div class="flex-1">
+      <p class="campaign-font text-sm font-black campaign-text-primary"><%= t('posters.success.proof_approved_title') %></p>
+      <p class="text-xs campaign-text-secondary mt-1"><%= t('posters.success.proof_approved_body', count: poster.campaign.poster_shards) %></p>
+    </div>
+  </div>
+</div>

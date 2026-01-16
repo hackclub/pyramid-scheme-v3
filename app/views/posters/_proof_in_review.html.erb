@@ -1,0 +1,37 @@
+<turbo-frame id="proof_upload_result_<%= poster.id %>">
+  <div class="campaign-panel-inner p-5 text-center space-y-4">
+    <div class="flex justify-center">
+      <%= icon :circle_check, size: 48, class_name: "text-green-600" %>
+    </div>
+    <p class="campaign-font text-2xl font-black">Upload successful</p>
+    <p class="text-sm opacity-70">Your poster is now under review.</p>
+  </div>
+
+  <script>
+    // Hide the upload form section
+    const uploadFormSection = document.querySelector('[data-turbo-frame="proof_upload_result_<%= poster.id %>"]')?.closest('.campaign-panel-inner');
+    if (uploadFormSection) {
+      // Hide the entire upload section (form + surrounding panel)
+      const prevSibling = uploadFormSection.previousElementSibling;
+      if (prevSibling?.tagName === 'FORM' || prevSibling?.querySelector('form')) {
+        prevSibling.style.display = 'none';
+      }
+    }
+
+    // Update the status badge to show "In Review"
+    const modal = document.querySelector('[data-poster-view-modal-target="dialog"]:not(.hidden)');
+    if (modal) {
+      const statusBadge = modal.querySelector('.campaign-panel-inner span.inline-flex');
+      if (statusBadge) {
+        statusBadge.textContent = 'In Review';
+        statusBadge.className = 'inline-flex items-center rounded-full px-3 py-1 text-xs font-black campaign-font bg-blue-600 text-white';
+      }
+    }
+
+    // Hide the delete button since proof has been submitted
+    const deleteBtn = modal?.querySelector('form[action*="posters"][method="post"] button[type="submit"]');
+    if (deleteBtn?.closest('form')?.querySelector('input[name="_method"][value="delete"]')) {
+      deleteBtn.closest('form').style.display = 'none';
+    }
+  </script>
+</turbo-frame>

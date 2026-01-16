@@ -1,0 +1,234 @@
+@import "shadcn.css";
+
+/* Phantom Sans Font */
+@font-face {
+  font-family: 'Phantom Sans';
+  src: url('https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Regular.woff')
+      format('woff'),
+    url('https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Regular.woff2')
+      format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Outfit Font (for Aces campaign) */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap');
+@font-face {
+  font-family: 'Phantom Sans';
+  src: url('https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Italic.woff')
+      format('woff'),
+    url('https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Italic.woff2')
+      format('woff2');
+  font-weight: normal;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Phantom Sans';
+  src: url('https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Bold.woff')
+      format('woff'),
+    url('https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Bold.woff2')
+      format('woff2');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  /* Ensure proper flex and grid gap support */
+  *,
+  ::before,
+  ::after {
+    --tw-content: '';
+  }
+}
+
+/* Don't override the container - use Tailwind's built-in container from shadcn.tailwind.js */
+
+@layer components {
+  /* Generic campaign font - can be overridden via CSS variables */
+  .campaign-font {
+    font-family: var(--campaign-font, "Phantom Sans", var(--font-sans));
+  }
+
+  /* Generic campaign surface - colors via CSS variables */
+  .campaign-surface {
+    color: var(--campaign-surface-foreground, currentColor);
+    background-color: var(--campaign-surface-background, transparent);
+  }
+
+  .campaign-surface a {
+    color: inherit;
+  }
+
+  /* Generic campaign panel */
+  .campaign-panel {
+    border-radius: var(--campaign-panel-radius, 1.25rem);
+    border: var(--campaign-panel-border, 6px solid rgba(0, 0, 0, 0.18));
+    background: var(--campaign-panel-background, rgba(255, 255, 255, 0.42));
+    box-shadow: var(--campaign-panel-shadow, 0 24px 60px rgba(0, 0, 0, 0.12));
+    backdrop-filter: blur(6px);
+  }
+
+  .campaign-panel-inner {
+    border-radius: var(--campaign-panel-inner-radius, 0.9rem);
+    border: var(--campaign-panel-inner-border, 2px solid rgba(0, 0, 0, 0.14));
+    background: var(--campaign-panel-inner-background, rgba(255, 255, 255, 0.38));
+  }
+
+  /* Generic campaign button */
+  .campaign-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: var(--campaign-btn-radius, 0.9rem);
+    padding: var(--campaign-btn-padding, 0.875rem 2.25rem) !important;
+    font-family: var(--campaign-font, "Phantom Sans", var(--font-sans));
+    font-weight: var(--campaign-btn-weight, 900);
+    letter-spacing: -0.01em;
+    border: var(--campaign-btn-border, none);
+    background: var(--campaign-btn-background, var(--primary));
+    color: var(--campaign-btn-color, var(--primary-foreground)) !important;
+    transition: filter 160ms ease, transform 160ms ease;
+    user-select: none;
+  }
+
+  .campaign-btn svg {
+    color: inherit !important;
+    fill: none !important;
+  }
+
+  .campaign-btn:hover {
+    filter: brightness(1.05);
+  }
+
+  .campaign-btn:active {
+    transform: translateY(1px);
+  }
+
+  .campaign-btn--primary {
+    background: var(--campaign-btn-primary-background, var(--campaign-btn-background, hsl(var(--primary))));
+    color: var(--campaign-btn-primary-color, var(--campaign-btn-color, hsl(var(--primary-foreground)))) !important;
+  }
+
+  .campaign-btn--secondary {
+    background: var(--campaign-btn-secondary-background, var(--campaign-btn-background, hsl(var(--secondary))));
+    color: var(--campaign-btn-secondary-color, var(--campaign-btn-color, hsl(var(--secondary-foreground)))) !important;
+    opacity: 0.9;
+  }
+
+  .campaign-btn--secondary:hover {
+    opacity: 1;
+  }
+
+  /* Generic campaign accent background (for progress bars, etc.) */
+  .campaign-accent-bg {
+    background-color: var(--campaign-accent-color, hsl(var(--primary)));
+  }
+
+  /* Generic campaign card */
+  .campaign-card {
+    background: var(--campaign-card-background, var(--card));
+    border: var(--campaign-card-border, 1px solid var(--border));
+    border-radius: var(--campaign-card-radius, 0.75rem);
+  }
+
+  /* Generic accent text */
+  .campaign-accent-text {
+    color: var(--campaign-accent-color, var(--primary));
+  }
+
+  /* Generic gradient background */
+  .campaign-gradient-bg {
+    background: var(--campaign-gradient, var(--background));
+  }
+
+  /* Generic campaign text colors */
+  .campaign-text-primary {
+    color: var(--campaign-text-primary, currentColor);
+  }
+
+  .campaign-text-secondary {
+    color: var(--campaign-text-secondary, currentColor);
+    opacity: 0.8;
+  }
+
+  .campaign-text-muted {
+    color: var(--campaign-text-muted, currentColor);
+    opacity: 0.6;
+  }
+
+  /* Generic campaign modal */
+  .campaign-modal {
+    background-color: var(--campaign-modal-background, var(--campaign-surface-background, #ffffff));
+    border: var(--campaign-modal-border, 6px solid rgba(0, 0, 0, 0.2));
+    border-radius: 1rem;
+  }
+
+  .campaign-modal-header {
+    background-color: var(--campaign-modal-background, var(--campaign-surface-background, #ffffff));
+    border-bottom: var(--campaign-modal-header-border, 4px solid rgba(0, 0, 0, 0.15));
+    color: var(--campaign-text-primary, currentColor);
+  }
+
+  /* Generic campaign input */
+  .campaign-input {
+    background-color: var(--campaign-input-background, #ffffff);
+    border: var(--campaign-input-border, 2px solid rgba(0, 0, 0, 0.2));
+    color: var(--campaign-text-primary, currentColor);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .campaign-input:focus {
+    outline: none;
+    border-color: var(--campaign-accent-color, currentColor);
+    box-shadow: 0 0 0 2px var(--campaign-accent-color, currentColor), 0 0 0 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .campaign-input::placeholder {
+    color: var(--campaign-text-muted, currentColor);
+  }
+
+  /* Select dropdown styling for shadcn-like appearance */
+  select.campaign-input {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1.25rem 1.25rem;
+    padding-right: 2.5rem;
+    cursor: pointer;
+    border-radius: var(--campaign-input-radius, 0.5rem);
+    background-color: var(--campaign-input-background, #ffffff);
+    border: var(--campaign-input-border, 2px solid rgba(0, 0, 0, 0.2));
+    color: var(--campaign-text-primary, currentColor);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: none;
+  }
+
+  select.campaign-input:focus-visible {
+    outline: none;
+    border-color: var(--campaign-accent-color, currentColor);
+    box-shadow: 0 0 0 2px var(--campaign-accent-color, currentColor), 0 0 0 4px rgba(0, 0, 0, 0.1);
+  }
+
+  select.campaign-input:hover {
+    border-color: var(--campaign-accent-color, rgba(0, 0, 0, 0.4));
+  }
+
+  select.campaign-input option {
+    background-color: var(--campaign-surface-background, #ffffff);
+    color: var(--campaign-text-primary, currentColor);
+    padding: 0.5rem;
+  }
+}

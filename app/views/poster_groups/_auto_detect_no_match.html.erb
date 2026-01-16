@@ -1,0 +1,26 @@
+<div class="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+  <div class="flex items-start gap-2">
+    <%= icon :triangle_alert, size: 16, class_name: "text-yellow-600 flex-shrink-0 mt-0.5" %>
+    <div class="flex-1 min-w-0">
+      <p class="text-sm font-bold text-yellow-600">QR Code Doesn't Match</p>
+      <p class="text-xs campaign-text-secondary mt-1">
+        The QR code detected doesn't match any poster in this group. 
+        <% if detected_qr_codes.present? %>
+          Detected: <code class="text-xs bg-black/10 px-1 py-0.5 rounded"><%= detected_qr_codes.first %></code>
+        <% end %>
+      </p>
+      <% if poster %>
+        <p class="text-xs campaign-text-secondary mt-2">
+          Submitted to poster #<%= poster.id %> for manual review.
+        </p>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<% if poster %>
+<script>
+  // Refresh the page to show updated poster status
+  setTimeout(() => window.location.reload(), 1500);
+</script>
+<% end %>

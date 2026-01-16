@@ -1,0 +1,357 @@
+<%# Hero section - full-bleed photo background, right-aligned copy %>
+<div class="relative isolate overflow-hidden flex flex-col min-h-[100svh]" style="min-height: 100svh; background-image: url('/landing/pyramid_of_cheops.jpg'); background-size: cover; background-position: center;">
+  <%# Background overlay layers (must never intercept clicks) %>
+  <div aria-hidden="true" class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-black/20"></div>
+  <div aria-hidden="true" class="pointer-events-none absolute inset-0 opacity-[0.06]" style="background-image: url('<%= asset_path('patterns/pyramid-outline.svg') %>'); background-size: 70px;"></div>
+
+  <%# Header (aligned to hero copy + attribution) %>
+  <header class="relative z-10 w-full">
+    <div class="mx-auto max-w-7xl px-4 md:px-6 py-4 md:py-6 flex items-center justify-between gap-3 md:gap-6">
+      <div class="flex items-center gap-3 flex-shrink-0">
+        <%= christmas_pyramid_icon(size: 48) %>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3 md:gap-6 text-xs md:text-sm font-semibold text-white/90 justify-end">
+      <% if user_signed_in? %>
+        <%= link_to campaign_path('flavortown'), class: "inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors" do %>
+          <%= icon :flag, size: 16 %>
+          <%= t('nav.campaigns') %>
+        <% end %>
+      <% end %>
+
+      <% if user_signed_in? %>
+        <%= link_to leaderboard_path, class: "inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors" do %>
+          <%= icon :trophy, size: 16 %>
+          <%= t('nav.leaderboard') %>
+        <% end %>
+      <% end %>
+
+      <% if user_signed_in? %>
+        <details class="relative">
+          <summary class="list-none inline-flex items-center justify-between gap-2 md:gap-4 rounded-lg border border-white/25 bg-black/15 px-2 md:px-3 py-1.5 md:py-2 text-white hover:bg-white/10 transition-colors cursor-pointer">
+            <span class="inline-flex items-center gap-2 md:gap-3 min-w-0">
+              <% if current_user.avatar.present? %>
+                <%= image_tag current_user.avatar, class: "w-7 h-7 md:w-8 md:h-8 rounded-full border border-white/20 object-cover flex-shrink-0", alt: current_user.display_name %>
+              <% else %>
+                <span class="w-7 h-7 md:w-8 md:h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                  <%= icon :user, size: 16, class_name: "text-white/80" %>
+                </span>
+              <% end %>
+
+              <span class="min-w-0 flex flex-col leading-tight">
+                <span class="max-w-[8rem] md:max-w-[12rem] truncate text-xs md:text-sm"><%= current_user.display_name %></span>
+                <span class="inline-flex items-center gap-1 text-[10px] md:text-xs font-semibold text-white/75">
+                  <%= icon :pyramid, size: 12, class_name: "text-white/75 md:w-3.5 md:h-3.5" %>
+                  <span class="tabular-nums"><%= number_with_delimiter(current_user.total_shards) %></span>
+                  <span class="hidden sm:inline"><%= t('nav.shards') %></span>
+                </span>
+              </span>
+            </span>
+
+            <%= icon :chevron_down, size: 14, class_name: "text-white/70 flex-shrink-0 md:w-4 md:h-4" %>
+          </summary>
+
+          <div class="absolute right-0 mt-2 min-w-full overflow-hidden rounded-lg border border-white/15 bg-black/70 backdrop-blur text-white shadow-md">
+            <%= button_to logout_path, method: :delete, class: "flex w-full items-center gap-2 px-3 py-2.5 text-sm font-semibold hover:bg-white/10 transition-colors cursor-pointer", form_class: "w-full" do %>
+              <%= icon :log_out, size: 16 %>
+              <%= t("nav.logout") %>
+            <% end %>
+          </div>
+        </details>
+      <% else %>
+        <%= link_to auth_path, class: "inline-flex items-center gap-2 md:gap-3 rounded-lg border border-white/25 px-3 md:px-4 py-1.5 md:py-2 text-white hover:bg-white hover:text-black transition-colors", data: { turbo: false } do %>
+          <%= icon :log_in, size: 16, stroke_width: 2.5, class_name: "md:w-[18px] md:h-[18px]" %>
+          <%= t('nav.login') %>
+        <% end %>
+      <% end %>
+      </div>
+    </div>
+  </header>
+
+  <%# Main hero content - pinned to bottom-left (aligned to header) %>
+  <div class="relative z-10 flex-1 flex items-end pb-8 md:pb-12 lg:pb-14">
+    <div class="w-full px-4 md:px-6">
+      <div class="mx-auto max-w-7xl">
+        <div class="max-w-3xl text-left space-y-4 md:space-y-6">
+      <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black leading-[0.95] tracking-tight text-white drop-shadow-sm">
+        <%= t('landing.hero.title') %>
+      </h1>
+      <p class="text-sm sm:text-base md:text-lg lg:text-xl text-white/85 max-w-2xl leading-relaxed">
+        <%= t('site.description') %>
+      </p>
+      <p class="text-xs sm:text-sm text-white/60"><%= t('site.age_requirement') %></p>
+
+      <div class="flex flex-col md:flex-row gap-2.5 md:gap-3 justify-start pt-1">
+        <% if user_signed_in? %>
+          <%= link_to campaign_path(@campaign.slug), class: "inline-flex items-center justify-center gap-2 md:gap-3 rounded-full border border-white/25 bg-white px-5 md:px-6 py-2.5 md:py-3 text-sm font-bold text-black hover:bg-white/90 transition-colors" do %>
+            <%= icon :flag, size: 16, class_name: "md:w-[18px] md:h-[18px]" %>
+            <%= t('landing.hero.cta_dashboard') %>
+          <% end %>
+        <% else %>
+          <%= link_to auth_path, class: "inline-flex items-center justify-center gap-2 md:gap-3 rounded-full border border-white/25 bg-white px-5 md:px-6 py-2.5 md:py-3 text-sm font-bold text-black hover:bg-white/90 transition-colors", data: { turbo: false } do %>
+            <%= icon :zap, size: 16, class_name: "md:w-[18px] md:h-[18px]" %>
+            <%= t('landing.hero.cta_primary') %>
+          <% end %>
+        <% end %>
+
+        <% if user_signed_in? %>
+          <%= link_to leaderboard_path, class: "inline-flex items-center justify-center gap-2 md:gap-3 rounded-full border border-white/25 px-5 md:px-6 py-2.5 md:py-3 text-sm font-semibold text-white hover:bg-white/10 transition-colors" do %>
+            <%= icon :trophy, size: 16, class_name: "md:w-[18px] md:h-[18px]" %>
+            <%= t('landing.hero.cta_leaderboard') %>
+          <% end %>
+        <% else %>
+          <%= link_to root_path(anchor: 'faq'), class: "inline-flex items-center justify-center gap-2 md:gap-3 rounded-full border border-white/25 px-5 md:px-6 py-2.5 md:py-3 text-sm font-semibold text-white hover:bg-white/10 transition-colors" do %>
+            <%= icon :help_circle, size: 16, class_name: "md:w-[18px] md:h-[18px]" %>
+            <%= t('landing.hero.cta_faq') %>
+          <% end %>
+        <% end %>
+      </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# Attribution pinned to absolute bottom-right %>
+  <div class="absolute inset-x-0 bottom-2 md:bottom-6 z-10">
+    <div class="mx-auto max-w-7xl px-4 md:px-6 flex justify-end">
+      <p class="text-[9px] md:text-[11px] leading-snug text-white/65 text-right">
+        <%= t("landing.attribution.text") %>
+        <%= link_to t("landing.attribution.link_text"), t("landing.attribution.url"), class: "underline underline-offset-2 hover:text-white transition-colors", target: "_blank", rel: "noopener" %>
+      </p>
+    </div>
+  </div>
+</div>
+
+<%# Our events, by the numbers %>
+<div class="relative isolate overflow-hidden bg-background" id="events-by-the-numbers">
+  <div aria-hidden="true" class="pointer-events-none absolute inset-0 opacity-[0.02]" style="background-image: url('<%= asset_path('patterns/pyramid-outline.svg') %>'); background-size: 60px;"></div>
+
+  <div class="container relative z-10 py-20 lg:py-32" data-controller="event-numbers" data-event-numbers-active-value="summer_of_making">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-start">
+        <%# Left column: header + top-left style buttons %>
+        <div class="lg:col-span-4 lg:sticky lg:top-8">
+          <div class="flex flex-col gap-6">
+            <h2 class="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-[0.95]">
+              <%= t('landing.events_by_numbers.title') %>
+            </h2>
+            <div class="text-lg md:text-xl leading-relaxed text-foreground/80 space-y-3">
+              <%= t('landing.events_by_numbers.description_html').html_safe %>
+            </div>
+          </div>
+
+          <div class="mt-8">
+            <div class="rounded-2xl border border-border/60 bg-background/70 backdrop-blur shadow-sm p-2">
+              <div class="flex flex-col gap-1">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected="true"
+                  data-event-numbers-target="tab"
+                  data-key="summer_of_making"
+                  data-action="event-numbers#show"
+                  data-event-numbers-key-param="summer_of_making"
+                  class="group w-full flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-foreground/70 hover:text-foreground hover:bg-foreground/5 aria-selected:bg-foreground/5 aria-selected:text-foreground transition-colors"
+                >
+                  <span class="inline-flex items-center gap-2">
+                    <span class="h-1.5 w-1.5 rounded-full bg-foreground/40"></span>
+                    <span><%= t('landing.events_by_numbers.tabs.summer_of_making') %></span>
+                  </span>
+                  <span class="text-foreground/30 group-hover:text-foreground/50">→</span>
+                </button>
+
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected="false"
+                  data-event-numbers-target="tab"
+                  data-key="high_seas"
+                  data-action="event-numbers#show"
+                  data-event-numbers-key-param="high_seas"
+                  class="group w-full flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-foreground/70 hover:text-foreground hover:bg-foreground/5 aria-selected:bg-foreground/5 aria-selected:text-foreground transition-colors"
+                >
+                  <span class="inline-flex items-center gap-2">
+                    <span class="h-1.5 w-1.5 rounded-full bg-foreground/40"></span>
+                    <span><%= t('landing.events_by_numbers.tabs.high_seas') %></span>
+                  </span>
+                  <span class="text-foreground/30 group-hover:text-foreground/50">→</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <%# Right column: panels %>
+        <div class="lg:col-span-8 min-w-0">
+          <%# Summer of Making panel %>
+          <section
+            role="tabpanel"
+            data-event-numbers-target="panel"
+            data-key="summer_of_making"
+            class="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-orange-50 via-amber-50 to-white dark:from-orange-950/30 dark:via-amber-950/20 dark:to-background shadow-sm"
+          >
+            <div aria-hidden="true" class="pointer-events-none absolute inset-0 opacity-[0.06]" style="background-image: radial-gradient(circle at 1px 1px, rgba(15,23,42,0.25) 1px, transparent 0); background-size: 26px 26px;"></div>
+            <div aria-hidden="true" class="pointer-events-none absolute -right-24 -top-16 w-[34rem] h-[34rem] rounded-full bg-gradient-to-br from-amber-500/20 to-orange-600/10 blur-3xl"></div>
+
+            <div class="relative p-10 md:p-12 lg:p-14">
+              <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
+                <div class="min-w-0">
+                  <p class="text-xs md:text-sm font-semibold tracking-wider text-orange-700 dark:text-amber-400/70"><%= t('landing.events_by_numbers.summer_of_making.category') %></p>
+                  <div class="mt-2 flex items-center gap-3">
+                    <h3 class="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-amber-50"><%= t('landing.events_by_numbers.summer_of_making.title') %></h3>
+                    <img src="/landing/summer_of_making_favicon.png" alt="" class="w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 flex-shrink-0">
+                  </div>
+                  <p class="mt-4 text-base md:text-lg lg:text-xl text-slate-700 dark:text-amber-100/80 max-w-2xl leading-relaxed">
+                    <%= t('landing.events_by_numbers.summer_of_making.description') %>
+                  </p>
+                </div>
+
+                <%= link_to t('landing.events_by_numbers.summer_of_making.url'), target: "_blank", rel: "noopener", class: "inline-flex items-center justify-center rounded-full border border-orange-300 dark:border-amber-400/30 bg-white/60 px-4 py-2 text-sm font-semibold text-slate-900 dark:text-amber-50 hover:bg-white/80 transition-colors flex-shrink-0" do %>
+                  <%= t('landing.events_by_numbers.summer_of_making.cta') %>
+                  <span class="ml-2 text-orange-600 dark:text-amber-300/60">↗</span>
+                <% end %>
+              </div>
+
+              <ul class="mt-10 space-y-2 text-black font-bold dark:text-white">
+                <li class="flex gap-2 leading-tight">
+                  <span aria-hidden="true">></span>
+                  <span><%= number_with_delimiter(I18n.t('landing.events_by_numbers.summer_of_making.values.participants')) %> <%= t('landing.events_by_numbers.summer_of_making.stats.participants').downcase %></span>
+                </li>
+                <li class="flex gap-2 leading-tight">
+                  <span aria-hidden="true">></span>
+                  <span><%= number_with_delimiter(I18n.t('landing.events_by_numbers.summer_of_making.values.hours')) %> <%= t('landing.events_by_numbers.summer_of_making.stats.hours').downcase %></span>
+                </li>
+                <li class="flex gap-2 leading-tight">
+                  <span aria-hidden="true">></span>
+                  <span><%= number_with_delimiter(I18n.t('landing.events_by_numbers.summer_of_making.values.prizes_shipped')) %> <%= t('landing.events_by_numbers.summer_of_making.stats.prizes_shipped').downcase %></span>
+                </li>
+              </ul>
+            </div>
+          </section>
+
+          <%# High Seas panel %>
+          <section
+            role="tabpanel"
+            hidden
+            data-event-numbers-target="panel"
+            data-key="high_seas"
+            class="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-blue-50 via-purple-50 to-white dark:from-purple-950/30 dark:via-indigo-950/20 dark:to-background shadow-sm"
+          >
+            <div aria-hidden="true" class="pointer-events-none absolute inset-0 opacity-[0.06]" style="background-image: radial-gradient(circle at 1px 1px, rgba(15,23,42,0.25) 1px, transparent 0); background-size: 26px 26px;"></div>
+            <div aria-hidden="true" class="pointer-events-none absolute -right-24 -top-16 w-[34rem] h-[34rem] rounded-full bg-gradient-to-br from-blue-400/20 to-purple-600/15 blur-3xl"></div>
+
+            <div class="relative p-10 md:p-12 lg:p-14">
+              <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
+                <div class="min-w-0">
+                  <p class="text-xs md:text-sm font-semibold tracking-wider text-purple-700 dark:text-purple-400/70"><%= t('landing.events_by_numbers.high_seas.category') %></p>
+                  <div class="mt-2 flex items-center gap-3">
+                    <h3 class="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-purple-50"><%= t('landing.events_by_numbers.high_seas.title') %></h3>
+                    <img src="/landing/high_seas_favicon.svg" alt="" class="w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 flex-shrink-0">
+                  </div>
+                  <p class="mt-4 text-base md:text-lg lg:text-xl text-slate-700 dark:text-purple-100/80 max-w-2xl leading-relaxed">
+                    <%= t('landing.events_by_numbers.high_seas.description') %>
+                  </p>
+                </div>
+
+                <%= link_to t('landing.events_by_numbers.high_seas.url'), target: "_blank", rel: "noopener", class: "inline-flex items-center justify-center rounded-full border border-purple-300 dark:border-purple-400/30 bg-white/60 px-4 py-2 text-sm font-semibold text-slate-900 dark:text-purple-50 hover:bg-white/80 transition-colors flex-shrink-0" do %>
+                  <%= t('landing.events_by_numbers.high_seas.cta') %>
+                  <span class="ml-2 text-purple-600 dark:text-purple-300/60">↗</span>
+                <% end %>
+              </div>
+
+              <ul class="mt-10 space-y-2 text-black font-bold dark:text-white">
+                <li class="flex gap-2 leading-tight">
+                  <span aria-hidden="true">></span>
+                  <span><%= number_with_delimiter(I18n.t('landing.events_by_numbers.high_seas.values.participants')) %> <%= t('landing.events_by_numbers.high_seas.stats.participants').downcase %></span>
+                </li>
+                <li class="flex gap-2 leading-tight">
+                  <span aria-hidden="true">></span>
+                  <span><%= number_with_delimiter(I18n.t('landing.events_by_numbers.high_seas.values.hours')) %> <%= t('landing.events_by_numbers.high_seas.stats.hours').downcase %></span>
+                </li>
+                <li class="flex gap-2 leading-tight">
+                  <span aria-hidden="true">></span>
+                  <span><%= number_with_delimiter(I18n.t('landing.events_by_numbers.high_seas.values.prizes_shipped')) %> <%= t('landing.events_by_numbers.high_seas.stats.prizes_shipped').downcase %></span>
+                </li>
+              </ul>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const enhanceEventNumbers = () => {
+      // If Stimulus already registered the controller, skip the fallback
+      if (window.Stimulus?.router?.modulesByIdentifier?.has("event-numbers")) return;
+
+      const root = document.querySelector("[data-controller='event-numbers']");
+      if (!root || root.dataset.eventNumbersEnhanced) return;
+
+      const tabs = [...root.querySelectorAll("[data-event-numbers-target='tab']")];
+      const panels = [...root.querySelectorAll("[data-event-numbers-target='panel']")];
+      if (!tabs.length || !panels.length) return;
+
+      const setActive = (key) => {
+        tabs.forEach((tab) => {
+          const isActive = tab.dataset.key === key;
+          tab.setAttribute("aria-selected", isActive);
+          tab.dataset.state = isActive ? "active" : "inactive";
+        });
+
+        panels.forEach((panel) => {
+          const isActive = panel.dataset.key === key;
+          panel.hidden = !isActive;
+          panel.dataset.state = isActive ? "active" : "inactive";
+        });
+      };
+
+      const initialKey = root.dataset.eventNumbersActiveValue || tabs[0].dataset.key;
+      setActive(initialKey);
+
+      tabs.forEach((tab) => {
+        tab.addEventListener("click", () => setActive(tab.dataset.key));
+      });
+
+      root.dataset.eventNumbersEnhanced = "true";
+    };
+
+    document.addEventListener("turbo:load", enhanceEventNumbers);
+    document.addEventListener("DOMContentLoaded", enhanceEventNumbers);
+  })();
+</script>
+
+<%# FAQ section (landing already explains everything; no extra "two ways to earn" section) %>
+<div class="relative isolate overflow-hidden" id="faq">
+  <div aria-hidden="true" class="pointer-events-none absolute inset-0 bg-background"></div>
+  <div aria-hidden="true" class="pointer-events-none absolute inset-0 opacity-[0.02]" style="background-image: url('<%= asset_path('patterns/pyramid-outline.svg') %>'); background-size: 60px;"></div>
+
+  <div class="container relative z-10 pt-32 lg:pt-36 pb-28 lg:pb-36">
+    <div class="text-center mb-16 lg:mb-20">
+      <h2 class="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight">
+        <%= t('landing.faq.title') %>
+      </h2>
+    </div>
+
+    <div class="max-w-3xl mx-auto space-y-2">
+      <% faq_items = I18n.t('faq.items', default: []) %>
+      <% if faq_items.is_a?(Array) %>
+        <% faq_items.each do |faq| %>
+          <details class="group border-b border-border/60">
+            <summary class="flex items-center justify-between px-1 py-3 cursor-pointer list-none hover:text-foreground transition-colors">
+              <span class="font-semibold text-foreground pr-4"><%= faq[:question] %></span>
+              <span class="flex-shrink-0 transition-transform duration-200 group-open:rotate-180">
+                <%= icon :chevron_down, size: 20, class_name: "text-foreground/50" %>
+              </span>
+            </summary>
+            <div class="px-1 pb-4 text-foreground/70 leading-relaxed text-sm">
+              <%= faq[:answer].html_safe %>
+            </div>
+          </details>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+</div>

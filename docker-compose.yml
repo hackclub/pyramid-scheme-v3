@@ -1,0 +1,126 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: pyramid
+      POSTGRES_PASSWORD: pyramid_dev
+      POSTGRES_DB: pyramid_development
+    ports:
+      - "6373:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pyramid -d pyramid_development"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Test database for running tests
+  db-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: pyramid
+      POSTGRES_PASSWORD: pyramid_dev
+      POSTGRES_DB: pyramid_test
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pyramid -d pyramid_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  pyramid:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    environment:
+      - RAILS_ENV=development
+      - PORT=4444
+      - DATABASE_URL=postgres://pyramid:pyramid_dev@db:5432/pyramid_development
+      - TEST_DATABASE_URL=postgres://pyramid:pyramid_dev@db-test:5432/pyramid_test
+      - ADMIN_KEY=${ADMIN_KEY:-dev_admin_key}
+      - HC_AUTH_CLIENT_ID=${HC_AUTH_CLIENT_ID:-}
+      - HC_AUTH_SECRET=${HC_AUTH_SECRET:-}
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN:-}
+      - ADMIN_NOTIFICATION_SLACK_ID=${ADMIN_NOTIFICATION_SLACK_ID:-}
+      - APP_HOST=http://localhost:4444
+      - QREADER_URL=http://qreader-primary:4445
+      - BACKEND_PORT=4444
+      - AZURE_STORAGE_ACCOUNT_NAME=${AZURE_STORAGE_ACCOUNT_NAME:-}
+      - AZURE_STORAGE_CONTAINER=${AZURE_STORAGE_CONTAINER:-}
+      - AZURE_STORAGE_SAS_TOKEN=${AZURE_STORAGE_SAS_TOKEN:-}
+      - AZURE_STORAGE_ACCESS_KEY=${AZURE_STORAGE_ACCESS_KEY:-}
+      - AIRTABLE_PAT=${AIRTABLE_PAT:-}
+      - AIRTABLE_BASE_ID=${AIRTABLE_BASE_ID:-}
+      - AIRTABLE_USERS_TABLE_ID=${AIRTABLE_USERS_TABLE_ID:-}
+      - AIRTABLE_RSVPS_TABLE_ID=${AIRTABLE_RSVPS_TABLE_ID:-}
+      - USE_LOCAL_STORAGE=${USE_LOCAL_STORAGE:-true}
+      # Enable asset compilation in development for predictability
+      - RAILS_SERVE_STATIC_FILES=true
+    ports:
+      - "4444:4444"
+    depends_on:
+      db:
+        condition: service_healthy
+      db-test:
+        condition: service_healthy
+      qreader-primary:
+        condition: service_started
+    restart: unless-stopped
+    # Run Rails + Tailwind watcher in the same container via Procfile.dev
+    command: bin/dev
+    tty: true
+    stdin_open: true
+    volumes:
+      - .:/rails
+      - node_modules:/rails/node_modules
+      - bundle_cache:/usr/local/bundle
+      # Persist generated assets between restarts
+      - rails_assets:/rails/app/assets/builds
+
+  qreader-primary:
+    build:
+      context: ./qreader
+      dockerfile: Dockerfile
+    environment:
+      - PORT=4445
+      - ADMIN_KEY=${ADMIN_KEY}
+    ports:
+      - "4445:4445"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4445/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  proxy:
+    build:
+      context: ./proxy
+      dockerfile: Dockerfile
+    environment:
+      - PORT=4446
+      - DATABASE_URL=postgres://pyramid:pyramid_dev@db:5432/pyramid_development
+    ports:
+      - "4446:4446"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4446/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+  postgres_test_data:
+  node_modules:
+  bundle_cache:
+  rails_assets:

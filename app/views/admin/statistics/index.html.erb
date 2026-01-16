@@ -1,0 +1,98 @@
+<% content_for :title, "Statistics" %>
+
+<div class="mb-6">
+  <h1 class="text-2xl font-bold tracking-tight text-foreground">Statistics</h1>
+  <p class="text-sm text-muted-foreground mt-1">Platform analytics and trends</p>
+</div>
+
+<%# Time range selector %>
+<div class="flex gap-1 mb-6 p-1 bg-muted rounded-lg w-fit" data-controller="stats-range">
+  <% %w[1d 5d 1m 3m 1y all].each do |range| %>
+    <%= link_to range.upcase,
+        admin_statistics_path(range: range),
+        class: "px-3 py-1.5 text-xs font-medium rounded-md transition-colors #{@range == range ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}",
+        data: { range: range } %>
+  <% end %>
+</div>
+
+<div class="grid gap-6 lg:grid-cols-2" data-controller="stats-charts" data-stats-charts-range-value="<%= @range %>">
+  <%# Growth Chart %>
+  <div class="rounded-lg border border-border bg-card shadow-sm">
+    <div class="p-4 border-b border-border flex items-center justify-between">
+      <h3 class="text-sm font-semibold text-foreground">Growth</h3>
+      <div class="flex gap-1 p-0.5 bg-muted rounded-md">
+        <button type="button"
+                class="chart-mode-btn px-2 py-1 text-xs font-medium rounded transition-colors bg-background text-foreground shadow-sm"
+                data-action="click->stats-charts#switchMode"
+                data-stats-charts-chart-param="growth"
+                data-stats-charts-mode-param="users">
+          Users
+        </button>
+        <button type="button"
+                class="chart-mode-btn px-2 py-1 text-xs font-medium rounded transition-colors text-muted-foreground hover:text-foreground"
+                data-action="click->stats-charts#switchMode"
+                data-stats-charts-chart-param="growth"
+                data-stats-charts-mode-param="referrals">
+          Referrals
+        </button>
+      </div>
+    </div>
+    <div class="p-4">
+      <canvas id="growthChart" height="200"></canvas>
+    </div>
+  </div>
+
+  <%# Success Chart %>
+  <div class="rounded-lg border border-border bg-card shadow-sm">
+    <div class="p-4 border-b border-border flex items-center justify-between">
+      <h3 class="text-sm font-semibold text-foreground">Success</h3>
+      <div class="flex gap-1 p-0.5 bg-muted rounded-md">
+        <button type="button"
+                class="chart-mode-btn px-2 py-1 text-xs font-medium rounded transition-colors bg-background text-foreground shadow-sm"
+                data-action="click->stats-charts#switchMode"
+                data-stats-charts-chart-param="success"
+                data-stats-charts-mode-param="completed_referrals">
+          Referrals
+        </button>
+        <button type="button"
+                class="chart-mode-btn px-2 py-1 text-xs font-medium rounded transition-colors text-muted-foreground hover:text-foreground"
+                data-action="click->stats-charts#switchMode"
+                data-stats-charts-chart-param="success"
+                data-stats-charts-mode-param="verified_posters">
+          Posters
+        </button>
+      </div>
+    </div>
+    <div class="p-4">
+      <canvas id="successChart" height="200"></canvas>
+    </div>
+  </div>
+
+  <%# Traffic Chart %>
+  <div class="lg:col-span-2 rounded-lg border border-border bg-card shadow-sm">
+    <div class="p-4 border-b border-border flex items-center justify-between">
+      <h3 class="text-sm font-semibold text-foreground">Traffic</h3>
+      <div class="flex gap-1 p-0.5 bg-muted rounded-md">
+        <button type="button"
+                class="chart-mode-btn px-2 py-1 text-xs font-medium rounded transition-colors bg-background text-foreground shadow-sm"
+                data-action="click->stats-charts#switchMode"
+                data-stats-charts-chart-param="traffic"
+                data-stats-charts-mode-param="proxy_hits">
+          Referral Hits
+        </button>
+        <button type="button"
+                class="chart-mode-btn px-2 py-1 text-xs font-medium rounded transition-colors text-muted-foreground hover:text-foreground"
+                data-action="click->stats-charts#switchMode"
+                data-stats-charts-chart-param="traffic"
+                data-stats-charts-mode-param="poster_scans">
+          Poster Scans
+        </button>
+      </div>
+    </div>
+    <div class="p-4">
+      <canvas id="trafficChart" height="150"></canvas>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

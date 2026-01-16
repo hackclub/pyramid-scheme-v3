@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "clobbering cached assets…"
+bin/rails assets:clobber
+
+echo "building Tailwind CSS again…"
+bin/rails tailwindcss:build
+
+echo "precompiling assets…"
+bin/rails assets:precompile

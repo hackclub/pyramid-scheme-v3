@@ -1,0 +1,62 @@
+<% content_for :title, "Airtable Configuration" %>
+
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold">Airtable Configuration</h1>
+      <p class="text-muted-foreground">Configure Airtable sync for each campaign</p>
+    </div>
+  </div>
+
+  <% if @campaigns.any? %>
+    <div class="grid gap-4">
+      <% @campaigns.each do |campaign| %>
+        <%= link_to admin_campaign_airtable_config_path(campaign), class: "block" do %>
+          <%= render_card class: "p-5 hover:bg-secondary/50 transition-colors" do %>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center">
+                  <%= icon :database, size: 20, class_name: "text-muted-foreground" %>
+                </div>
+                <div>
+                  <h3 class="font-semibold"><%= campaign.name %></h3>
+                  <% if campaign.airtable_configured? %>
+                    <p class="text-sm text-muted-foreground">Base: <%= campaign.airtable_base_id %></p>
+                  <% elsif campaign.uses_global_airtable? %>
+                    <p class="text-sm text-muted-foreground">Using global fallback base</p>
+                  <% else %>
+                    <p class="text-sm text-amber-500">Not configured</p>
+                  <% end %>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <% if campaign.airtable_configured? %>
+                  <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-500/10 text-green-500">
+                    Configured
+                  </span>
+                <% elsif campaign.uses_global_airtable? %>
+                  <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-blue-500/10 text-blue-500">
+                    Global Fallback
+                  </span>
+                <% else %>
+                  <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-amber-500/10 text-amber-500">
+                    Setup Required
+                  </span>
+                <% end %>
+                <%= icon :chevron_right, size: 20, class_name: "text-muted-foreground" %>
+              </div>
+            </div>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
+  <% else %>
+    <%= render_card class: "p-10 text-center" do %>
+      <%= icon :database, size: 40, class_name: "mx-auto text-muted-foreground mb-4" %>
+      <p class="text-lg font-semibold">No campaigns</p>
+      <p class="text-sm text-muted-foreground mt-1">Create a campaign first to configure Airtable sync.</p>
+      <%= link_to "Create Campaign", new_admin_campaign_path, class: "inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90" %>
+    <% end %>
+  <% end %>
+</div>

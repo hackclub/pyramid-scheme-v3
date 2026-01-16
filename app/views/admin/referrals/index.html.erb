@@ -1,0 +1,203 @@
+<% content_for :title, "Referrals" %>
+
+<div class="flex justify-between items-center mb-6">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight text-foreground">Referrals</h1>
+    <p class="text-sm text-muted-foreground mt-1">Track referrals across campaigns</p>
+  </div>
+</div>
+
+<div class="mb-6">
+  <div class="flex flex-row justify-between">
+    <!-- Total Referrals -->
+    <div class="flex-1 text-center">
+      <div class="flex items-center justify-center gap-3 mb-3">
+        <%= icon :share_2, size: 24 %>
+        <div class="text-sm font-normal text-muted-foreground tracking-wider">Total Referrals</div>
+      </div>
+      <div class="text-4xl font-black text-foreground tabular-nums mb-1"><%= number_with_delimiter(@stats[:total]) %></div>
+      <div class="text-xs text-muted-foreground"><%= number_with_delimiter(@stats[:completed]) %> completed · <%= number_with_delimiter(@stats[:pending] + @stats[:id_verified]) %> pending</div>
+    </div>
+
+    <!-- Completion Rate -->
+    <div class="flex-1 text-center">
+      <div class="flex items-center justify-center gap-3 mb-3">
+        <%= icon :trending_up, size: 24 %>
+        <div class="text-sm font-normal text-muted-foreground tracking-wider">Completion Rate</div>
+      </div>
+      <% completion_rate = @stats[:total].zero? ? 0 : (@stats[:completed].to_f / @stats[:total] * 100).round(1) %>
+      <div class="text-4xl font-black text-foreground tabular-nums mb-1"><%= completion_rate %>%</div>
+      <div class="text-xs text-muted-foreground"><%= number_with_delimiter(@stats[:completed]) %> of <%= number_with_delimiter(@stats[:total]) %> completed</div>
+    </div>
+
+    <!-- Status Breakdown -->
+    <div class="flex-1 text-center">
+      <div class="flex items-center justify-center gap-3 mb-3">
+        <%= icon :bar_chart_3, size: 24 %>
+        <div class="text-sm font-normal text-muted-foreground tracking-wider">Status Breakdown</div>
+      </div>
+      <div class="flex items-center justify-center gap-6 mb-1">
+        <div class="text-center">
+          <div class="text-4xl font-black text-foreground tabular-nums"><%= number_with_delimiter(@stats[:pending]) %></div>
+          <div class="text-xs text-muted-foreground">Pending</div>
+        </div>
+        <div class="text-center">
+          <div class="text-4xl font-black text-foreground tabular-nums"><%= number_with_delimiter(@stats[:id_verified]) %></div>
+          <div class="text-xs text-muted-foreground">ID Verified</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="rounded-lg border border-border bg-card p-4 shadow-sm mb-6">
+  <%= form_with url: admin_referrals_path, method: :get, class: "space-y-4", id: "referrals-filter-form" do %>
+    <!-- Search -->
+    <div>
+      <input
+        type="text"
+        name="q"
+        value="<%= params[:q] %>"
+        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        placeholder="Search by referrer or referred email..."
+      >
+    </div>
+
+    <!-- Filters Grid -->
+    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <!-- Status Filter -->
+      <div>
+        <%= filter_dropdown "status", 
+          [["all", "All Statuses"], ["0", "Pending"], ["1", "ID Verified"], ["2", "Completed"]], 
+          params[:status] || "all", 
+          "referrals-filter-form" %>
+      </div>
+
+      <!-- Referral Type Filter -->
+      <div>
+        <%= filter_dropdown "referral_type", 
+          [["all", "All Types"], ["link", "Link"], ["poster", "Poster"]], 
+          params[:referral_type] || "all", 
+          "referrals-filter-form" %>
+      </div>
+
+      <!-- Poster Subtype Filter -->
+      <div>
+        <%= filter_dropdown "poster_subtype", 
+          [["all", "All Posters"], ["digital", "Digital Only"], ["manual", "Manual Only"]], 
+          params[:poster_subtype] || "all", 
+          "referrals-filter-form" %>
+      </div>
+
+      <!-- Campaign Filter -->
+      <div>
+        <%= filter_dropdown "campaign_id", 
+          [["", "All Campaigns"]] + @campaigns.map { |c| [c.id.to_s, c.name] }, 
+          params[:campaign_id] || "", 
+          "referrals-filter-form" %>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex gap-3 justify-end pt-4">
+      <% if params[:q].present? || params[:status].present? || params[:campaign_id].present? || params[:referral_type].present? || params[:poster_subtype].present? %>
+        <%= link_to "Clear All", admin_referrals_path, class: "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
+      <% end %>
+      <button type="submit" class="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+        Apply Filters
+      </button>
+    </div>
+  <% end %>
+</div>
+
+<div class="rounded-lg border border-border bg-card shadow-sm">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="border-b border-border">
+        <tr class="text-left text-xs text-muted-foreground">
+          <th class="px-4 py-2">Referrer</th>
+          <th class="px-4 py-2">Referred</th>
+          <th class="px-4 py-2">Type</th>
+          <th class="px-4 py-2">Status</th>
+          <th class="px-4 py-2">Progress</th>
+          <th class="px-4 py-2"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-border">
+        <% if @referrals.any? %>
+          <% @referrals.each do |referral| %>
+            <tr class="hover:bg-muted/30">
+              <td class="px-4 py-2">
+                <%= link_to referral.referrer.display_name, admin_user_path(referral.referrer), class: "font-medium text-foreground hover:text-primary" %>
+              </td>
+
+              <td class="px-4 py-2">
+                <div class="text-foreground"><%= truncate(referral.referred_identifier, length: 25) %></div>
+              </td>
+
+              <td class="px-4 py-2">
+                <% if referral.referral_type == "poster" %>
+                  <% is_digital = @poster_statuses_by_user[referral.referrer_id] == "digital" %>
+                  <span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium <%= is_digital ? 'bg-purple-500/10 text-purple-500' : 'bg-blue-500/10 text-blue-500' %>">
+                    <%= is_digital ? "Digital Poster" : "Manual Poster" %>
+                  </span>
+                <% else %>
+                  <span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium bg-green-500/10 text-green-500">
+                    Link
+                  </span>
+                <% end %>
+              </td>
+
+              <td class="px-4 py-2">
+                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium <%= referral_status_badge_class(referral) %>">
+                  <%= referral_status_label(referral) %>
+                </span>
+              </td>
+
+              <td class="px-4 py-2">
+                <div class="flex items-center gap-2">
+                  <div class="flex-1 bg-muted rounded-full h-1.5 min-w-[50px]">
+                    <div class="bg-primary rounded-full h-1.5" style="width: <%= referral.progress_percentage %>%"></div>
+                  </div>
+                  <span class="text-xs text-muted-foreground whitespace-nowrap"><%= referral.tracked_minutes %>/<%= referral.campaign.required_coding_minutes %></span>
+                </div>
+              </td>
+
+              <td class="px-4 py-2 text-right">
+                <%= link_to "View", admin_referral_path(referral), class: "text-xs font-medium text-primary hover:underline" %>
+              </td>
+            </tr>
+          <% end %>
+        <% else %>
+          <tr>
+            <td colspan="6" class="px-4 py-8 text-center text-sm text-muted-foreground">
+              No referrals found
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <% if @pagy.pages > 1 %>
+    <div class="flex items-center justify-center gap-2 p-6 border-t border-border">
+      <% if @pagy.page > 1 %>
+        <%= link_to "Previous", admin_referrals_path(page: @pagy.page - 1, q: params[:q], status: params[:status], campaign_id: params[:campaign_id], referral_type: params[:referral_type], poster_subtype: params[:poster_subtype]),
+            class: "inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
+      <% end %>
+      <% (1..@pagy.pages).each do |page_num| %>
+        <% if page_num <= 3 || page_num > @pagy.pages - 3 || (page_num >= @pagy.page - 1 && page_num <= @pagy.page + 1) %>
+          <%= link_to page_num, admin_referrals_path(page: page_num, q: params[:q], status: params[:status], campaign_id: params[:campaign_id], referral_type: params[:referral_type], poster_subtype: params[:poster_subtype]),
+              class: "inline-flex items-center justify-center rounded-md w-9 h-9 text-sm font-medium #{page_num == @pagy.page ? 'bg-primary text-primary-foreground' : 'border border-border bg-background hover:bg-muted'} transition-colors" %>
+        <% elsif page_num == 4 || page_num == @pagy.pages - 3 %>
+          <span class="inline-flex items-center justify-center w-9 h-9 text-sm text-muted-foreground">...</span>
+        <% end %>
+      <% end %>
+      <% if @pagy.page < @pagy.pages %>
+        <%= link_to "Next", admin_referrals_path(page: @pagy.page + 1, q: params[:q], status: params[:status], campaign_id: params[:campaign_id], referral_type: params[:referral_type], poster_subtype: params[:poster_subtype]),
+            class: "inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

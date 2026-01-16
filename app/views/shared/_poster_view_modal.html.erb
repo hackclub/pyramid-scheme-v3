@@ -1,0 +1,219 @@
+<div data-poster-view-modal-target="dialog" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" data-state="closed">
+  <!-- Backdrop -->
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" data-action="click->poster-view-modal#closeOnBackdrop"></div>
+
+  <!-- Modal -->
+  <div class="relative campaign-modal shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+    <!-- Header -->
+    <div class="sticky top-0 campaign-modal-header px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+      <h2 class="campaign-font text-xl sm:text-2xl font-black campaign-text-primary">Poster Details</h2>
+      <button type="button"
+              data-action="click->poster-view-modal#close"
+              class="campaign-text-muted hover:campaign-text-primary transition-colors">
+        <%= icon :x, size: 24 %>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="px-4 sm:px-6 py-4 sm:py-6 space-y-4">
+      <!-- Status -->
+      <div class="campaign-panel-inner p-3 sm:p-4">
+        <% status_label, status_classes = poster_status_badge_full(poster.verification_status) %>
+        <div class="flex items-center justify-between">
+          <span class="campaign-font text-sm font-black campaign-text-primary">Status:</span>
+          <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-black campaign-font <%= status_classes %>"><%= status_label %></span>
+        </div>
+      </div>
+
+      <!-- Download Poster Button -->
+      <div class="<%= poster.verification_status == 'pending' ? 'flex flex-col sm:grid sm:grid-cols-2 gap-3' : '' %>">
+        <%= link_to download_poster_path(poster), class: "campaign-btn campaign-btn--primary #{'w-full' unless poster.verification_status == 'pending'} justify-center" do %>
+          <%= icon :download, size: 18 %>
+          Download Poster
+        <% end %>
+
+        <% if poster.verification_status == "pending" %>
+          <%= button_to poster_path(poster), method: :delete,
+              data: { turbo_confirm: "Are you sure you want to delete this poster? This cannot be undone." },
+              class: "campaign-btn campaign-btn--secondary w-full justify-center",
+              form: { data: { turbo: false } } do %>
+            <%= icon :trash_2, size: 18 %>
+            Delete
+          <% end %>
+        <% end %>
+      </div>
+
+      <!-- Location -->
+      <% unless poster.verification_status == "pending" && poster.location_description.blank? %>
+        <div class="campaign-panel-inner p-3 sm:p-4">
+          <p class="campaign-font text-sm font-black campaign-text-primary mb-2">Location:</p>
+          <p class="text-sm campaign-text-secondary"><%= poster.location_description.presence || "Not specified" %></p>
+          <% if poster.country_code.present? %>
+            <p class="text-xs campaign-text-muted mt-1">Country: <%= country_name_from_code(poster.country_code) %></p>
+          <% end %>
+        </div>
+      <% end %>
+
+      <!-- Proof Upload -->
+      <% if poster.verification_status == "pending" %>
+        <div class="campaign-panel-inner p-3 sm:p-4 space-y-3">
+          <div>
+            <p class="campaign-font text-sm font-black campaign-text-primary">Upload Proof Photo</p>
+            <p class="text-xs campaign-text-secondary mt-1">Take a clear photo of your poster in place with the QR code visible.</p>
+          </div>
+          
+          <div class="campaign-panel-inner p-3 border-2 border-current/20">
+            <p class="text-xs font-bold campaign-text-primary mb-1">Auto-Detection</p>
+            <p class="text-xs campaign-text-secondary">Our system reads the QR code and automatically matches it to the correct poster, even if you upload to the wrong one.</p>
+          </div>
+
+          <%= form_with url: upload_proof_poster_path(poster), method: :post, multipart: true, data: { turbo_frame: "proof_upload_result_#{poster.id}", poster_view_modal_target: "uploadForm" }, class: "space-y-3" do |f| %>
+            <div>
+              <label class="block campaign-font text-xs font-bold campaign-text-primary mb-1">Location (Required)</label>
+              <p class="text-xs campaign-text-secondary mb-2">Where did you put this poster? Be specific so we can verify it.</p>
+              <%= f.text_area :location_description,
+                              value: poster.location_description,
+                              rows: 2,
+                              placeholder: "e.g., Coffee shop bulletin board on Main St, next to the entrance",
+                              required: true,
+                              class: "flex min-h-[60px] w-full rounded-lg campaign-input px-3 sm:px-4 py-2 text-sm" %>
+            </div>
+
+            <div>
+              <label class="block campaign-font text-xs font-bold campaign-text-primary mb-1">Proof Image (Required)</label>
+              <%= f.file_field :proof_image,
+                               accept: "image/jpeg,image/png,image/heic,image/heif,image/webp",
+                               required: true,
+                               data: { poster_view_modal_target: "fileInputs", poster_id: poster.id, action: "change->poster-view-modal#previewProofImage" },
+                               class: "flex h-11 w-full rounded-lg campaign-input px-3 sm:px-4 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium" %>
+            </div>
+
+            <div>
+              <label class="block campaign-font text-xs font-bold campaign-text-primary mb-1">Supporting Evidence (Optional - Recommended)</label>
+              <p class="text-xs campaign-text-secondary mb-2">Add additional photos or videos to help reviewers verify your poster. Up to 50MB per file. This can help avoid review delays.</p>
+              <%= file_field_tag 'supporting_evidence[]',
+                                 multiple: true,
+                                 accept: "image/jpeg,image/png,image/heic,image/heif,image/webp,application/pdf,video/mp4,video/quicktime",
+                                 data: { poster_view_modal_target: "fileInputs", poster_id: poster.id, action: "change->poster-view-modal#previewSupportingEvidence" },
+                                 class: "flex h-11 w-full rounded-lg campaign-input px-3 sm:px-4 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium" %>
+            </div>
+
+            <!-- Upload Progress Indicator -->
+            <div data-poster-view-modal-target="uploadProgress" class="hidden">
+              <div class="flex items-center justify-center gap-2 py-3">
+                <svg class="animate-spin h-5 w-5 campaign-text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="campaign-font text-sm font-black campaign-text-primary">Uploading files...</span>
+              </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-2">
+              <%= button_tag type: "submit", data: { poster_view_modal_target: "uploadButton" }, class: "flex-1 campaign-btn campaign-btn--secondary inline-flex items-center justify-center gap-2" do %>
+                <%= icon :upload, size: 16 %>
+                Upload Proof
+              <% end %>
+
+              <%= button_to mark_digital_poster_path(poster), method: :post,
+                  data: { turbo_confirm: "Mark this poster as digital?\n\nThis means you're sharing it digitally (no physical poster). No shards will be awarded, but your link will work immediately." },
+                  class: "flex-1 campaign-btn campaign-btn--primary inline-flex items-center justify-center gap-2",
+                  form: { data: { turbo: false } } do %>
+                <%= icon :web, size: 16 %>
+                Mark Digital
+              <% end %>
+            </div>
+          <% end %>
+
+          <turbo-frame id="proof_upload_result_<%= poster.id %>"></turbo-frame>
+        </div>
+      <% end %>
+
+      <!-- Proof Image -->
+      <% if poster.proof_image.attached? %>
+        <div class="campaign-panel-inner p-3 sm:p-4">
+          <div class="flex items-center justify-between mb-2">
+            <p class="campaign-font text-sm font-black campaign-text-primary">Proof Image</p>
+            <%= link_to "View Full Size", url_for(poster.proof_image), target: "_blank", class: "text-xs campaign-text-primary hover:underline font-semibold" %>
+          </div>
+          <a href="<%= url_for(poster.proof_image) %>" target="_blank" class="block">
+            <%= image_tag poster.proof_image, class: "w-full rounded-lg border-2 border-current/20 hover:border-current/40 transition-colors cursor-pointer" %>
+          </a>
+          <p class="text-xs campaign-text-muted mt-1">
+            <%= number_to_human_size(poster.proof_image.byte_size) %> • <%= poster.proof_image.content_type %>
+          </p>
+        </div>
+      <% end %>
+
+      <!-- Supporting Evidence -->
+      <% if poster.supporting_evidence.attached? %>
+        <div class="campaign-panel-inner p-3 sm:p-4">
+          <p class="campaign-font text-sm font-black campaign-text-primary mb-3">Supporting Evidence (<%= poster.supporting_evidence.count %> file<%= poster.supporting_evidence.count == 1 ? '' : 's' %>)</p>
+          <div class="grid grid-cols-2 gap-3">
+            <% poster.supporting_evidence.each_with_index do |evidence, index| %>
+              <div class="relative group">
+                <% if evidence.image? %>
+                  <a href="<%= url_for(evidence) %>" target="_blank" class="block">
+                    <%= image_tag evidence, class: "w-full h-32 object-cover rounded-lg border-2 border-current/20 hover:border-current/40 transition-colors" %>
+                  </a>
+                <% elsif evidence.video? %>
+                  <video controls class="w-full h-32 rounded-lg border-2 border-current/20 bg-black">
+                    <source src="<%= url_for(evidence) %>" type="<%= evidence.content_type %>">
+                  </video>
+                <% else %>
+                  <a href="<%= url_for(evidence) %>" target="_blank" class="flex flex-col items-center justify-center h-32 rounded-lg border-2 border-current/20 campaign-panel-inner campaign-text-primary hover:opacity-80 transition-colors p-2">
+                    <%= icon :file, size: 24 %>
+                    <span class="text-xs mt-1 text-center truncate w-full px-2"><%= evidence.filename %></span>
+                  </a>
+                <% end %>
+                <p class="text-xs campaign-text-muted mt-1">
+                  <%= number_to_human_size(evidence.byte_size) %>
+                </p>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Stats -->
+      <div class="campaign-panel-inner p-3 sm:p-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-xs campaign-text-muted">QR Code:</p>
+            <p class="font-mono text-sm font-semibold campaign-text-primary"><%= poster.qr_code_token %></p>
+          </div>
+          <div>
+            <p class="text-xs campaign-text-muted">Referrals:</p>
+            <p class="font-mono text-sm font-semibold campaign-text-primary"><%= number_with_delimiter(poster.scan_count) %></p>
+          </div>
+          <div>
+            <p class="text-xs campaign-text-muted">Created:</p>
+            <p class="text-sm font-semibold campaign-text-primary"><%= poster.created_at.strftime("%b %d, %Y") %></p>
+          </div>
+          <% if poster.verified_at.present? %>
+            <div>
+              <p class="text-xs campaign-text-muted">Verified:</p>
+              <p class="text-sm font-semibold campaign-text-primary"><%= poster.verified_at.strftime("%b %d, %Y") %></p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <% if poster.rejection_reason.present? %>
+        <div class="campaign-panel-inner p-3 sm:p-4 border-2 border-red-500/30">
+          <p class="campaign-font text-sm font-black text-red-600 mb-2">Rejection Reason:</p>
+          <p class="text-sm campaign-text-secondary"><%= poster.rejection_reason %></p>
+        </div>
+      <% end %>
+
+      <!-- Close Button -->
+      <div class="pt-2">
+        <button type="button"
+                data-action="click->poster-view-modal#close"
+                class="w-full px-6 py-3 campaign-font font-black text-sm campaign-text-muted hover:campaign-text-primary transition-colors rounded-lg hover:bg-black/5">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

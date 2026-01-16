@@ -1,0 +1,88 @@
+<%= form_with(model: [:admin, shop_item], class: "space-y-6") do |form| %>
+  <% if shop_item.errors.any? %>
+    <div class="rounded-lg border border-destructive bg-destructive/10 p-4">
+      <h3 class="text-sm font-medium text-destructive mb-2"><%= pluralize(shop_item.errors.count, "error") %> prohibited this item from being saved:</h3>
+      <ul class="list-disc list-inside text-sm text-destructive">
+        <% shop_item.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="grid gap-6 md:grid-cols-2">
+    <div class="space-y-2">
+      <%= form.label :name, class: "text-sm font-medium text-foreground" %>
+      <%= form.text_field :name, required: true, class: "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" %>
+    </div>
+
+    <div class="space-y-2">
+      <%= form.label :category, class: "text-sm font-medium text-foreground" %>
+      <%= form.text_field :category, class: "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" %>
+    </div>
+  </div>
+
+  <div class="space-y-2">
+    <%= form.label :description, class: "text-sm font-medium text-foreground" %>
+    <%= form.text_area :description, rows: 3, class: "flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" %>
+  </div>
+
+  <div class="space-y-2">
+    <%= form.label :image_url, "Image URL", class: "text-sm font-medium text-foreground" %>
+    <%= form.text_field :image_url, placeholder: "https://...", class: "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" %>
+    <% if shop_item.image_url.present? %>
+      <div class="mt-2">
+        <%= image_tag shop_item.image_url, class: "w-24 h-24 rounded object-cover border border-border" %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="grid gap-6 md:grid-cols-3">
+    <div class="space-y-2">
+      <%= form.label :price_shards, "Price (Shards)", class: "text-sm font-medium text-foreground" %>
+      <%= form.number_field :price_shards, required: true, min: 0, class: "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" %>
+    </div>
+
+    <div class="space-y-2">
+      <%= form.label :stock_quantity, "Stock Quantity", class: "text-sm font-medium text-foreground" %>
+      <%= form.number_field :stock_quantity, min: 0, disabled: shop_item.unlimited_stock?, class: "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" %>
+    </div>
+
+    <div class="space-y-2">
+      <%= form.label :max_per_user, "Max Per User", class: "text-sm font-medium text-foreground" %>
+      <%= form.number_field :max_per_user, min: 0, placeholder: "Unlimited", class: "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" %>
+    </div>
+  </div>
+
+  <div class="rounded-lg border border-border bg-card/50 p-4" data-controller="toggle">
+    <h3 class="text-sm font-semibold text-foreground mb-3">Sale Settings</h3>
+
+    <div class="flex items-center space-x-2 mb-4">
+      <%= form.check_box :on_sale, class: "h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary", data: { action: "change->toggle#toggle", toggle_target: "checkbox" } %>
+      <%= form.label :on_sale, "Item on Sale", class: "text-sm font-medium text-foreground" %>
+    </div>
+
+    <div class="space-y-2">
+      <%= form.label :sale_price_shards, "Sale Price (Shards)", class: "text-sm font-medium text-foreground" %>
+      <%= form.number_field :sale_price_shards, min: 1, placeholder: "Enter sale price", class: "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50", data: { toggle_target: "toggleable" }, disabled: !shop_item.on_sale? %>
+      <p class="text-xs text-muted-foreground">Must be less than regular price</p>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-6">
+    <div class="flex items-center space-x-2">
+      <%= form.check_box :unlimited_stock, class: "h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" %>
+      <%= form.label :unlimited_stock, "Unlimited Stock", class: "text-sm font-medium text-foreground" %>
+    </div>
+
+    <div class="flex items-center space-x-2">
+      <%= form.check_box :active, class: "h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" %>
+      <%= form.label :active, "Active", class: "text-sm font-medium text-foreground" %>
+    </div>
+  </div>
+
+  <div class="flex justify-end gap-3 pt-4">
+    <%= link_to "Cancel", admin_shop_items_path, class: "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
+    <%= form.submit class: "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer" %>
+  </div>
+<% end %>

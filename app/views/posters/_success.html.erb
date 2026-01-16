@@ -1,0 +1,15 @@
+<div class="campaign-panel-inner p-4 mt-4">
+  <div class="flex items-center gap-3">
+    <div class="flex-shrink-0">
+      <%= icon :circle_check, size: 24, class_name: "text-green-600" %>
+    </div>
+    <div>
+      <p class="campaign-font text-sm font-black campaign-text-primary"><%= t('posters.success.submitted_title') %></p>
+      <% if poster.verification_status == "success" %>
+        <p class="text-xs campaign-text-secondary mt-1"><%= t('posters.success.auto_verified_body', count: poster.campaign.poster_shards) %></p>
+      <% else %>
+        <p class="text-xs campaign-text-secondary mt-1"><%= t('posters.success.pending_body') %></p>
+      <% end %>
+    </div>
+  </div>
+</div>

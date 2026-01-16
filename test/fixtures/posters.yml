@@ -1,0 +1,78 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+pending_poster:
+  user: regular_user
+  campaign: flavortown
+  qr_code_token: PENDINGTOKEN
+  referral_code: PEND1234
+  verification_status: pending
+  poster_type: color
+  created_at: <%= 1.day.ago.to_fs(:db) %>
+  updated_at: <%= 1.day.ago.to_fs(:db) %>
+  metadata: {}
+  detected_qr_codes: []
+
+in_review_poster:
+  user: regular_user
+  campaign: flavortown
+  qr_code_token: REVIEWTOKEN1
+  referral_code: REVI1234
+  verification_status: in_review
+  poster_type: color
+  location_description: Coffee shop downtown
+  created_at: <%= 2.days.ago.to_fs(:db) %>
+  updated_at: <%= 1.day.ago.to_fs(:db) %>
+  metadata: {}
+  detected_qr_codes: []
+
+verified_poster:
+  user: poster_champion
+  campaign: flavortown
+  qr_code_token: VERIFITOKEN1
+  referral_code: VERI1234
+  verification_status: success
+  poster_type: color
+  location_description: Library bulletin board
+  verified_at: <%= 12.hours.ago.to_fs(:db) %>
+  created_at: <%= 3.days.ago.to_fs(:db) %>
+  updated_at: <%= 12.hours.ago.to_fs(:db) %>
+  metadata: {}
+  detected_qr_codes: []
+
+rejected_poster:
+  user: regular_user
+  campaign: flavortown
+  qr_code_token: REJECTTOKEN1
+  referral_code: REJE1234
+  verification_status: rejected
+  poster_type: bw
+  location_description: Some location
+  rejection_reason: "QR code not visible in photo"
+  created_at: <%= 5.days.ago.to_fs(:db) %>
+  updated_at: <%= 4.days.ago.to_fs(:db) %>
+  metadata: {}
+  detected_qr_codes: []
+
+aces_poster:
+  user: regular_user
+  campaign: aces
+  qr_code_token: ACESTOKEN123
+  referral_code: ACES1234
+  verification_status: pending
+  poster_type: color
+  created_at: <%= 1.day.ago.to_fs(:db) %>
+  updated_at: <%= 1.day.ago.to_fs(:db) %>
+  metadata: {}
+  detected_qr_codes: []
+
+construct_poster:
+  user: regular_user
+  campaign: construct
+  qr_code_token: CONSTTOKEN12
+  referral_code: CONS1234
+  verification_status: pending
+  poster_type: color
+  created_at: <%= 1.day.ago.to_fs(:db) %>
+  updated_at: <%= 1.day.ago.to_fs(:db) %>
+  metadata: {}
+  detected_qr_codes: []

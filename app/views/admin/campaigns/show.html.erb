@@ -1,0 +1,254 @@
+<% content_for :title, @campaign.name %>
+
+<div class="mb-8">
+  <%= link_to "← Back to Campaigns", admin_campaigns_path, class: "text-sm text-muted-foreground hover:text-foreground transition-colors" %>
+</div>
+
+<div class="flex justify-between items-start mb-8">
+  <div>
+    <h1 class="text-3xl font-bold tracking-tight text-foreground"><%= @campaign.name %></h1>
+    <p class="text-sm text-muted-foreground mt-1">
+      Slug: <code class="bg-muted px-1 py-0.5 rounded"><%= @campaign.slug %></code>
+      <% if @campaign.subdomain.present? %>
+        • Subdomain: <code class="bg-muted px-1 py-0.5 rounded"><%= @campaign.subdomain %>.hack.club</code>
+      <% end %>
+    </p>
+  </div>
+  <div class="flex gap-2">
+    <%= link_to "Edit", edit_admin_campaign_path(@campaign), class: "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors" %>
+    <%= link_to "Assets", admin_campaign_assets_path(@campaign), class: "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
+    <%= link_to "Airtable Config", admin_campaign_airtable_config_path(@campaign), class: "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+  <!-- Status -->
+  <div class="rounded-lg border border-border bg-card p-6">
+    <div class="text-sm text-muted-foreground mb-1">Status</div>
+    <div class="text-2xl font-bold">
+      <span class="<%= @campaign.active? && @campaign.running? ? 'text-green-500' : 'text-muted-foreground' %>">
+        <%= @campaign.active? ? (@campaign.running? ? 'Running' : 'Scheduled') : 'Inactive' %>
+      </span>
+    </div>
+  </div>
+
+  <!-- Referrals -->
+  <div class="rounded-lg border border-border bg-card p-6">
+    <div class="text-sm text-muted-foreground mb-1">Total Referrals</div>
+    <div class="text-2xl font-bold"><%= number_with_delimiter(@referral_stats[:total]) %></div>
+    <div class="text-xs text-muted-foreground mt-1">
+      <%= @referral_stats[:completed] %> completed • <%= @referral_stats[:pending] %> pending
+    </div>
+  </div>
+
+  <!-- Posters -->
+  <div class="rounded-lg border border-border bg-card p-6">
+    <div class="text-sm text-muted-foreground mb-1">Total Posters</div>
+    <div class="text-2xl font-bold"><%= number_with_delimiter(@poster_stats[:total]) %></div>
+    <div class="text-xs text-muted-foreground mt-1">
+      <%= @poster_stats[:verified] %> verified • <%= @poster_stats[:pending] %> pending
+    </div>
+  </div>
+
+  <!-- Shards -->
+  <div class="rounded-lg border border-border bg-card p-6">
+    <div class="text-sm text-muted-foreground mb-1">Shard Config</div>
+    <div class="text-lg font-bold">
+      <%= @campaign.referral_shards %> per referral •
+      <%= @campaign.poster_shards %> per poster
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <!-- Campaign Details -->
+  <div class="rounded-lg border border-border bg-card shadow-sm">
+    <div class="p-6 border-b border-border">
+      <h2 class="text-lg font-semibold">Campaign Details</h2>
+    </div>
+    <div class="p-6 space-y-4">
+      <div>
+        <div class="text-sm text-muted-foreground">Theme</div>
+        <div class="font-medium"><%= @campaign.theme.humanize %></div>
+      </div>
+      <div>
+        <div class="text-sm text-muted-foreground">Required Coding Minutes</div>
+        <div class="font-medium"><%= @campaign.required_coding_minutes %> minutes</div>
+      </div>
+      <div>
+        <div class="text-sm text-muted-foreground">Date Range</div>
+        <div class="font-medium">
+          <% if @campaign.starts_at && @campaign.ends_at %>
+            <%= @campaign.starts_at.strftime("%B %d, %Y") %> - <%= @campaign.ends_at.strftime("%B %d, %Y") %>
+          <% elsif @campaign.starts_at %>
+            Starts <%= @campaign.starts_at.strftime("%B %d, %Y") %>
+          <% elsif @campaign.ends_at %>
+            Ends <%= @campaign.ends_at.strftime("%B %d, %Y") %>
+          <% else %>
+            No date restrictions
+          <% end %>
+        </div>
+      </div>
+      <% if @campaign.description.present? %>
+        <div>
+          <div class="text-sm text-muted-foreground">Description</div>
+          <div class="text-sm"><%= @campaign.description %></div>
+        </div>
+      <% end %>
+      <div>
+        <div class="text-sm text-muted-foreground">Referral URL</div>
+        <div class="font-mono text-sm text-primary"><%= @campaign.referral_base_url %></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assets Overview -->
+  <div class="rounded-lg border border-border bg-card shadow-sm">
+    <div class="p-6 border-b border-border flex justify-between items-center">
+      <h2 class="text-lg font-semibold">Assets</h2>
+      <%= link_to "Manage", admin_campaign_assets_path(@campaign), class: "text-sm text-primary hover:underline" %>
+    </div>
+    <div class="p-6">
+      <% if @assets.any? %>
+        <div class="space-y-3">
+          <% @assets.each do |type, assets| %>
+            <div class="flex justify-between items-center py-2">
+              <span class="text-sm"><%= type.humanize.pluralize %></span>
+              <span class="text-sm font-medium"><%= assets.count %></span>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="text-center py-8 text-muted-foreground">
+          <p class="text-sm">No assets uploaded yet.</p>
+          <%= link_to "Upload Assets", new_admin_campaign_asset_path(@campaign), class: "text-sm text-primary hover:underline" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Airtable Status -->
+  <div class="rounded-lg border border-border bg-card shadow-sm">
+    <div class="p-6 border-b border-border flex justify-between items-center">
+      <h2 class="text-lg font-semibold">Airtable Integration</h2>
+      <%= link_to "Configure", admin_campaign_airtable_config_path(@campaign), class: "text-sm text-primary hover:underline" %>
+    </div>
+    <div class="p-6">
+      <% if @campaign.airtable_configured? %>
+        <div class="space-y-4">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+            <span class="text-sm">Sync enabled</span>
+          </div>
+          <div>
+            <div class="text-sm text-muted-foreground">Base ID</div>
+            <div class="font-mono text-xs"><%= @campaign.airtable_base_id %></div>
+          </div>
+          <div>
+            <div class="text-sm text-muted-foreground">Table ID</div>
+            <div class="font-mono text-xs"><%= @campaign.airtable_table_id %></div>
+          </div>
+          
+          <% if @airtable_sync_runs.any? %>
+            <div class="mt-4">
+              <div class="text-sm text-muted-foreground mb-2">Recent Syncs</div>
+              <div class="space-y-1">
+                <% @airtable_sync_runs.each do |run| %>
+                  <div class="text-xs flex justify-between">
+                    <span class="<%= run.status == 'success' ? 'text-green-500' : 'text-red-500' %>">
+                      <%= run.status.humanize %>
+                    </span>
+                    <span class="text-muted-foreground"><%= time_ago_in_words(run.created_at) %> ago</span>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="text-center py-8 text-muted-foreground">
+          <p class="text-sm">Airtable sync not configured.</p>
+          <%= link_to "Set up Airtable", admin_campaign_airtable_config_path(@campaign), class: "text-sm text-primary hover:underline" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Theme Config -->
+  <div class="rounded-lg border border-border bg-card shadow-sm">
+    <div class="p-6 border-b border-border">
+      <h2 class="text-lg font-semibold">Theme Configuration</h2>
+    </div>
+    <div class="p-6 space-y-4">
+      <div class="grid gap-4 md:grid-cols-2">
+        <div>
+          <div class="text-sm text-muted-foreground mb-1">Theme</div>
+          <div class="font-medium"><%= @campaign.theme %></div>
+        </div>
+        <% if @campaign.subdomain.present? %>
+          <div>
+            <div class="text-sm text-muted-foreground mb-1">Subdomain</div>
+            <div class="font-medium"><%= @campaign.subdomain %>.hack.club</div>
+          </div>
+        <% end %>
+        <% if @campaign.base_url.present? %>
+          <div>
+            <div class="text-sm text-muted-foreground mb-1">Base URL</div>
+            <div class="font-medium"><%= @campaign.base_url %></div>
+          </div>
+        <% end %>
+      </div>
+
+      <% if @campaign.theme_config.present? %>
+        <div>
+          <div class="text-sm text-muted-foreground mb-1">Theme Config (Colors)</div>
+          <div class="grid gap-2 sm:grid-cols-3">
+            <% @campaign.theme_config.each do |key, value| %>
+              <div class="flex items-center gap-2 p-2 bg-muted rounded">
+                <div class="w-6 h-6 rounded border border-border" style="background-color: <%= value %>"></div>
+                <div class="text-xs">
+                  <div class="font-medium"><%= key.humanize %></div>
+                  <div class="text-muted-foreground"><%= value %></div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <% if @campaign.custom_css.present? %>
+        <div>
+          <div class="text-sm text-muted-foreground mb-1">Custom CSS</div>
+          <pre class="bg-muted p-2 rounded text-xs overflow-x-auto max-h-32"><%= truncate(@campaign.custom_css, length: 500) %></pre>
+        </div>
+      <% end %>
+
+      <% if @campaign.i18n_overrides.present? && @campaign.i18n_overrides.any? %>
+        <div>
+          <div class="text-sm text-muted-foreground mb-1">i18n Overrides</div>
+          <pre class="bg-muted p-2 rounded text-xs overflow-x-auto max-h-32"><%= JSON.pretty_generate(@campaign.i18n_overrides) %></pre>
+        </div>
+      <% end %>
+
+      <% if @campaign.poster_templates.present? && @campaign.poster_templates.any? %>
+        <div>
+          <div class="text-sm text-muted-foreground mb-1">Poster Templates Config</div>
+          <pre class="bg-muted p-2 rounded text-xs overflow-x-auto max-h-32"><%= JSON.pretty_generate(@campaign.poster_templates) %></pre>
+        </div>
+      <% end %>
+
+      <% if @campaign.poster_qr_coordinates.present? && @campaign.poster_qr_coordinates.any? %>
+        <div>
+          <div class="text-sm text-muted-foreground mb-1">Poster QR Coordinates</div>
+          <pre class="bg-muted p-2 rounded text-xs overflow-x-auto max-h-32"><%= JSON.pretty_generate(@campaign.poster_qr_coordinates) %></pre>
+        </div>
+      <% end %>
+
+      <% unless @campaign.theme_config.present? || @campaign.custom_css.present? || (@campaign.i18n_overrides.present? && @campaign.i18n_overrides.any?) %>
+        <div class="text-center py-4 text-muted-foreground">
+          <p class="text-sm">Using default theme styling.</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,88 @@
+<% content_for :title, t("admin.nav.users") %>
+
+<div class="flex justify-between items-center mb-8">
+  <div>
+    <h1 class="text-3xl font-bold tracking-tight text-foreground">Users</h1>
+    <p class="text-sm text-muted-foreground mt-2">Manage all Pyramid users.</p>
+  </div>
+</div>
+
+<div class="rounded-lg border border-border bg-card p-6 shadow-sm mb-6">
+  <%= form_with url: admin_users_path, method: :get, class: "flex gap-3" do %>
+    <input type="text" name="q" value="<%= params[:q] %>" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" placeholder="Search by name, email, or Slack ID..." style="flex: 1;">
+    <button type="submit" class="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">Search</button>
+    <% if params[:q].present? %>
+      <%= link_to "Clear", admin_users_path, class: "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
+    <% end %>
+  <% end %>
+</div>
+
+<div class="rounded-lg border border-border bg-card shadow-sm">
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead class="border-b border-border">
+        <tr class="text-left">
+          <th class="px-6 py-3 text-sm font-medium text-muted-foreground">User</th>
+          <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Email</th>
+          <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Role</th>
+          <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Shards</th>
+          <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Referrals</th>
+          <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Posters</th>
+          <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Joined</th>
+          <th class="px-6 py-3 text-sm font-medium text-muted-foreground"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-border">
+        <% @users.each do |user| %>
+          <tr class="hover:bg-muted/50 transition-colors">
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <% if user.avatar.present? %>
+                  <%= image_tag user.avatar, class: "w-8 h-8 rounded-full" %>
+                <% end %>
+                <div>
+                  <div class="font-medium text-foreground"><%= user.display_name %></div>
+                  <% if user.is_banned? %>
+                    <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-red-500/10 text-red-500">Banned</span>
+                  <% end %>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 text-sm text-muted-foreground"><%= user.email %></td>
+            <td class="px-6 py-4">
+              <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium <%= user.admin? ? 'bg-primary/10 text-primary' : user.fulfiller? ? 'bg-blue-500/10 text-blue-500' : 'bg-muted text-muted-foreground' %>">
+                <%= user.role.humanize %>
+              </span>
+            </td>
+            <td class="px-6 py-4 text-sm text-foreground"><%= number_with_delimiter(user.total_shards) %></td>
+            <td class="px-6 py-4 text-sm text-foreground"><%= user.referral_count %></td>
+            <td class="px-6 py-4 text-sm text-foreground"><%= user.poster_count %></td>
+            <td class="px-6 py-4 text-sm text-muted-foreground"><%= user.created_at.strftime("%b %d, %Y") %></td>
+            <td class="px-6 py-4 text-sm">
+              <%= link_to "View", admin_user_path(user), class: "text-primary hover:underline font-medium" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if @pagy.pages > 1 %>
+    <div class="flex items-center justify-center gap-2 p-6 border-t border-border">
+      <% if @pagy.page > 1 %>
+        <%= link_to "Previous", admin_users_path(page: @pagy.page - 1, q: params[:q]), class: "inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
+      <% end %>
+      <% (1..@pagy.pages).each do |page_num| %>
+        <% if page_num <= 3 || page_num > @pagy.pages - 3 || (page_num >= @pagy.page - 1 && page_num <= @pagy.page + 1) %>
+          <%= link_to page_num, admin_users_path(page: page_num, q: params[:q]),
+              class: "inline-flex items-center justify-center rounded-md w-9 h-9 text-sm font-medium #{page_num == @pagy.page ? 'bg-primary text-primary-foreground' : 'border border-border bg-background hover:bg-muted'} transition-colors" %>
+        <% elsif page_num == 4 || page_num == @pagy.pages - 3 %>
+          <span class="inline-flex items-center justify-center w-9 h-9 text-sm text-muted-foreground">...</span>
+        <% end %>
+      <% end %>
+      <% if @pagy.page < @pagy.pages %>
+        <%= link_to "Next", admin_users_path(page: @pagy.page + 1, q: params[:q]), class: "inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

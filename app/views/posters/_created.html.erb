@@ -1,0 +1,35 @@
+<div class="campaign-panel-inner p-5 sm:p-6 border-2 border-green-500/30 bg-green-500/10 rounded-xl">
+  <div class="flex items-start gap-4">
+    <%= icon :circle_check, size: 28, class_name: "text-green-600 flex-shrink-0 mt-0.5" %>
+    <div class="flex-1 min-w-0">
+      <p class="campaign-font text-xl sm:text-2xl font-black text-green-600 mb-2">
+        Poster Generated!
+      </p>
+      <p class="text-sm sm:text-base campaign-text-secondary mb-4 leading-relaxed">
+        Your poster is ready with a unique QR code and referral link.
+        <% if defined?(unpaid_count) && unpaid_count.to_i > 0 %>
+          <br><span class="text-amber-600 font-semibold">Note: This poster won't earn shards (quota exceeded).</span>
+        <% end %>
+      </p>
+      
+      <div class="space-y-3">
+        <%= link_to download_poster_path(poster), class: "campaign-btn campaign-btn--primary w-full justify-center text-base" do %>
+          <%= icon :download, size: 20 %>
+          Download Poster
+        <% end %>
+        
+        <p class="text-xs sm:text-sm campaign-text-muted text-center leading-relaxed">
+          Print it, put it up, then upload proof from your dashboard to earn shards.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Hide the form after successful poster generation
+  const form = document.querySelector('[data-poster-modal-target="form"]');
+  if (form) {
+    form.style.display = 'none';
+  }
+</script>
