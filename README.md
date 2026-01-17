@@ -1,25 +1,65 @@
-# README
+# pyramid scheme
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+yoo is this real? unfortunately not actually a pyramid scheme. this is hack club's flagship referral program! specifically the third iteration (hence the v3).
 
-Things you may want to cover:
+## ok so what do i start with 
 
-* Ruby version
+if you love containers and want to save time [go here](#i-am-a-docker-pro-pls-dont-waste-my-time)
 
-* System dependencies
+otherwise,
 
-* Configuration
+```bash
+bundle install
+npm install
+bin/rails db:create db:migrate db:seed
+```
 
-* Database creation
+## run
 
-* Database initialization
+```bash
+bin/dev
+```
 
-* How to run the test suite
+app runs on `http://localhost:4444`. ez! well you have to do some more stuff (see below) but
 
-* Services (job queues, cache servers, search engines, etc.)
+## test
 
-* Deployment instructions
+```bash
+bin/rails test
+```
 
-* ...
+## env
 
+copy `.env.example` to `.env` and configure as needed
+
+required:
+- `DATABASE_URL` - postgres connection string
+
+everything else is optional, but add as much as you can. a lot of things might not work otherwise!
+
+## so wth is qreader
+
+qreader (this is the microservice that the reads qr codes for auto verification!):
+```bash
+cd qreader && PORT=4445 python main.py
+```
+
+## and worker?
+
+background jobs (these sync data in the bg):
+```bash
+bin/rails solid_queue:start
+```
+
+## what about proxy?
+
+proxy (url shortener service; you probably won't need it though!):
+```bash
+cd proxy && PORT=4446 python main.py
+``` 
+
+## i am a docker pro pls dont waste my time
+
+```bash
+docker-compose up
+```
