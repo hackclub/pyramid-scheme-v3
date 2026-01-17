@@ -1,7 +1,7 @@
 # pyramid scheme
 
 yoo is this real? unfortunately not actually a pyramid scheme. this is hack club's flagship referral program! specifically the third iteration (hence the v3).
-<img width="1761" height="939" alt="screengrab" src="https://github.com/user-attachments/assets/b171fbd1-e3ce-4f2f-a09b-62c2ca29cd4e" />
+<img width="1530" height="938" alt="screengrab_noartifacts" src="https://github.com/user-attachments/assets/eeaaebfe-8d45-4b0a-9cc3-b130d62c075a" />
 
 
 ## ok so what do i start with 
