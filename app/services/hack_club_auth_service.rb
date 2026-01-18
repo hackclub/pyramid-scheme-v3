@@ -161,7 +161,7 @@ class HackClubAuthService
       end
 
       # Always update display_name and avatar from Slack if available
-      if slack_profile
+      if profile
         update_attrs[:display_name] = display_name
         update_attrs[:avatar] = avatar if avatar.present?
         update_attrs[:first_name] = profile["first_name"] if profile["first_name"].present?
