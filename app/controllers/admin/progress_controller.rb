@@ -119,11 +119,11 @@ module Admin
       metric = params[:metric] || "referrals"
       max_days = 150 # About 5 months like v2
 
-      # Try to get v2 data, return zeros if database unavailable
+      # Try to get v2 data, return zeros if database unavailable or tables don't exist
       v2_data = begin
         calculate_v2_cumulative_data(metric, v2_start_date, max_days)
-      rescue ActiveRecord::ConnectionNotEstablished, PG::ConnectionBad => e
-        Rails.logger.warn "PyramidV2 database unavailable: #{e.message}"
+      rescue ActiveRecord::ConnectionNotEstablished, ActiveRecord::StatementInvalid, PG::ConnectionBad, PG::UndefinedTable => e
+        Rails.logger.warn "PyramidV2 database unavailable or tables missing: #{e.message}"
         Array.new(max_days + 1, 0)
       end
 

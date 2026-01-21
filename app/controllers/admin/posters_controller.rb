@@ -8,7 +8,9 @@ module Admin
 
     def index
       @status = params[:status].presence_in(STATUSES) || "in_review"
-      @posters = Poster.includes(:user, :campaign, :poster_group, proof_image_attachment: :blob).where(verification_status: @status).order(created_at: :desc)
+      @posters = Poster.includes(:user, :campaign, :poster_group, proof_image_attachment: :blob)
+                       .where(verification_status: @status)
+                       .order(Arel.sql("COALESCE(verified_at, created_at) DESC"))
       @pagy, @posters = pagy(@posters)
     end
 

@@ -4,7 +4,7 @@ class PosterGroupsController < ApplicationController
   include QrCodeMatching
 
   before_action :set_campaign, only: [ :create ]
-  before_action :set_poster_group, only: [ :show, :update, :destroy, :submit_all, :auto_detect ]
+  before_action :set_poster_group, only: [ :show, :update, :destroy, :submit_all, :auto_detect, :download_all ]
 
   def create
     count = params.dig(:poster_group, :count).to_i
@@ -81,6 +81,13 @@ class PosterGroupsController < ApplicationController
     # Call Python proxy service to generate batch PDF
     proxy_url = ENV.fetch("PROXY_URL", "http://pyramid-proxy:4446")
 
+    # Check if proxy URL is configured for production
+    if proxy_url.include?("pyramid-proxy") && Rails.env.production?
+      Rails.logger.error "PROXY_URL not configured for production environment"
+      redirect_to poster_group_path(@poster_group), alert: "Poster generation is temporarily unavailable. Please try again later."
+      return
+    end
+
     posters_data = @poster_group.posters.map do |poster|
       {
         content: poster.referral_url,
@@ -112,6 +119,9 @@ class PosterGroupsController < ApplicationController
       Rails.logger.error "Failed to generate bulk poster download from proxy: #{response.status} - #{response.body}"
       redirect_to poster_group_path(@poster_group), alert: "Failed to generate posters. Please try again."
     end
+  rescue Faraday::ConnectionFailed => e
+    Rails.logger.error "Proxy service connection failed (#{proxy_url}): #{e.message}"
+    redirect_to poster_group_path(@poster_group), alert: "Poster generation service is temporarily unavailable. Please try again later."
   rescue => e
     Rails.logger.error "Failed to generate bulk poster download: #{e.message}"
     redirect_to poster_group_path(@poster_group), alert: "Failed to generate posters. Please try again."
