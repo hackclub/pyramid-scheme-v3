@@ -119,24 +119,68 @@ module Admin
       metric = params[:metric] || "referrals"
       max_days = 150 # About 5 months like v2
 
-      # Try to get v2 data, return zeros if database unavailable or tables don't exist
-      v2_data = begin
-        calculate_v2_cumulative_data(metric, v2_start_date, max_days)
+      # V2 campaign IDs
+      athena_id = "vePHhmjo"
+      summer_id = "vHvAQ8O4"
+
+      # Try to get v2 data per campaign
+      v2_athena = begin
+        calculate_v2_cumulative_data_for_campaign(metric, v2_start_date, max_days, athena_id)
       rescue ActiveRecord::ConnectionNotEstablished, ActiveRecord::StatementInvalid, PG::ConnectionBad, PG::UndefinedTable => e
-        Rails.logger.warn "PyramidV2 database unavailable or tables missing: #{e.message}"
+        Rails.logger.warn "PyramidV2 database unavailable: #{e.message}"
+        Array.new(max_days + 1, 0)
+      end
+
+      v2_summer = begin
+        calculate_v2_cumulative_data_for_campaign(metric, v2_start_date, max_days, summer_id)
+      rescue ActiveRecord::ConnectionNotEstablished, ActiveRecord::StatementInvalid, PG::ConnectionBad, PG::UndefinedTable => e
         Array.new(max_days + 1, 0)
       end
 
       v3_data = calculate_v3_cumulative_data(metric, v3_start_date, max_days)
 
       render json: {
-        v2: v2_data,
+        v2_athena: v2_athena,
+        v2_summer: v2_summer,
         v3: v3_data,
         labels: (0..max_days).to_a
       }
     end
 
     private
+
+    def calculate_v2_cumulative_data_for_campaign(metric, start_date, max_days, campaign_id)
+      case metric
+      when "referrals"
+        calculate_cumulative_by_day(
+          PyramidV2::ReferredSignUp.where(campaign_id: campaign_id),
+          :created_at,
+          start_date,
+          max_days
+        )
+      when "completed_referrals"
+        calculate_cumulative_by_day(
+          PyramidV2::ReferredSignUp.where(campaign_id: campaign_id).where.not(qualified_detected_at: nil),
+          :qualified_detected_at,
+          start_date,
+          max_days
+        )
+      when "posters"
+        calculate_cumulative_by_day(
+          PyramidV2::Poster.where(campaign_id: campaign_id),
+          :created_at,
+          start_date,
+          max_days
+        )
+      when "completed_posters"
+        calculate_cumulative_by_day(
+          PyramidV2::Poster.where(campaign_id: campaign_id).where(status: "approved"),
+          :created_at,
+          start_date,
+          max_days
+        )
+      end
+    end
 
     def calculate_v2_cumulative_data(metric, start_date, max_days)
       case metric
