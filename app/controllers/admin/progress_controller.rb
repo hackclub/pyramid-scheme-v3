@@ -18,35 +18,43 @@ module Admin
       @per_page = 100 if @per_page > 100 # Cap at 100
 
       if params[:view] == "v2_posters"
-        relation = PyramidV2::Poster.all
+        begin
+          relation = PyramidV2::Poster.all
 
-        # Filter by status
-        if params[:status].present? && %w[approved rejected].include?(params[:status])
-          relation = relation.where(status: params[:status])
+          # Filter by status
+          if params[:status].present? && %w[approved rejected].include?(params[:status])
+            relation = relation.where(status: params[:status])
+          end
+
+          # Filter by date range
+          if params[:start_date].present?
+            relation = relation.where("created_at >= ?", params[:start_date])
+          end
+          if params[:end_date].present?
+            relation = relation.where("created_at <= ?", params[:end_date])
+          end
+
+          # Sorting
+          sort_column = params[:sort] || "created_at"
+          sort_direction = params[:direction] == "asc" ? :asc : :desc
+          allowed_sorts = %w[created_at status location_description]
+          sort_column = "created_at" unless allowed_sorts.include?(sort_column)
+
+          @v2_posters = relation
+            .order(sort_column => sort_direction)
+            .limit(@per_page)
+            .offset((@page - 1) * @per_page)
+          @total_count = relation.count
+        rescue ActiveRecord::ConnectionNotEstablished, PG::ConnectionBad => e
+          Rails.logger.warn "PyramidV2 database unavailable: #{e.message}"
+          @v2_posters = []
+          @total_count = 0
+          flash.now[:alert] = "Historical data unavailable: PyramidV2 database not configured."
         end
-
-        # Filter by date range
-        if params[:start_date].present?
-          relation = relation.where("created_at >= ?", params[:start_date])
-        end
-        if params[:end_date].present?
-          relation = relation.where("created_at <= ?", params[:end_date])
-        end
-
-        # Sorting
-        sort_column = params[:sort] || "created_at"
-        sort_direction = params[:direction] == "asc" ? :asc : :desc
-        allowed_sorts = %w[created_at status location_description]
-        sort_column = "created_at" unless allowed_sorts.include?(sort_column)
-
-        @v2_posters = relation
-          .order(sort_column => sort_direction)
-          .limit(@per_page)
-          .offset((@page - 1) * @per_page)
-        @total_count = relation.count
 
       elsif params[:view] == "v2_referrals"
-        relation = PyramidV2::ReferredSignUp.all
+        begin
+          relation = PyramidV2::ReferredSignUp.all
 
         # Filter by qualified status
         if params[:qualified].present?
@@ -92,6 +100,12 @@ module Admin
           .limit(@per_page)
           .offset((@page - 1) * @per_page)
         @total_count = relation.count
+        rescue ActiveRecord::ConnectionNotEstablished, PG::ConnectionBad => e
+          Rails.logger.warn "PyramidV2 database unavailable: #{e.message}"
+          @v2_referrals = []
+          @total_count = 0
+          flash.now[:alert] = "Historical data unavailable: PyramidV2 database not configured."
+        end
       end
     end
 
@@ -105,7 +119,14 @@ module Admin
       metric = params[:metric] || "referrals"
       max_days = 150 # About 5 months like v2
 
-      v2_data = calculate_v2_cumulative_data(metric, v2_start_date, max_days)
+      # Try to get v2 data, return zeros if database unavailable
+      v2_data = begin
+        calculate_v2_cumulative_data(metric, v2_start_date, max_days)
+      rescue ActiveRecord::ConnectionNotEstablished, PG::ConnectionBad => e
+        Rails.logger.warn "PyramidV2 database unavailable: #{e.message}"
+        Array.new(max_days + 1, 0)
+      end
+
       v3_data = calculate_v3_cumulative_data(metric, v3_start_date, max_days)
 
       render json: {
