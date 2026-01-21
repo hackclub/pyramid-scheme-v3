@@ -139,8 +139,10 @@ module ApplicationHelper
   end
 
   # Returns all countries with a readable name for select inputs.
-  def country_options_for_select
-    ISO3166::Country.all
+  # @param selected [String, nil] Optional country code to mark as selected
+  # @return [Array<Array<String, String>>] Array of [name, code] pairs
+  def country_options_for_select(selected = nil)
+    options = ISO3166::Country.all
       .map { |country|
         [
           country.translations[I18n.locale.to_s] ||
@@ -152,6 +154,9 @@ module ApplicationHelper
       }
       .reject { |name, code| name.blank? || code.blank? }
       .sort_by { |name, _code| name }
+
+    # If a selected value is provided, use options_for_select to mark it as selected
+    selected.present? ? options_for_select(options, selected) : options
   end
 
   # Check if current user can impersonate other users
