@@ -12,17 +12,17 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 WORKDIR /app
 
-# Create mount point for Rails assets (poster PDF templates)
-RUN mkdir -p /app/assets/images
+# Copy poster PDF templates from Rails app assets
+COPY app/assets/images/ /app/assets/images/
 
-COPY pyproject.toml .
+COPY proxy/pyproject.toml .
 
 # Install dependencies declared in pyproject.toml without needing a full python package build.
 RUN python -c "import tomllib; from pathlib import Path; data = tomllib.loads(Path('pyproject.toml').read_text()); deps = data.get('project', {}).get('dependencies', []); Path('requirements.txt').write_text('\n'.join(deps) + '\n')"
 
 RUN uv pip install --system --no-cache -r requirements.txt
 
-COPY main.py .
+COPY proxy/main.py .
 
 # Health check for rolling/blue-green deployments
 HEALTHCHECK --interval=10s --timeout=10s --start-period=10s --retries=3 \
