@@ -71,24 +71,36 @@ class PostersController < ApplicationController
   end
 
   def download
-    pdf_service = QrCodeWriterService.new
+    # Call Python proxy service to generate PDF
+    proxy_url = ENV.fetch("PROXY_URL", "http://pyramid-proxy:4446")
 
-    pdf_data = pdf_service.generate_qr_pdf(
-      content: @poster.referral_url,
-      qr_size: 300,
-      page_size: "LETTER",
-      style: @poster.poster_type || "classic",
-      campaign: @poster.campaign,
-      referral_code: @poster.referral_code
-    )
+    conn = Faraday.new(url: proxy_url) do |f|
+      f.adapter Faraday.default_adapter
+    end
 
-    send_data pdf_data,
-              type: "application/pdf",
-              disposition: "attachment",
-              filename: "poster-#{@poster.referral_code}-#{@poster.poster_type}.pdf"
-    rescue => e
-      Rails.logger.error "Failed to generate poster PDF: #{e.message}"
+    response = conn.post("/generate_poster") do |req|
+      req.headers["Content-Type"] = "application/json"
+      req.body = {
+        content: @poster.referral_url,
+        campaign_slug: @poster.campaign.slug,
+        style: @poster.poster_type || "color",
+        referral_code: @poster.referral_code
+      }.to_json
+      req.options.timeout = 30
+    end
+
+    if response.success?
+      send_data response.body,
+                type: "application/pdf",
+                disposition: "attachment",
+                filename: "poster-#{@poster.referral_code}-#{@poster.poster_type}.pdf"
+    else
+      Rails.logger.error "Failed to generate poster PDF from proxy: #{response.status} - #{response.body}"
       redirect_to campaign_path(@poster.campaign.slug), alert: "Failed to generate poster. Please try again."
+    end
+  rescue => e
+    Rails.logger.error "Failed to generate poster PDF: #{e.message}"
+    redirect_to campaign_path(@poster.campaign.slug), alert: "Failed to generate poster. Please try again."
   end
 
   def destroy

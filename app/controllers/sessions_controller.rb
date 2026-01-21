@@ -46,6 +46,9 @@ class SessionsController < ApplicationController
       session[:user_id] = user.id
       session[:hc_auth_token] = token_response["access_token"]
 
+      # Fetch and cache the user's country from their primary address if not already cached
+      cache_user_country(user, token_response["access_token"])
+
       # Log the login with IP and user agent
       log_login(user)
 
@@ -123,5 +126,19 @@ class SessionsController < ApplicationController
   rescue ActiveRecord::ActiveRecordError => e
     # Signup ref capture is non-critical - don't block user login
     Rails.logger.error("Failed to capture signup ref source for user #{user.id}: #{e.message}")
+  end
+
+  def cache_user_country(user, access_token)
+    # Only fetch if not already cached
+    return if user.country_code.present?
+
+    country_code = HackClubAuthService.fetch_primary_address_country(access_token)
+    if country_code.present?
+      user.update_column(:country_code, country_code)
+      Rails.logger.info("Cached country code for user #{user.id}: #{country_code}")
+    end
+  rescue => e
+    # Country caching is non-critical - don't block user login
+    Rails.logger.error("Failed to cache country for user #{user.id}: #{e.message}")
   end
 end

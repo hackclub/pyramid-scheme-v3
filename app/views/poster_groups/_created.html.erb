@@ -26,9 +26,16 @@
       </p>
       
       <div class="space-y-3">
-        <% poster_group.posters.each_with_index do |poster, index| %>
-          <%= link_to download_poster_path(poster), class: "campaign-btn campaign-btn--primary w-full justify-center text-base" do %>
+        <% if poster_group.poster_count > 1 %>
+          <%= link_to download_all_poster_group_path(poster_group), class: "campaign-btn campaign-btn--primary w-full justify-center text-base" do %>
             <%= icon :download, size: 20 %>
+            Download All as PDF (<%= poster_group.poster_count %> Posters)
+          <% end %>
+        <% end %>
+
+        <% poster_group.posters.each_with_index do |poster, index| %>
+          <%= link_to download_poster_path(poster), class: "campaign-btn campaign-btn--<%= poster_group.poster_count > 1 ? 'secondary' : 'primary' %> w-full justify-center text-<%= poster_group.poster_count > 1 ? 'sm' : 'base' %>" do %>
+            <%= icon :download, size: <%= poster_group.poster_count > 1 ? 18 : 20 %> %>
             <% if poster_group.poster_count == 1 %>
               Download Poster
             <% else %>
@@ -36,12 +43,12 @@
             <% end %>
           <% end %>
         <% end %>
-        
+
         <%= link_to poster_group_path(poster_group), class: "campaign-btn campaign-btn--secondary w-full justify-center text-sm" do %>
           <%= icon :settings, size: 18 %>
           Manage Poster<%= poster_group.poster_count == 1 ? '' : 's' %>
         <% end %>
-        
+
         <p class="text-xs campaign-text-muted text-center leading-relaxed">
           Print, put up, then upload proof from the manage page to earn shards.
         </p>

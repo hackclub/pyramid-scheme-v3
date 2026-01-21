@@ -124,6 +124,24 @@ class HackClubAuthService
     identity["addresses"] || []
   end
 
+  # Extracts the country code from the user's primary address
+  # @param access_token [String] HC Auth access token
+  # @return [String, nil] ISO country code (e.g., "US", "CA") or nil if not found
+  def self.fetch_primary_address_country(access_token)
+    addresses = fetch_addresses(access_token)
+    return nil if addresses.empty?
+
+    # Find the primary address or use the first one
+    primary_address = addresses.find { |addr| addr["primary"] == true } || addresses.first
+    return nil unless primary_address
+
+    # Extract country code from the address
+    primary_address["country"]
+  rescue => e
+    Rails.logger.error("Failed to fetch primary address country: #{e.message}")
+    nil
+  end
+
   # Finds an existing user or creates a new one from OAuth user info.
   #
   # Attempts to fetch enhanced profile data from Slack if available,
