@@ -255,7 +255,7 @@ class PosterGroupsController < ApplicationController
   end
 
   def poster_group_params
-    params.require(:poster_group).permit(:name, :charset, :count, :poster_type, :campaign_id)
+    params.require(:poster_group).permit(:name, :charset, :count, :poster_type, :campaign_id, :mark_as_digital)
   end
 
   def quota_exceeded_message(requested, remaining)
@@ -265,6 +265,8 @@ class PosterGroupsController < ApplicationController
 
   # Create a single standalone poster (not in a group)
   def create_single_poster(paid_count, unpaid_count)
+    mark_as_digital = poster_group_params[:mark_as_digital] == "1"
+
     @poster = current_user.posters.build(
       campaign: @campaign,
       poster_type: poster_group_params[:poster_type] || "color",
@@ -272,15 +274,36 @@ class PosterGroupsController < ApplicationController
     )
 
     if @poster.save
+      # Mark as digital if requested
+      if mark_as_digital
+        begin
+          @poster.mark_digital!(current_user)
+          @poster.reload
+        rescue ActiveRecord::RecordInvalid => e
+          Rails.logger.error "Failed to mark poster as digital: #{e.message}"
+        end
+      end
+
       respond_to do |format|
-        format.html { redirect_to campaign_path(@campaign.slug), notice: "Poster generated successfully!" }
-        format.turbo_stream {
-          render turbo_stream: turbo_stream.replace(
-            "poster_result",
-            partial: "posters/created",
-            locals: { poster: @poster, paid_count: paid_count, unpaid_count: unpaid_count }
-          )
-        }
+        if mark_as_digital && @poster.verification_status == "digital"
+          format.html { redirect_to campaign_path(@campaign.slug), notice: "Digital poster activated! Your link is ready to share." }
+          format.turbo_stream {
+            render turbo_stream: turbo_stream.replace(
+              "poster_result",
+              partial: "posters/digital_success",
+              locals: { poster: @poster }
+            )
+          }
+        else
+          format.html { redirect_to campaign_path(@campaign.slug), notice: "Poster generated successfully!" }
+          format.turbo_stream {
+            render turbo_stream: turbo_stream.replace(
+              "poster_result",
+              partial: "posters/created",
+              locals: { poster: @poster, paid_count: paid_count, unpaid_count: unpaid_count }
+            )
+          }
+        end
       end
     else
       respond_to do |format|
