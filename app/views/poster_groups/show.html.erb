@@ -237,7 +237,7 @@
                   <% end %>
 
                   <%= button_to mark_digital_poster_path(poster), method: :post,
-                      data: { turbo_confirm: "Mark as digital? No shards awarded.", turbo_frame: "poster_#{poster.id}" },
+                      data: { turbo_confirm: "Mark as digital? No shards awarded." },
                       class: "campaign-text-primary hover:opacity-70 text-xs font-medium inline-flex items-center gap-1 cursor-pointer" do %>
                     <%= icon :monitor, size: 12 %>
                     Mark digital
@@ -260,16 +260,20 @@
 
     <%# Footer actions %>
     <div class="mt-6 flex flex-wrap gap-3 justify-between items-center">
-      <% unless @poster_group.has_submitted_posters? %>
-        <%= button_to poster_group_path(@poster_group), method: :delete,
-            data: { turbo_confirm: "Delete group and all #{@poster_group.poster_count} posters? This cannot be undone!" },
-            class: "campaign-btn campaign-btn--secondary text-xs h-9 px-4 inline-flex items-center gap-1.5 hover:!bg-red-500 hover:!text-white transition-colors" do %>
-          <%= icon :trash_2, size: 14 %>
-          Delete Entire Group
+      <div class="flex flex-wrap gap-3 items-center">
+        <%= link_to download_all_poster_group_path(@poster_group), class: "campaign-btn campaign-btn--primary text-xs h-9 px-4 inline-flex items-center gap-1.5" do %>
+          <%= icon :download, size: 14 %>
+          Download All
         <% end %>
-      <% else %>
-        <div></div>
-      <% end %>
+        <% unless @poster_group.has_submitted_posters? %>
+          <%= button_to poster_group_path(@poster_group), method: :delete,
+              data: { turbo_confirm: "Delete group and all #{@poster_group.poster_count} posters? This cannot be undone!" },
+              class: "campaign-btn campaign-btn--secondary text-xs h-9 px-4 inline-flex items-center gap-1.5 hover:!bg-red-500 hover:!text-white transition-colors" do %>
+            <%= icon :trash_2, size: 14 %>
+            Delete Entire Group
+          <% end %>
+        <% end %>
+      </div>
       <%= link_to campaign_path(@poster_group.campaign.slug), class: "text-xs campaign-text-muted hover:campaign-text-primary transition-colors inline-flex items-center gap-1" do %>
         <%= icon :arrow_left, size: 14 %>
         Back to Campaign

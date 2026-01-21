@@ -2,11 +2,18 @@ FROM python:3.13-slim-bookworm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    libjpeg-dev \
+    libpng-dev \
+    zlib1g-dev \
+    libfreetype6-dev \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 WORKDIR /app
+
+# Create mount point for Rails assets (poster PDF templates)
+RUN mkdir -p /app/assets/images
 
 COPY pyproject.toml .
 

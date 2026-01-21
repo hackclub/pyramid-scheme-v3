@@ -77,6 +77,46 @@ class PosterGroupsController < ApplicationController
     @posters = @poster_group.posters.order(created_at: :asc)
   end
 
+  def download_all
+    # Call Python proxy service to generate batch PDF
+    proxy_url = ENV.fetch("PROXY_URL", "http://pyramid-proxy:4446")
+
+    posters_data = @poster_group.posters.map do |poster|
+      {
+        content: poster.referral_url,
+        referral_code: poster.referral_code,
+        poster_type: poster.poster_type || "color"
+      }
+    end
+
+    conn = Faraday.new(url: proxy_url) do |f|
+      f.adapter Faraday.default_adapter
+    end
+
+    response = conn.post("/generate_poster_batch") do |req|
+      req.headers["Content-Type"] = "application/json"
+      req.body = {
+        posters: posters_data,
+        campaign_slug: @poster_group.campaign.slug
+      }.to_json
+      req.options.timeout = 60  # Longer timeout for batch generation
+    end
+
+    if response.success?
+      group_name = @poster_group.name.presence || "group_#{@poster_group.id}"
+      send_data response.body,
+                type: "application/pdf",
+                disposition: "attachment",
+                filename: "posters_#{group_name.parameterize}.pdf"
+    else
+      Rails.logger.error "Failed to generate bulk poster download from proxy: #{response.status} - #{response.body}"
+      redirect_to poster_group_path(@poster_group), alert: "Failed to generate posters. Please try again."
+    end
+  rescue => e
+    Rails.logger.error "Failed to generate bulk poster download: #{e.message}"
+    redirect_to poster_group_path(@poster_group), alert: "Failed to generate posters. Please try again."
+  end
+
   def update
     if @poster_group.update(poster_group_params.slice(:name))
       redirect_to poster_group_path(@poster_group), notice: "Group updated successfully!"

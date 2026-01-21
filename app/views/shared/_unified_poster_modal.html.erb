@@ -123,7 +123,7 @@
         <div>
           <%= f.label :country_code, "Country", class: "block campaign-font text-sm font-black campaign-text-primary mb-2" %>
           <%= f.select :country_code,
-                       country_options_for_select,
+                       country_options_for_select(current_user.country_code),
                        { include_blank: "Select a country..." },
                        { class: "flex h-11 w-full rounded-lg campaign-input px-4 py-2 text-sm" } %>
         </div>

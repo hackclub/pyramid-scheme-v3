@@ -47,6 +47,7 @@ Rails.application.routes.draw do
     member do
       post :submit_all
       post :auto_detect
+      get :download_all
     end
   end
 

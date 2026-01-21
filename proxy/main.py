@@ -1,10 +1,30 @@
 import os
 import re
 import json
+import io
+import tempfile
 from datetime import datetime
-from fastapi import FastAPI, Request
-from fastapi.responses import RedirectResponse
+from typing import Optional
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.responses import RedirectResponse, Response, StreamingResponse
+from pydantic import BaseModel
 import asyncpg
+import qrcode
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+from pypdf import PdfReader, PdfWriter
+from PIL import Image
+
+# Pydantic models for poster generation
+class PosterRequest(BaseModel):
+    content: str  # URL to encode in QR code
+    campaign_slug: str
+    style: str = "color"  # color, bw, or printer_efficient
+    referral_code: Optional[str] = None
+
+class BatchPosterRequest(BaseModel):
+    posters: list[dict]  # List of {content, referral_code, poster_type} dicts
+    campaign_slug: str
 
 app = FastAPI(title="proxy", docs_url=None, redoc_url=None)
 
@@ -20,6 +40,55 @@ CAMPAIGN_DOMAINS = {
 }
 
 DEFAULT_CAMPAIGN = {"slug": "flavortown", "target": "https://flavortown.hackclub.com"}
+
+# QR code coordinates for each campaign and style
+# PDF dimensions vary by campaign; y is from bottom edge
+QR_COORDINATES = {
+    "flavortown": {
+        "color": {"x": 847, "y": 119, "size": 258},
+        "bw": {"x": 530, "y": 122, "size": 218},
+        "printer_efficient": {"x": 847, "y": 119, "size": 258}
+    },
+    "aces": {
+        "color": {"x": 857, "y": 148, "size": 226},
+        "bw": {"x": 115, "y": 175, "size": 230},
+        "printer_efficient": {"x": 857, "y": 148, "size": 226}
+    },
+    "construct": {
+        "color": {"x": 20, "y": 132, "size": 175},
+        "bw": {"x": 20, "y": 132, "size": 175},
+        "printer_efficient": {"x": 20, "y": 132, "size": 175}
+    },
+    "sleepover": {
+        "color": {"x": 847, "y": 119, "size": 258},
+        "bw": {"x": 530, "y": 122, "size": 218},
+        "printer_efficient": {"x": 847, "y": 119, "size": 258}
+    }
+}
+
+# Referral code text coordinates for each campaign and style
+REFERRAL_CODE_COORDINATES = {
+    "flavortown": {
+        "color": {"x": 595, "y": 62, "size": 18, "color": "FFFFFF"},
+        "bw": {"x": 595, "y": 62, "size": 18, "color": "000000"},
+        "printer_efficient": {"x": 595, "y": 62, "size": 18, "color": "FFFFFF"}
+    },
+    "aces": {
+        "color": {"x": 595, "y": 55, "size": 16, "color": "8B1A1A"},
+        "bw": {"x": 880, "y": 55, "size": 16, "color": "000000"},
+        "printer_efficient": {"x": 595, "y": 55, "size": 16, "color": "8B1A1A"}
+    },
+    "construct": {
+        "color": {"x": 108, "y": 120, "size": 12, "color": "000000"},
+        "bw": {"x": 108, "y": 120, "size": 12, "color": "000000"},
+        "printer_efficient": {"x": 108, "y": 120, "size": 12, "color": "000000"}
+    },
+    "sleepover": {
+        "color": {"x": 595, "y": 62, "size": 18, "color": "FFFFFF"},
+        "bw": {"x": 595, "y": 62, "size": 18, "color": "000000"},
+        "printer_efficient": {"x": 595, "y": 62, "size": 18, "color": "FFFFFF"}
+    }
+}
 
 async def get_db_pool():
     global db_pool
@@ -52,6 +121,163 @@ def get_campaign_for_host(host: str) -> dict:
     host_clean = host.split(":")[0].lower()
     return CAMPAIGN_DOMAINS.get(host_clean, DEFAULT_CAMPAIGN)
 
+def generate_qr_code_png(content: str, size: int = 300) -> bytes:
+    """Generate a QR code as PNG bytes"""
+    qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(content)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white")
+
+    # Convert to high-res PNG bytes
+    img = img.resize((size * 3, size * 3), Image.Resampling.LANCZOS)
+
+    buffer = io.BytesIO()
+    img.save(buffer, format='PNG')
+    return buffer.getvalue()
+
+def get_template_path(campaign_slug: str, style: str) -> str:
+    """Get the path to the PDF template for a campaign and style"""
+    # Map style names to filenames
+    template_filename = {
+        "bw": "poster-bw.pdf",
+        "printer_efficient": "poster-printer_efficient.pdf",
+        "color": "poster-color.pdf"
+    }.get(style, "poster-color.pdf")
+
+    # Path in the mounted volume (assuming Rails assets are mounted)
+    template_path = f"/app/assets/images/{campaign_slug}/{template_filename}"
+
+    if not os.path.exists(template_path):
+        # Fall back to default campaign
+        default_slug = os.getenv("DEFAULT_CAMPAIGN_SLUG", "flavortown")
+        template_path = f"/app/assets/images/{default_slug}/{template_filename}"
+
+    return template_path
+
+def get_qr_config(campaign_slug: str, style: str) -> dict:
+    """Get QR code positioning configuration"""
+    campaign_coords = QR_COORDINATES.get(campaign_slug, QR_COORDINATES["flavortown"])
+    return campaign_coords.get(style, campaign_coords["color"])
+
+def get_text_config(campaign_slug: str, style: str) -> dict:
+    """Get referral code text positioning configuration"""
+    campaign_coords = REFERRAL_CODE_COORDINATES.get(campaign_slug, REFERRAL_CODE_COORDINATES["flavortown"])
+    return campaign_coords.get(style, campaign_coords["color"])
+
+def hex_to_rgb(hex_color: str) -> tuple:
+    """Convert hex color to RGB tuple (0-1 range for reportlab)"""
+    hex_color = hex_color.lstrip('#')
+    r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    return (r / 255.0, g / 255.0, b / 255.0)
+
+def create_qr_overlay_pdf(qr_png_data: bytes, x: float, y: float, qr_size: float,
+                          page_width: float, page_height: float,
+                          referral_code: Optional[str] = None,
+                          text_config: Optional[dict] = None) -> bytes:
+    """Create a transparent PDF overlay with QR code and optional referral code text"""
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=(page_width, page_height))
+
+    # Enable compression for reportlab-generated PDF
+    c.setPageCompression(1)
+
+    # Draw QR code
+    with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
+        tmp.write(qr_png_data)
+        tmp.flush()
+        tmp_path = tmp.name
+
+    try:
+        c.drawImage(tmp_path, x, y, width=qr_size, height=qr_size, mask='auto')
+
+        # Draw referral code text if provided
+        if referral_code and text_config:
+            text_x = text_config.get('x', 0)
+            text_y = text_config.get('y', 0)
+            text_size = text_config.get('size', 18)
+            text_color = text_config.get('color', '000000')
+
+            # Set text color
+            rgb = hex_to_rgb(text_color)
+            c.setFillColorRGB(*rgb)
+
+            # Set font and draw text
+            c.setFont("Helvetica-Bold", text_size)
+            text = f"Ref: {referral_code}"
+            text_width = c.stringWidth(text, "Helvetica-Bold", text_size)
+            # Center the text at the specified x coordinate
+            c.drawString(text_x - text_width / 2, text_y, text)
+
+        c.save()
+    finally:
+        os.unlink(tmp_path)
+
+    buffer.seek(0)
+    return buffer.read()
+
+def generate_poster_pdf(content: str, campaign_slug: str, style: str,
+                       referral_code: Optional[str] = None) -> bytes:
+    """Generate a complete poster PDF with QR code overlay"""
+    # Get template path
+    template_path = get_template_path(campaign_slug, style)
+
+    if not os.path.exists(template_path):
+        raise HTTPException(status_code=404, detail=f"Template not found for campaign '{campaign_slug}' with style '{style}'")
+
+    # Get QR and text configurations
+    qr_config = get_qr_config(campaign_slug, style)
+    text_config = get_text_config(campaign_slug, style) if referral_code else None
+
+    # Generate QR code
+    qr_size = qr_config['size']
+    qr_png_data = generate_qr_code_png(content, size=int(qr_size))
+
+    # Load template PDF
+    template_reader = PdfReader(template_path)
+    first_page = template_reader.pages[0]
+
+    # Get page dimensions
+    page_width = float(first_page.mediabox.width)
+    page_height = float(first_page.mediabox.height)
+
+    # Create overlay PDF
+    overlay_pdf_data = create_qr_overlay_pdf(
+        qr_png_data=qr_png_data,
+        x=qr_config['x'],
+        y=qr_config['y'],
+        qr_size=qr_size,
+        page_width=page_width,
+        page_height=page_height,
+        referral_code=referral_code,
+        text_config=text_config
+    )
+
+    # Merge overlay with template
+    overlay_reader = PdfReader(io.BytesIO(overlay_pdf_data))
+
+    # Create output PDF with compression
+    writer = PdfWriter()
+    first_page.merge_page(overlay_reader.pages[0])
+    writer.add_page(first_page)
+
+    # Write to bytes with compression
+    output_buffer = io.BytesIO()
+
+    # Add compression to writer before writing
+    for page in writer.pages:
+        page.compress_content_streams()
+
+    writer.write(output_buffer)
+    output_buffer.seek(0)
+
+    return output_buffer.read()
+
 @app.on_event("startup")
 async def startup():
     await get_db_pool()
@@ -78,6 +304,75 @@ async def root(request: Request):
         return RedirectResponse(url=f"{target_url}/?ref={ref_param}", status_code=302)
     
     return RedirectResponse(url=f"{target_url}/", status_code=302)
+
+@app.post("/generate_poster")
+async def generate_single_poster(poster_request: PosterRequest):
+    """Generate a single poster PDF with QR code"""
+    try:
+        pdf_data = generate_poster_pdf(
+            content=poster_request.content,
+            campaign_slug=poster_request.campaign_slug,
+            style=poster_request.style,
+            referral_code=poster_request.referral_code
+        )
+
+        return Response(
+            content=pdf_data,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"attachment; filename=poster-{poster_request.referral_code or 'generated'}-{poster_request.style}.pdf"
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate poster: {str(e)}")
+
+@app.post("/generate_poster_batch")
+async def generate_poster_batch(batch_request: BatchPosterRequest):
+    """Generate multiple posters merged into a single PDF"""
+    try:
+        # Create a PDF writer for merging all posters
+        merged_writer = PdfWriter()
+
+        for index, poster_data in enumerate(batch_request.posters):
+            content = poster_data.get('content')
+            referral_code = poster_data.get('referral_code')
+            poster_type = poster_data.get('poster_type', 'color')
+
+            if not content:
+                continue
+
+            # Generate PDF for this poster
+            pdf_data = generate_poster_pdf(
+                content=content,
+                campaign_slug=batch_request.campaign_slug,
+                style=poster_type,
+                referral_code=referral_code
+            )
+
+            # Read the generated PDF and add its page to the merged document
+            pdf_reader = PdfReader(io.BytesIO(pdf_data))
+            for page in pdf_reader.pages:
+                merged_writer.add_page(page)
+
+        # Write the merged PDF with compression
+        output_buffer = io.BytesIO()
+
+        # Add compression to all pages before writing
+        for page in merged_writer.pages:
+            page.compress_content_streams()
+
+        merged_writer.write(output_buffer)
+        output_buffer.seek(0)
+
+        return Response(
+            content=output_buffer.read(),
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"attachment; filename=posters_{batch_request.campaign_slug}.pdf"
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate poster batch: {str(e)}")
 
 @app.get("/{code:path}")
 async def proxy_referral(code: str, request: Request):
