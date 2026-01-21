@@ -74,6 +74,13 @@ class PostersController < ApplicationController
     # Call Python proxy service to generate PDF
     proxy_url = ENV.fetch("PROXY_URL", "http://pyramid-proxy:4446")
 
+    # Check if proxy URL is configured
+    if proxy_url.include?("pyramid-proxy") && Rails.env.production?
+      Rails.logger.error "PROXY_URL not configured for production environment"
+      redirect_to campaign_path(@poster.campaign.slug), alert: "Poster generation is temporarily unavailable. Please try again later."
+      return
+    end
+
     conn = Faraday.new(url: proxy_url) do |f|
       f.adapter Faraday.default_adapter
     end
@@ -98,6 +105,9 @@ class PostersController < ApplicationController
       Rails.logger.error "Failed to generate poster PDF from proxy: #{response.status} - #{response.body}"
       redirect_to campaign_path(@poster.campaign.slug), alert: "Failed to generate poster. Please try again."
     end
+  rescue Faraday::ConnectionFailed => e
+    Rails.logger.error "Proxy service connection failed (#{proxy_url}): #{e.message}"
+    redirect_to campaign_path(@poster.campaign.slug), alert: "Poster generation service is temporarily unavailable. Please try again later."
   rescue => e
     Rails.logger.error "Failed to generate poster PDF: #{e.message}"
     redirect_to campaign_path(@poster.campaign.slug), alert: "Failed to generate poster. Please try again."

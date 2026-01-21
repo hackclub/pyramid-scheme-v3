@@ -34,18 +34,23 @@ class GeocodeIpJob < ApplicationJob
     geo_data = fetch_geocoding_data(ip_address)
     return mark_as_geocoded(record) unless geo_data
 
-    record.update!(
+    # Build update hash with only attributes that exist on this model
+    update_attrs = {
       latitude: geo_data["lat"],
       longitude: geo_data["lng"],
       city: geo_data["city"],
       region: geo_data["region"],
       country_name: geo_data["country_name"],
       country_code: geo_data["country_code"],
-      postal_code: geo_data["postal_code"],
-      timezone: geo_data["timezone"],
-      org: geo_data["org"],
       geocoded_at: Time.current
-    )
+    }
+
+    # Only include optional attributes if the model has them
+    update_attrs[:postal_code] = geo_data["postal_code"] if record.respond_to?(:postal_code=)
+    update_attrs[:timezone] = geo_data["timezone"] if record.respond_to?(:timezone=)
+    update_attrs[:org] = geo_data["org"] if record.respond_to?(:org=)
+
+    record.update!(update_attrs)
   rescue => e
     Rails.logger.error("[GeocodeIpJob] Failed to geocode #{model_class}##{record_id}: #{e.message}")
   end

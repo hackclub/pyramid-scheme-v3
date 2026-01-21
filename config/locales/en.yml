@@ -281,7 +281,7 @@ en:
           prizes_shipped: 5044
 
   admin:
-    title_prefix: "Admin"
+    title_prefix: "Pyramid Admin"
     brand: "Pyramid Admin"
     nav:
       dashboard: "Dashboard"
@@ -344,6 +344,30 @@ en:
           label: "Description"
           placeholder: "What will this API key be used for?"
 
+    posters:
+      flash:
+        verified: "Poster verified and shards awarded."
+        on_hold: "Poster marked as on hold."
+        rejected: "Poster rejected."
+        marked_digital: "Poster marked as digital (no shards awarded)."
+        cannot_mark_digital: "Cannot mark as digital: poster is not pending."
+        no_proof: "Cannot retry: no proof image attached."
+        auto_verified: "🎉 Poster auto-verified successfully! Shards awarded."
+        auto_verify_attempted: "Auto-verification attempted but did not pass threshold."
+        auto_verify_failed: "Auto-verify failed. Please try again."
+        resubmission_requested: "Poster sent back for resubmission."
+        not_found: "Poster not found."
+
+    referrals:
+      flash:
+        verified: "Referral verified successfully."
+        verify_error: "Failed to verify referral."
+        completed: "Referral completed successfully."
+        complete_error: "Failed to complete referral."
+        minutes_updated: "Arcade minutes updated."
+        minutes_error: "Failed to update arcade minutes."
+        deleted: "Referral deleted successfully."
+        delete_error: "Failed to delete referral."
 
   shop:
     title: "Shard Shop"
@@ -390,31 +414,6 @@ en:
       delete_error: "Failed to delete submission."
       already_submitted: "You've already submitted to this campaign."
       no_video_url: "Please provide a video URL."
-
-  admin:
-    posters:
-      flash:
-        verified: "Poster verified and shards awarded."
-        on_hold: "Poster marked as on hold."
-        rejected: "Poster rejected."
-        marked_digital: "Poster marked as digital (no shards awarded)."
-        cannot_mark_digital: "Cannot mark as digital: poster is not pending."
-        no_proof: "Cannot retry: no proof image attached."
-        auto_verified: "🎉 Poster auto-verified successfully! Shards awarded."
-        auto_verify_attempted: "Auto-verification attempted but did not pass threshold."
-        auto_verify_failed: "Auto-verify failed. Please try again."
-        resubmission_requested: "Poster sent back for resubmission."
-        not_found: "Poster not found."
-    referrals:
-      flash:
-        verified: "Referral verified successfully."
-        verify_error: "Failed to verify referral."
-        completed: "Referral completed successfully."
-        complete_error: "Failed to complete referral."
-        minutes_updated: "Arcade minutes updated."
-        minutes_error: "Failed to update arcade minutes."
-        deleted: "Referral deleted successfully."
-        delete_error: "Failed to delete referral."
 
   settings:
     title: "Settings"
