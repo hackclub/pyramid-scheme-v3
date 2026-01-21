@@ -1,4 +1,6 @@
 @import "shadcn.css";
+/* Outfit Font (for Aces campaign) */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap');
 
 /* Phantom Sans Font */
 @font-face {
@@ -11,9 +13,6 @@
   font-style: normal;
   font-display: swap;
 }
-
-/* Outfit Font (for Aces campaign) */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap');
 @font-face {
   font-family: 'Phantom Sans';
   src: url('https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Italic.woff')

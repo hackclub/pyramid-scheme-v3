@@ -87,6 +87,25 @@ class PostersControllerTest < ActionDispatch::IntegrationTest
   test "download generates PDF" do
     sign_in_as(@user)
 
+    # Stub the proxy service call
+    stub_request(:post, "http://pyramid-proxy:4446/generate_poster")
+      .with(
+        body: hash_including(
+          "content" => @pending_poster.referral_url,
+          "campaign_slug" => @pending_poster.campaign.slug,
+          "style" => @pending_poster.poster_type,
+          "referral_code" => @pending_poster.referral_code
+        ),
+        headers: {
+          "Content-Type" => "application/json"
+        }
+      )
+      .to_return(
+        status: 200,
+        body: "%PDF-1.4\nfake pdf content",
+        headers: { "Content-Type" => "application/pdf" }
+      )
+
     get download_poster_path(@pending_poster)
 
     assert_response :success
