@@ -37,7 +37,7 @@ copy `.env.example` to `.env` and configure as needed
 required:
 - `DATABASE_URL` - postgres connection string
 
-everything else is optional, but add as much as you can. a lot of things might not work otherwise!
+everything else is optional, but add as much as you can. a lot of things might not work otherwise! make a gh issue / PR if you would like me to fix smth with the dev setup!
 
 ## so wth is qreader
 
