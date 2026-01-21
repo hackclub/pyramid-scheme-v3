@@ -4,7 +4,7 @@ module Admin
   class ReferralsController < BaseController
     def index
       @referrals = Referral.includes(:referrer, :referred, :campaign)
-                           .order(created_at: :desc)
+                           .order(Arel.sql("COALESCE(completed_at, verified_at, created_at) DESC"))
 
       # Filter by status
       if params[:status].present? && params[:status] != "all"
