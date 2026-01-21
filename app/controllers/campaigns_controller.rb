@@ -21,17 +21,45 @@ class CampaignsController < ApplicationController
     @user = current_user
     @poster = current_user.posters.build(campaign: @campaign)
 
-    # Eager load associations to prevent N+1 queries
-    @user_referrals = @user.referrals_given
-      .for_campaign(@campaign)
-      .includes(:referred, :campaign)
-      .order(created_at: :desc)
+    # Poster filtering and sorting
+    @poster_filter = params[:poster_filter].presence || "all"
+    @poster_sort = params[:poster_sort].presence || "created"
 
-    @user_posters = @user.posters
-      .for_campaign(@campaign)
-      .standalone
-      .includes(:campaign, :poster_scans)
-      .order(created_at: :desc)
+    posters_scope = @user.posters.for_campaign(@campaign).standalone.includes(:campaign, :poster_scans)
+
+    # Apply poster filter
+    posters_scope = case @poster_filter
+    when "pending" then posters_scope.pending
+    when "submitted" then posters_scope.where(verification_status: %w[in_review on_hold])
+    when "verified" then posters_scope.success
+    when "digital" then posters_scope.digital
+    else posters_scope
+    end
+
+    # Apply poster sort
+    @user_posters = case @poster_sort
+    when "verified" then posters_scope.order(Arel.sql("COALESCE(verified_at, created_at) DESC"))
+    else posters_scope.order(created_at: :desc)
+    end
+
+    # Referral filtering and sorting
+    @referral_filter = params[:referral_filter].presence || "all"
+    @referral_sort = params[:referral_sort].presence || "created"
+
+    referrals_scope = @user.referrals_given.for_campaign(@campaign).includes(:referred, :campaign)
+
+    # Apply referral filter
+    referrals_scope = case @referral_filter
+    when "pending" then referrals_scope.where(status: %w[pending id_verified])
+    when "completed" then referrals_scope.completed
+    else referrals_scope
+    end
+
+    # Apply referral sort
+    @user_referrals = case @referral_sort
+    when "completed" then referrals_scope.order(Arel.sql("COALESCE(completed_at, created_at) DESC"))
+    else referrals_scope.order(created_at: :desc)
+    end
 
     @user_poster_groups = @user.poster_groups
       .for_campaign(@campaign)

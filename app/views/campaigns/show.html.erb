@@ -151,6 +151,24 @@
                 </div>
               </div>
 
+              <%# Filter/Sort tabs for posters %>
+              <div class="flex flex-wrap items-center gap-2 mb-3">
+                <div class="flex rounded-lg campaign-bg-muted p-0.5">
+                  <% [["all", "All"], ["pending", "Pending"], ["submitted", "Submitted"], ["verified", "Verified"], ["digital", "Digital"]].each do |key, label| %>
+                    <%= link_to label,
+                        campaign_path(@campaign.slug, poster_filter: key, poster_sort: @poster_sort, referral_filter: @referral_filter, referral_sort: @referral_sort),
+                        class: "px-2.5 py-1 text-xs font-bold rounded-md transition-colors #{@poster_filter == key ? 'campaign-surface campaign-text-primary shadow-sm' : 'campaign-text-muted hover:campaign-text-primary'}" %>
+                  <% end %>
+                </div>
+                <div class="flex rounded-lg campaign-bg-muted p-0.5 ml-auto">
+                  <% [["created", "Created"], ["verified", "Verified"]].each do |key, label| %>
+                    <%= link_to label,
+                        campaign_path(@campaign.slug, poster_filter: @poster_filter, poster_sort: key, referral_filter: @referral_filter, referral_sort: @referral_sort),
+                        class: "px-2.5 py-1 text-xs font-bold rounded-md transition-colors #{@poster_sort == key ? 'campaign-surface campaign-text-primary shadow-sm' : 'campaign-text-muted hover:campaign-text-primary'}" %>
+                  <% end %>
+                </div>
+              </div>
+
               <%# Weekly bonus shards info %>
               <div class="campaign-panel-inner p-3 mb-4">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -222,7 +240,7 @@
                     <% end %>
 
                     <%# Then show individual posters %>
-                    <% @user_posters.order(created_at: :desc).each do |poster| %>
+                    <% @user_posters.each do |poster| %>
                       <% status_label, status_classes = poster_status_badge_full(poster.verification_status) %>
                       
                       <%# Warning for pending/in_review posters when user has no quota %>
@@ -302,10 +320,28 @@
                 </div>
               </div>
 
+              <%# Filter/Sort tabs for referrals %>
+              <div class="flex flex-wrap items-center gap-2 mb-3">
+                <div class="flex rounded-lg campaign-bg-muted p-0.5">
+                  <% [["all", "All"], ["pending", "Pending"], ["completed", "Completed"]].each do |key, label| %>
+                    <%= link_to label,
+                        campaign_path(@campaign.slug, poster_filter: @poster_filter, poster_sort: @poster_sort, referral_filter: key, referral_sort: @referral_sort),
+                        class: "px-2.5 py-1 text-xs font-bold rounded-md transition-colors #{@referral_filter == key ? 'campaign-surface campaign-text-primary shadow-sm' : 'campaign-text-muted hover:campaign-text-primary'}" %>
+                  <% end %>
+                </div>
+                <div class="flex rounded-lg campaign-bg-muted p-0.5 ml-auto">
+                  <% [["created", "Created"], ["completed", "Completed"]].each do |key, label| %>
+                    <%= link_to label,
+                        campaign_path(@campaign.slug, poster_filter: @poster_filter, poster_sort: @poster_sort, referral_filter: @referral_filter, referral_sort: key),
+                        class: "px-2.5 py-1 text-xs font-bold rounded-md transition-colors #{@referral_sort == key ? 'campaign-surface campaign-text-primary shadow-sm' : 'campaign-text-muted hover:campaign-text-primary'}" %>
+                  <% end %>
+                </div>
+              </div>
+
               <div class="max-h-[42vh] overflow-y-auto pr-1">
                 <% if @user_referrals.any? %>
                   <div class="space-y-4">
-                    <% @user_referrals.order(created_at: :desc).each do |referral| %>
+                    <% @user_referrals.each do |referral| %>
                       <% hours = (referral.tracked_minutes / 60) %>
                       <% mins = (referral.tracked_minutes % 60) %>
                       <% tracked = [
