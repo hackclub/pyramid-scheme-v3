@@ -16,19 +16,32 @@ class PostersController < ApplicationController
       if mark_as_digital
         begin
           @poster.mark_digital!(current_user)
+          @poster.reload # Reload to ensure status is updated
         rescue ActiveRecord::RecordInvalid => e
           Rails.logger.error "Failed to mark poster as digital: #{e.message}"
         end
       end
+
       respond_to do |format|
-        format.html { redirect_to campaign_path(@campaign.slug), notice: "Poster generated! Download it and put it up." }
-        format.turbo_stream {
-          render turbo_stream: turbo_stream.replace(
-            "poster_result",
-            partial: "posters/created",
-            locals: { poster: @poster }
-          )
-        }
+        if mark_as_digital && @poster.verification_status == "digital"
+          format.html { redirect_to campaign_path(@campaign.slug), notice: "Digital poster activated! Your link is ready to share." }
+          format.turbo_stream {
+            render turbo_stream: turbo_stream.replace(
+              "poster_result",
+              partial: "posters/digital_success",
+              locals: { poster: @poster }
+            )
+          }
+        else
+          format.html { redirect_to campaign_path(@campaign.slug), notice: "Poster generated! Download it and put it up." }
+          format.turbo_stream {
+            render turbo_stream: turbo_stream.replace(
+              "poster_result",
+              partial: "posters/created",
+              locals: { poster: @poster }
+            )
+          }
+        end
       end
     else
       respond_to do |format|
