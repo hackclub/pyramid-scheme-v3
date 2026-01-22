@@ -9,6 +9,7 @@ export default class extends Controller {
 
   toggle(e) {
     e.preventDefault()
+    e.stopPropagation()
     if (this.menuTarget.classList.contains("hidden")) {
       this.open()
     } else {
@@ -18,7 +19,10 @@ export default class extends Controller {
 
   open() {
     this.menuTarget.classList.remove("hidden")
-    document.addEventListener("click", this.boundClickOutside)
+    // Use setTimeout to prevent immediate close from bubbling click
+    setTimeout(() => {
+      document.addEventListener("click", this.boundClickOutside)
+    }, 0)
   }
 
   close() {
