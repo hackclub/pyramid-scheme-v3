@@ -374,6 +374,48 @@ async def generate_poster_batch(batch_request: BatchPosterRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate poster batch: {str(e)}")
 
+@app.post("/generate_poster_batch_zip")
+async def generate_poster_batch_zip(batch_request: BatchPosterRequest):
+    """Generate multiple posters as individual PDFs in a ZIP archive"""
+    import zipfile
+    
+    try:
+        # Create zip file in memory
+        zip_buffer = io.BytesIO()
+        
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for index, poster_data in enumerate(batch_request.posters):
+                content = poster_data.get('content')
+                referral_code = poster_data.get('referral_code')
+                poster_type = poster_data.get('poster_type', 'color')
+
+                if not content:
+                    continue
+
+                # Generate PDF for this poster
+                pdf_data = generate_poster_pdf(
+                    content=content,
+                    campaign_slug=batch_request.campaign_slug,
+                    style=poster_type,
+                    referral_code=referral_code
+                )
+
+                # Add to zip with meaningful filename
+                filename = f"poster_{index + 1}_{referral_code}.pdf"
+                zip_file.writestr(filename, pdf_data)
+
+        zip_buffer.seek(0)
+
+        return Response(
+            content=zip_buffer.read(),
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": f"attachment; filename=posters_{batch_request.campaign_slug}.zip"
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate poster zip: {str(e)}")
+
 @app.get("/{code:path}")
 async def proxy_referral(code: str, request: Request):
     """
