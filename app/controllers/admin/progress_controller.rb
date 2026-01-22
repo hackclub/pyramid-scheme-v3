@@ -179,6 +179,14 @@ module Admin
           start_date,
           max_days
         )
+      when "users"
+        # V2 users are global (not campaign-specific)
+        calculate_cumulative_by_day(
+          PyramidV2::User,
+          :created_at,
+          start_date,
+          max_days
+        )
       end
     end
 
@@ -242,6 +250,13 @@ module Admin
         calculate_cumulative_by_day(
           Poster.verified,
           :verified_at,
+          start_date,
+          max_days
+        )
+      when "users"
+        calculate_cumulative_by_day(
+          User,
+          :created_at,
           start_date,
           max_days
         )

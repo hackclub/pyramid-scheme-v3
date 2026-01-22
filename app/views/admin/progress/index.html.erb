@@ -84,14 +84,31 @@
         </div>
       </div>
     </div>
+
+    <%# Users Chart %>
+    <div class="rounded-lg border border-border bg-card shadow-sm lg:col-span-2">
+      <div class="p-5 border-b border-border">
+        <h3 class="text-sm font-semibold text-foreground">Total Users</h3>
+        <p class="text-xs text-muted-foreground mt-1">Users who signed up over time</p>
+      </div>
+      <div class="p-5">
+        <div data-controller="progress-chart" data-progress-chart-metric-value="users" class="h-[300px]">
+          <canvas></canvas>
+        </div>
+      </div>
+    </div>
   </div>
 
   <%# Legend %>
   <div class="mt-6 rounded-xl border border-border bg-card p-5">
-    <div class="flex items-center justify-center gap-8 text-sm">
+    <div class="flex flex-wrap items-center justify-center gap-6 text-sm">
       <div class="flex items-center gap-2">
-        <div class="w-4 h-0.5 bg-indigo-500"></div>
-        <span class="text-muted-foreground">Pyramid v2</span>
+        <div class="w-4 h-0.5 bg-violet-500 border-dashed border-b-2 border-violet-500"></div>
+        <span class="text-muted-foreground">Athena (v2)</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-4 h-0.5 bg-indigo-500 border-dashed border-b-2 border-indigo-500"></div>
+        <span class="text-muted-foreground">Summer of Making (v2)</span>
       </div>
       <div class="flex items-center gap-2">
         <div class="w-4 h-0.5 bg-green-500"></div>
@@ -249,25 +266,6 @@
       <% end %>
     </div>
   </div>
-
-  <%# Suspicious Data Warning %>
-  <% if params[:suspicious].blank? %>
-    <div class="rounded-xl border border-amber-500/20 bg-amber-500/10 p-5 mb-6">
-      <div class="flex items-start gap-4">
-        <div class="flex-shrink-0">
-          <%= icon :alert_triangle, size: 20, class_name: "text-amber-500" %>
-        </div>
-        <div class="flex-1">
-          <h3 class="text-sm font-semibold text-amber-500 mb-1">Suspicious Data Detected</h3>
-          <p class="text-sm text-muted-foreground">
-            Pyramid v2 data shows large batch imports on <strong>June 16 (122 signups)</strong>, <strong>June 17 (242 signups at 3am)</strong>, and <strong>June 18 (474 signups at 9am)</strong>.
-            Many timestamps are on exact hour boundaries (00:00, 03:00, etc.), suggesting historical data imports rather than organic signups.
-            <%= link_to "Filter to see suspicious entries", admin_progress_path(view: "v2_referrals", suspicious: "yes"), class: "text-amber-500 font-medium hover:underline" %>
-          </p>
-        </div>
-      </div>
-    </div>
-  <% end %>
 
   <div class="rounded-lg border border-border bg-card shadow-sm">
     <div class="p-5 border-b border-border">

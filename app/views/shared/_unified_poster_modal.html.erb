@@ -131,12 +131,23 @@
         <!-- Digital Poster Option -->
         <div class="campaign-panel-inner p-3 sm:p-4">
           <label class="flex items-start gap-3 cursor-pointer">
-            <%= f.check_box :mark_as_digital, class: "mt-1 h-5 w-5 rounded border-2 border-current/40 campaign-text-primary focus:ring-2 focus:ring-current/20" %>
+            <%= f.check_box :mark_as_digital, 
+                data: { action: "change->poster-modal#toggleLocationField", poster_modal_target: "digitalCheckbox" },
+                class: "mt-1 h-5 w-5 rounded border-2 border-current/40 campaign-text-primary focus:ring-2 focus:ring-current/20" %>
             <div class="flex-1">
               <p class="campaign-font text-sm font-black campaign-text-primary">Mark as Digital</p>
               <p class="text-xs campaign-text-secondary mt-1">I'm sharing this digitally (no physical poster). No shards awarded, but your link will work immediately.</p>
             </div>
           </label>
+        </div>
+
+        <!-- Location (for digital posters) -->
+        <div data-poster-modal-target="locationFieldContainer" class="hidden">
+          <label class="block campaign-font text-sm font-black campaign-text-primary mb-2">Location (Optional)</label>
+          <p class="text-xs campaign-text-secondary mb-2">Where will you share this? e.g., "Twitter", "Discord server", "My blog"</p>
+          <%= f.text_field :location_description,
+              placeholder: "e.g., Twitter, Instagram, Discord",
+              class: "flex h-11 w-full rounded-lg campaign-input px-4 py-2 text-sm" %>
         </div>
 
         <!-- Instructions Warning -->

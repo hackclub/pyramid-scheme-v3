@@ -3,23 +3,22 @@
     <%= icon :circle_check, size: 28, class_name: "text-green-600 flex-shrink-0 mt-0.5" %>
     <div class="flex-1 min-w-0">
       <p class="campaign-font text-xl sm:text-2xl font-black text-green-600 mb-2">
-        <%= poster_group.poster_count %> Poster<%= poster_group.poster_count == 1 ? '' : 's' %> Generated!
+        Poster<%= poster_group.poster_count == 1 ? '' : 's' %> Generated!
       </p>
       <p class="text-sm sm:text-base campaign-text-secondary mb-4 leading-relaxed">
         <% if poster_group.name.present? %>
           <% if poster_group.poster_count == 1 %>
-            "<%= poster_group.name %>" is ready.
+            "<%= poster_group.name %>" is ready with a unique QR code and referral link.
           <% else %>
             Group "<%= poster_group.name %>" created with <%= poster_group.poster_count %> unique posters.
           <% end %>
         <% else %>
           <% if poster_group.poster_count == 1 %>
-            Your poster is ready.
+            Your poster is ready with a unique QR code and referral link.
           <% else %>
-            Your poster group has been created with <%= poster_group.poster_count %> unique posters.
+            Your <%= poster_group.poster_count %> posters are ready, each with a unique QR code.
           <% end %>
         <% end %>
-        Each poster has its own unique QR code and referral link.
         <% if defined?(unpaid_count) && unpaid_count.to_i > 0 %>
           <br><span class="text-amber-600 font-semibold">Note: <%= unpaid_count %> poster<%= unpaid_count == 1 ? '' : 's' %> won't earn shards (quota exceeded).</span>
         <% end %>
@@ -29,18 +28,15 @@
         <% if poster_group.poster_count > 1 %>
           <%= link_to download_all_poster_group_path(poster_group), class: "campaign-btn campaign-btn--primary w-full justify-center text-base" do %>
             <%= icon :download, size: 20 %>
-            Download All as PDF (<%= poster_group.poster_count %> Posters)
+            Download Posters (merged)
           <% end %>
         <% end %>
 
-        <% poster_group.posters.each_with_index do |poster, index| %>
-          <%= link_to download_poster_path(poster), class: "campaign-btn campaign-btn--<%= poster_group.poster_count > 1 ? 'secondary' : 'primary' %> w-full justify-center text-<%= poster_group.poster_count > 1 ? 'sm' : 'base' %>" do %>
-            <%= icon :download, size: <%= poster_group.poster_count > 1 ? 18 : 20 %> %>
-            <% if poster_group.poster_count == 1 %>
-              Download Poster
-            <% else %>
-              Download Poster #<%= index + 1 %>
-            <% end %>
+        <% if poster_group.poster_count == 1 %>
+          <% poster = poster_group.posters.first %>
+          <%= link_to download_poster_path(poster), class: "campaign-btn campaign-btn--primary w-full justify-center text-base" do %>
+            <%= icon :download, size: 20 %>
+            Download Poster
           <% end %>
         <% end %>
 

@@ -255,7 +255,7 @@ class PosterGroupsController < ApplicationController
   end
 
   def poster_group_params
-    params.require(:poster_group).permit(:name, :charset, :count, :poster_type, :campaign_id, :mark_as_digital)
+    params.require(:poster_group).permit(:name, :charset, :count, :poster_type, :campaign_id, :mark_as_digital, :location_description)
   end
 
   def quota_exceeded_message(requested, remaining)
@@ -266,6 +266,7 @@ class PosterGroupsController < ApplicationController
   # Create a single standalone poster (not in a group)
   def create_single_poster(paid_count, unpaid_count)
     mark_as_digital = poster_group_params[:mark_as_digital] == "1"
+    location = poster_group_params[:location_description]
 
     @poster = current_user.posters.build(
       campaign: @campaign,
@@ -278,6 +279,7 @@ class PosterGroupsController < ApplicationController
       if mark_as_digital
         begin
           @poster.mark_digital!(current_user)
+          @poster.update(location_description: location) if location.present?
           @poster.reload
         rescue ActiveRecord::RecordInvalid => e
           Rails.logger.error "Failed to mark poster as digital: #{e.message}"

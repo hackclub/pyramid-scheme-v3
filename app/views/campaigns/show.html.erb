@@ -151,20 +151,13 @@
                 </div>
               </div>
 
-              <%# Filter/Sort tabs for posters %>
+              <%# Filter tabs for posters %>
               <div class="flex flex-wrap items-center gap-2 mb-3">
                 <div class="flex rounded-lg campaign-bg-muted p-0.5">
                   <% [["all", "All"], ["pending", "Pending"], ["submitted", "Submitted"], ["verified", "Verified"], ["digital", "Digital"]].each do |key, label| %>
                     <%= link_to label,
-                        campaign_path(@campaign.slug, poster_filter: key, poster_sort: @poster_sort, referral_filter: @referral_filter, referral_sort: @referral_sort),
+                        campaign_path(@campaign.slug, poster_filter: key, referral_filter: @referral_filter),
                         class: "px-2.5 py-1 text-xs font-bold rounded-md transition-colors #{@poster_filter == key ? 'campaign-surface campaign-text-primary shadow-sm' : 'campaign-text-muted hover:campaign-text-primary'}" %>
-                  <% end %>
-                </div>
-                <div class="flex rounded-lg campaign-bg-muted p-0.5 ml-auto">
-                  <% [["created", "Created"], ["verified", "Verified"]].each do |key, label| %>
-                    <%= link_to label,
-                        campaign_path(@campaign.slug, poster_filter: @poster_filter, poster_sort: key, referral_filter: @referral_filter, referral_sort: @referral_sort),
-                        class: "px-2.5 py-1 text-xs font-bold rounded-md transition-colors #{@poster_sort == key ? 'campaign-surface campaign-text-primary shadow-sm' : 'campaign-text-muted hover:campaign-text-primary'}" %>
                   <% end %>
                 </div>
               </div>
@@ -320,20 +313,13 @@
                 </div>
               </div>
 
-              <%# Filter/Sort tabs for referrals %>
+              <%# Filter tabs for referrals %>
               <div class="flex flex-wrap items-center gap-2 mb-3">
                 <div class="flex rounded-lg campaign-bg-muted p-0.5">
                   <% [["all", "All"], ["pending", "Pending"], ["completed", "Completed"]].each do |key, label| %>
                     <%= link_to label,
-                        campaign_path(@campaign.slug, poster_filter: @poster_filter, poster_sort: @poster_sort, referral_filter: key, referral_sort: @referral_sort),
+                        campaign_path(@campaign.slug, poster_filter: @poster_filter, referral_filter: key),
                         class: "px-2.5 py-1 text-xs font-bold rounded-md transition-colors #{@referral_filter == key ? 'campaign-surface campaign-text-primary shadow-sm' : 'campaign-text-muted hover:campaign-text-primary'}" %>
-                  <% end %>
-                </div>
-                <div class="flex rounded-lg campaign-bg-muted p-0.5 ml-auto">
-                  <% [["created", "Created"], ["completed", "Completed"]].each do |key, label| %>
-                    <%= link_to label,
-                        campaign_path(@campaign.slug, poster_filter: @poster_filter, poster_sort: @poster_sort, referral_filter: @referral_filter, referral_sort: key),
-                        class: "px-2.5 py-1 text-xs font-bold rounded-md transition-colors #{@referral_sort == key ? 'campaign-surface campaign-text-primary shadow-sm' : 'campaign-text-muted hover:campaign-text-primary'}" %>
                   <% end %>
                 </div>
               </div>
