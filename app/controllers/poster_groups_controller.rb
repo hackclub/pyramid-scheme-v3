@@ -133,8 +133,6 @@ class PosterGroupsController < ApplicationController
   end
 
   def download_all_zip
-    require "zip"
-
     proxy_url = ENV.fetch("PROXY_URL", "http://pyramid-proxy:4446")
 
     # Check if proxy URL is configured for production
@@ -148,34 +146,34 @@ class PosterGroupsController < ApplicationController
       f.adapter Faraday.default_adapter
     end
 
-    # Create zip file in memory
-    zip_data = Zip::OutputStream.write_buffer do |zip|
-      @poster_group.posters.each_with_index do |poster, index|
-        # Generate individual poster PDF via proxy
-        response = conn.post("/generate_poster") do |req|
-          req.headers["Content-Type"] = "application/json"
-          req.body = {
-            content: poster.referral_url,
-            campaign_slug: @poster_group.campaign.slug,
-            style: poster.poster_type || "color",
-            referral_code: poster.referral_code
-          }.to_json
-          req.options.timeout = 30
-        end
-
-        if response.success?
-          filename = "poster_#{index + 1}_#{poster.referral_code}.pdf"
-          zip.put_next_entry(filename)
-          zip.write(response.body)
-        end
-      end
+    # Call Python proxy service to generate batch ZIP
+    posters_data = @poster_group.posters.map do |poster|
+      {
+        content: poster.referral_url,
+        referral_code: poster.referral_code,
+        poster_type: poster.poster_type || "color"
+      }
     end
 
-    group_name = @poster_group.name.presence || "group_#{@poster_group.id}"
-    send_data zip_data.string,
-              type: "application/zip",
-              disposition: "attachment",
-              filename: "posters_#{group_name.parameterize}.zip"
+    response = conn.post("/generate_poster_batch_zip") do |req|
+      req.headers["Content-Type"] = "application/json"
+      req.body = {
+        posters: posters_data,
+        campaign_slug: @poster_group.campaign.slug
+      }.to_json
+      req.options.timeout = 120  # Longer timeout for batch generation
+    end
+
+    if response.success?
+      group_name = @poster_group.name.presence || "group_#{@poster_group.id}"
+      send_data response.body,
+                type: "application/zip",
+                disposition: "attachment",
+                filename: "posters_#{group_name.parameterize}.zip"
+    else
+      Rails.logger.error "Failed to generate zip from proxy: #{response.status} - #{response.body}"
+      redirect_to poster_group_path(@poster_group), alert: "Failed to generate posters. Please try again."
+    end
   rescue Faraday::ConnectionFailed => e
     Rails.logger.error "Proxy service connection failed (#{proxy_url}): #{e.message}"
     redirect_to poster_group_path(@poster_group), alert: "Poster generation service is temporarily unavailable. Please try again later."
