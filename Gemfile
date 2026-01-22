@@ -124,6 +124,9 @@ gem "prawn", "~> 2.5"
 gem "prawn-table", "~> 0.2.2"
 gem "combine_pdf", "~> 1.0"
 
+# Zip file generation
+gem "rubyzip", "~> 2.3"
+
 gem "lucide-rails", "~> 0.7.3"
 
 # Airtable API client
