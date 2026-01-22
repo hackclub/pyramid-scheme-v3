@@ -405,7 +405,7 @@ GEM
       ffi (~> 1.12)
       logger
     ruby2_keywords (0.0.5)
-    rubyzip (3.2.2)
+    rubyzip (2.4.1)
     securerandom (0.4.1)
     selenium-webdriver (4.39.0)
       base64 (~> 0.2)
@@ -540,6 +540,7 @@ DEPENDENCIES
   rails (~> 8.1.2)
   rqrcode (~> 3.1)
   rubocop-rails-omakase
+  rubyzip (~> 2.3)
   selenium-webdriver
   shadcn-ui (~> 0.0.15)
   solid_cable
