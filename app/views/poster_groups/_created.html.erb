@@ -26,9 +26,10 @@
       
       <div class="space-y-3">
         <% if poster_group.poster_count > 1 %>
-          <div class="relative" data-controller="dropdown">
+          <div class="relative" data-controller="dropdown" x-data="{ open: false }">
             <button type="button" 
                     data-action="click->dropdown#toggle"
+                    onclick="const menu = this.nextElementSibling; menu.classList.toggle('hidden'); event.stopPropagation();"
                     class="campaign-btn campaign-btn--primary w-full justify-center text-base">
               <%= icon :download, size: 20 %>
               Download Posters
