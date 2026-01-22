@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["dialog", "form", "submitButton", "submitText", "loadingText", "cancelButton", "countField", "nameFieldContainer"]
+  static targets = ["dialog", "form", "submitButton", "submitText", "loadingText", "cancelButton", "countField", "nameFieldContainer", "digitalCheckbox", "locationFieldContainer"]
 
   toggleNameField() {
     if (this.hasNameFieldContainerTarget && this.hasCountFieldTarget) {
@@ -10,6 +10,16 @@ export default class extends Controller {
         this.nameFieldContainerTarget.classList.add("hidden")
       } else {
         this.nameFieldContainerTarget.classList.remove("hidden")
+      }
+    }
+  }
+
+  toggleLocationField() {
+    if (this.hasLocationFieldContainerTarget && this.hasDigitalCheckboxTarget) {
+      if (this.digitalCheckboxTarget.checked) {
+        this.locationFieldContainerTarget.classList.remove("hidden")
+      } else {
+        this.locationFieldContainerTarget.classList.add("hidden")
       }
     }
   }

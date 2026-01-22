@@ -36,47 +36,76 @@ export default class extends Controller {
       const canvas = this.element.querySelector("canvas")
       const ctx = canvas.getContext("2d")
 
+      // For users metric, v2 data is global (not per-campaign)
+      const isUsersMetric = metric === "users"
+      
+      const datasets = isUsersMetric ? [
+        {
+          label: "Pyramid v2",
+          data: data.v2_athena, // v2_athena contains global users for users metric
+          borderColor: "#8b5cf6",
+          backgroundColor: "#8b5cf620",
+          borderWidth: 2,
+          fill: false,
+          tension: 0.3,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          borderDash: [5, 5]
+        },
+        {
+          label: "Pyramid v3 (Current)",
+          data: data.v3,
+          borderColor: "#22c55e",
+          backgroundColor: "#22c55e20",
+          borderWidth: 3,
+          fill: false,
+          tension: 0.3,
+          pointRadius: 0,
+          pointHoverRadius: 5
+        }
+      ] : [
+        {
+          label: "Athena (v2)",
+          data: data.v2_athena,
+          borderColor: "#8b5cf6",
+          backgroundColor: "#8b5cf620",
+          borderWidth: 2,
+          fill: false,
+          tension: 0.3,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          borderDash: [5, 5]
+        },
+        {
+          label: "Summer of Making (v2)",
+          data: data.v2_summer,
+          borderColor: "#6366f1",
+          backgroundColor: "#6366f120",
+          borderWidth: 2,
+          fill: false,
+          tension: 0.3,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          borderDash: [5, 5]
+        },
+        {
+          label: "Pyramid v3 (Current)",
+          data: data.v3,
+          borderColor: "#22c55e",
+          backgroundColor: "#22c55e20",
+          borderWidth: 3,
+          fill: false,
+          tension: 0.3,
+          pointRadius: 0,
+          pointHoverRadius: 5
+        }
+      ]
+
       this.chart = new Chart(ctx, {
         type: "line",
         data: {
           labels: data.labels,
-          datasets: [
-            {
-              label: "Athena (v2)",
-              data: data.v2_athena,
-              borderColor: "#8b5cf6",
-              backgroundColor: "#8b5cf620",
-              borderWidth: 2,
-              fill: false,
-              tension: 0.3,
-              pointRadius: 0,
-              pointHoverRadius: 5,
-              borderDash: [5, 5]
-            },
-            {
-              label: "Summer of Making (v2)",
-              data: data.v2_summer,
-              borderColor: "#6366f1",
-              backgroundColor: "#6366f120",
-              borderWidth: 2,
-              fill: false,
-              tension: 0.3,
-              pointRadius: 0,
-              pointHoverRadius: 5,
-              borderDash: [5, 5]
-            },
-            {
-              label: "Pyramid v3 (Current)",
-              data: data.v3,
-              borderColor: "#22c55e",
-              backgroundColor: "#22c55e20",
-              borderWidth: 3,
-              fill: false,
-              tension: 0.3,
-              pointRadius: 0,
-              pointHoverRadius: 5
-            }
-          ]
+          datasets: datasets
         },
         options: {
           responsive: true,

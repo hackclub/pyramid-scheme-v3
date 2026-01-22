@@ -213,8 +213,12 @@ class User < ApplicationRecord
   alias_method :weekly_poster_limit, :weekly_paid_poster_limit
 
   # Count posters created this calendar week (Monday to Sunday)
+  # Excludes rejected posters so they don't count against quota
   def posters_created_this_week
-    posters.where(created_at: Time.current.beginning_of_week..Time.current.end_of_week).count
+    posters
+      .where(created_at: Time.current.beginning_of_week..Time.current.end_of_week)
+      .where.not(verification_status: "rejected")
+      .count
   end
 
   # Count completed referrals this calendar week (Monday to Sunday)
