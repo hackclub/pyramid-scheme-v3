@@ -26,17 +26,13 @@
       
       <div class="space-y-3">
         <% if poster_group.poster_count > 1 %>
-          <div class="relative" data-controller="dropdown" x-data="{ open: false }">
-            <button type="button" 
-                    data-action="click->dropdown#toggle"
-                    onclick="const menu = this.nextElementSibling; menu.classList.toggle('hidden'); event.stopPropagation();"
-                    class="campaign-btn campaign-btn--primary w-full justify-center text-base">
+          <details class="relative download-dropdown">
+            <summary class="campaign-btn campaign-btn--primary w-full justify-center text-base cursor-pointer list-none [&::-webkit-details-marker]:hidden">
               <%= icon :download, size: 20 %>
               Download Posters
               <%= icon :chevron_down, size: 16, class_name: "ml-1" %>
-            </button>
-            <div data-dropdown-target="menu" 
-                 class="hidden absolute top-full left-0 right-0 mt-1 rounded-lg campaign-surface border-2 border-current/20 shadow-lg overflow-hidden z-10">
+            </summary>
+            <div class="absolute top-full left-0 right-0 mt-1 rounded-lg campaign-surface border-2 border-current/20 shadow-lg overflow-hidden z-10">
               <%= link_to download_all_poster_group_path(poster_group), 
                   class: "flex items-center gap-2 px-4 py-2.5 text-sm font-bold campaign-text-primary hover:bg-black/5 transition-colors" do %>
                 <%= icon :file, size: 16 %>
@@ -48,7 +44,7 @@
                 Download Posters (zip)
               <% end %>
             </div>
-          </div>
+          </details>
         <% end %>
 
         <% if poster_group.poster_count == 1 %>
