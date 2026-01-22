@@ -264,6 +264,7 @@
         <div class="relative" data-controller="dropdown">
           <button type="button" 
                   data-action="click->dropdown#toggle"
+                  onclick="const menu = this.nextElementSibling; menu.classList.toggle('hidden'); event.stopPropagation();"
                   class="campaign-btn campaign-btn--primary text-xs h-9 px-4 inline-flex items-center gap-1.5">
             <%= icon :download, size: 14 %>
             Download All
