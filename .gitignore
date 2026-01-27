@@ -63,3 +63,5 @@ AGENTS.md
 ref
 /app/assets/builds/*
 !/app/assets/builds/.keep
+
+__pycache__

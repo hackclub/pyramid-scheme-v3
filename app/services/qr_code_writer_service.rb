@@ -250,6 +250,12 @@ class QrCodeWriterService
         "color" => { x: 108, y: 120, size: 12, color: "000000" },
         "bw" => { x: 108, y: 120, size: 12, color: "000000" },
         "printer_efficient" => { x: 108, y: 120, size: 12, color: "000000" }
+      },
+      "sleepover" => {
+        # Centered in the left text area of the footer, below URL
+        "color" => { x: 530, y: 50, size: 18, color: "5D4A7A" },
+        "bw" => { x: 530, y: 50, size: 18, color: "000000" },
+        "printer_efficient" => { x: 530, y: 50, size: 18, color: "000000" }
       }
     }
 
