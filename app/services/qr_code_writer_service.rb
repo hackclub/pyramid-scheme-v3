@@ -206,6 +206,11 @@ class QrCodeWriterService
         "bw" => { x: 530, y: 122, size: 218 },
         "printer_efficient" => { x: 847, y: 119, size: 258 }
       },
+      "sleepover" => {
+        "color" => { x: 1133, y: 71, size: 326 },
+        "bw" => { x: 1144, y: 81, size: 299 },
+        "printer_efficient" => { x: 1149, y: 82, size: 318 }
+      },
       "aces" => {
         "color" => { x: 857, y: 148, size: 226 },
         "bw" => { x: 115, y: 175, size: 230 },
