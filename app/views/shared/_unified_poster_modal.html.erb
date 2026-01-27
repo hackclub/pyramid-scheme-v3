@@ -99,7 +99,13 @@
               ]
             end
             grid_cols = poster_styles.length == 2 ? "grid-cols-2 max-w-md mx-auto" : (poster_styles.length == 1 ? "grid-cols-1 max-w-xs mx-auto" : "grid-cols-3")
-            designer_credit = campaign.slug == "construct" ? "Posters by Shayaan" : t("posters.credit.designer")
+            designer_credit = if campaign.slug == "construct"
+                                "Posters by Shayaan"
+                              elsif campaign.slug == "sleepover"
+                                "Posters by Reem"
+                              else
+                                t("posters.credit.designer")
+                              end
           %>
           <div class="grid <%= grid_cols %> gap-3 sm:gap-4">
             <% poster_styles.each do |style| %>
