@@ -225,12 +225,21 @@ class PosterGroupsController < ApplicationController
       return
     end
 
-    # Submit all posters
+    # Submit all posters with auto-verification attempt
+    auto_verified_count = 0
     posters_to_submit.each do |poster|
-      poster.mark_in_review!
+      verification_result = PosterAutoVerificationService.new(poster).call
+      auto_verified_count += 1 if verification_result == :success || verification_result == :auto_matched
     end
 
-    redirect_to campaign_path(@poster_group.campaign.slug), notice: "All #{posters_to_submit.count} posters submitted for review!"
+    if auto_verified_count == posters_to_submit.count
+      redirect_to campaign_path(@poster_group.campaign.slug), notice: "🎉 All #{posters_to_submit.count} posters were automatically verified!"
+    elsif auto_verified_count > 0
+      in_review_count = posters_to_submit.count - auto_verified_count
+      redirect_to campaign_path(@poster_group.campaign.slug), notice: "#{auto_verified_count} poster(s) auto-verified, #{in_review_count} submitted for review!"
+    else
+      redirect_to campaign_path(@poster_group.campaign.slug), notice: "All #{posters_to_submit.count} posters submitted for review!"
+    end
   end
 
   # Auto-detect which poster a proof image belongs to within this group

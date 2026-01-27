@@ -309,18 +309,39 @@ class PostersController < ApplicationController
       return
     end
 
-    # Submit the poster
-    @poster.mark_in_review!
+    # Attempt auto-verification before falling back to manual review
+    verification_result = PosterAutoVerificationService.new(@poster).call
 
     respond_to do |format|
-      format.html { redirect_to poster_group_path(@poster.poster_group), notice: "Poster submitted for review!" }
-      format.turbo_stream {
-        render turbo_stream: turbo_stream.replace(
-          "submit_result_#{@poster.id}",
-          partial: "posters/submit_success",
-          locals: { poster: @poster }
-        )
-      }
+      case verification_result
+      when :success
+        format.html { redirect_to poster_group_path(@poster.poster_group), notice: "🎉 Your poster has been automatically verified! Shards have been awarded." }
+        format.turbo_stream {
+          render turbo_stream: turbo_stream.replace(
+            "submit_result_#{@poster.id}",
+            partial: "posters/submit_success",
+            locals: { poster: @poster, auto_verified: true }
+          )
+        }
+      when :auto_matched
+        format.html { redirect_to poster_group_path(@poster.poster_group), notice: "🎉 Your poster was auto-matched and verified!" }
+        format.turbo_stream {
+          render turbo_stream: turbo_stream.replace(
+            "submit_result_#{@poster.id}",
+            partial: "posters/submit_success",
+            locals: { poster: @poster, auto_verified: true }
+          )
+        }
+      else # :in_review
+        format.html { redirect_to poster_group_path(@poster.poster_group), notice: "Poster submitted for review!" }
+        format.turbo_stream {
+          render turbo_stream: turbo_stream.replace(
+            "submit_result_#{@poster.id}",
+            partial: "posters/submit_success",
+            locals: { poster: @poster }
+          )
+        }
+      end
     end
   end
 
