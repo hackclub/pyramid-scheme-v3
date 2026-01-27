@@ -38,6 +38,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
+    env_file: .env
     environment:
       - RAILS_ENV=development
       - PORT=4444
@@ -108,6 +109,8 @@ services:
       - DATABASE_URL=postgres://pyramid:pyramid_dev@db:5432/pyramid_development
     ports:
       - "4446:4446"
+    volumes:
+      - ./app/assets/images:/app/assets/images:ro
     depends_on:
       db:
         condition: service_healthy

@@ -60,9 +60,9 @@ QR_COORDINATES = {
         "printer_efficient": {"x": 20, "y": 132, "size": 175}
     },
     "sleepover": {
-        "color": {"x": 847, "y": 119, "size": 258},
-        "bw": {"x": 530, "y": 122, "size": 218},
-        "printer_efficient": {"x": 847, "y": 119, "size": 258}
+        "color": {"x": 1133, "y": 71, "size": 326},
+        "bw": {"x": 1144, "y": 81, "size": 299},
+        "printer_efficient": {"x": 1149, "y": 82, "size": 318}
     }
 }
 
@@ -84,9 +84,9 @@ REFERRAL_CODE_COORDINATES = {
         "printer_efficient": {"x": 108, "y": 120, "size": 12, "color": "000000"}
     },
     "sleepover": {
-        "color": {"x": 595, "y": 62, "size": 18, "color": "FFFFFF"},
-        "bw": {"x": 595, "y": 62, "size": 18, "color": "000000"},
-        "printer_efficient": {"x": 595, "y": 62, "size": 18, "color": "FFFFFF"}
+        "color": {"x": 530, "y": 50, "size": 18, "color": "5D4A7A"},
+        "bw": {"x": 530, "y": 50, "size": 18, "color": "000000"},
+        "printer_efficient": {"x": 530, "y": 50, "size": 18, "color": "000000"}
     }
 }
 
