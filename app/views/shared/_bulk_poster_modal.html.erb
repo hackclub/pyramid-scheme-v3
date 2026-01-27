@@ -100,6 +100,12 @@
               poster_styles = case campaign.slug
               when "aces"
                 [{ value: "color", title: "Color Poster", preview: "aces-poster-color-preview.webp" }]
+              when "sleepover"
+                [
+                  { value: "color", title: "Color Poster", preview: "sleepover-poster-color-preview.webp" },
+                  { value: "bw", title: "Black & White Poster", preview: "sleepover-poster-bw-preview.webp" },
+                  { value: "printer_efficient", title: "Printer Efficient", preview: "sleepover-poster-printer_efficient-preview.webp" }
+                ]
               else
                 [
                   { value: "color", title: "Color Poster", preview: "poster-color-preview.webp" },
