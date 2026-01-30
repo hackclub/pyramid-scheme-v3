@@ -13,6 +13,19 @@ class FlavortownCampaignLogic < BaseCampaignLogic
     build_campaign_url(SUBDOMAIN)
   end
 
+  # Custom field mappings for Flavortown Airtable.
+  # Flavortown uses lowercase "ref" instead of "Referral Code".
+  #
+  # @return [Hash] mapping of internal field names to Airtable column names
+  def airtable_field_mappings
+    {
+      "email" => "email",
+      "hours" => "hours",
+      "idv_status" => "verification_status",
+      "referral_code" => "ref"
+    }.freeze
+  end
+
   def background_pattern_url
     "#{SUBDOMAIN}/striped-btn-bg.svg"
   end
