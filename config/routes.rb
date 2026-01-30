@@ -86,7 +86,11 @@ Rails.application.routes.draw do
       get "referrals_valid", to: "referrals#referrals_valid"
 
       # Referral code validation endpoints
-      resources :codes, only: [ :index, :show ]
+      resources :codes, only: [ :index, :show ] do
+        collection do
+          get :lookup
+        end
+      end
 
       # Worker API (internal service communication)
       namespace :worker do

@@ -3,6 +3,8 @@
 module Api
   module V1
     class CodesController < BaseController
+      skip_before_action :authenticate_api_key!, only: [:lookup]
+
       # GET /api/v1/codes
       # Returns all valid referral codes for the campaign
       def index
@@ -95,6 +97,60 @@ module Api
           valid: false,
           reason: "not_found"
         )
+      end
+
+      # GET /api/v1/codes/lookup?slack_id=X&campaign_slug=Y
+      # Unauthenticated endpoint to lookup referral codes by Slack ID and Campaign
+      def lookup
+        slack_id = params[:slack_id]
+        campaign_slug = params[:campaign_slug]
+
+        # Validate required parameters
+        if slack_id.blank?
+          return render_error("slack_id parameter is required", status: :bad_request)
+        end
+
+        if campaign_slug.blank?
+          return render_error("campaign_slug parameter is required", status: :bad_request)
+        end
+
+        # Find the campaign
+        campaign = Campaign.find_by(slug: campaign_slug)
+        unless campaign
+          return render_error("Campaign not found", status: :not_found)
+        end
+
+        # Find the user by slack_id
+        user = User.find_by(slack_id: slack_id)
+        unless user
+          return render_error("User not found", status: :not_found)
+        end
+
+        # Build response with referral codes
+        codes = []
+
+        if user.referral_code.present?
+          codes << {
+            code: user.referral_code,
+            type: "standard"
+          }
+        end
+
+        if user.custom_referral_code.present?
+          codes << {
+            code: user.custom_referral_code,
+            type: "custom"
+          }
+        end
+
+        render_success({
+          slack_id: slack_id,
+          campaign_slug: campaign_slug,
+          user: {
+            display_name: user.display_name
+          },
+          codes: codes
+        })
       end
     end
   end
