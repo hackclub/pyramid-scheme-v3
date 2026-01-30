@@ -28,7 +28,7 @@ class Campaign < ApplicationRecord
     "email" => "Email",
     "hours" => "Hours",
     "idv_status" => "IDV Status",
-    "referral_code" => "ref",
+    "referral_code" => "Referral Code",
     "projects_shipped" => "Projects Shipped"
   }.freeze
 
