@@ -30,7 +30,7 @@ class AirtableReferral < ApplicationRecord
 
     # Use field mappings to extract data
     email_field = field_mappings["email"] || "Email"
-    ref_field = field_mappings["referral_code"] || "ref"
+    ref_field = field_mappings["referral_code"] || "Referral Code"
     name_field = field_mappings["name"] || "Name"
     slack_id_field = field_mappings["slack_id"] || "Slack ID"
     hours_field = field_mappings["hours"] || "Hours"
@@ -39,7 +39,7 @@ class AirtableReferral < ApplicationRecord
     projects_count_field = field_mappings["projects_count"] || "Project Count"
     ships_count_field = field_mappings["ships_count"] || "Verified Shipped Count"
 
-    referral_code = (fields[ref_field] || fields["ref"] || fields["Referral Code"]).to_s.strip.upcase
+    referral_code = (fields[ref_field] || fields["Referral Code"]).to_s.strip.upcase
     email = (fields[email_field] || fields["Email"] || fields["email"]).to_s.strip.downcase
     name = fields[name_field] || fields["Name"] || fields["name"]
     slack_id = fields[slack_id_field] || fields["Slack ID"] || fields["slack_id"]

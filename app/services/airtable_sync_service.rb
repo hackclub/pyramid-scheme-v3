@@ -69,7 +69,7 @@ class AirtableSyncService
 
     # Get field names from mappings
     email_field = field_mappings["email"] || "Email"
-    ref_field = field_mappings["referral_code"] || "ref"
+    ref_field = field_mappings["referral_code"] || "Referral Code"
 
     records.each do |record|
       fields = record["fields"] || {}
@@ -95,7 +95,7 @@ class AirtableSyncService
       normalized_record["fields"] ||= {}
       normalized_record["fields"]["Email"] ||= email
       normalized_record["fields"]["email"] ||= email
-      normalized_record["fields"]["ref"] ||= ref_code
+      normalized_record["fields"]["Referral Code"] ||= ref_code
 
       result = AirtableReferral.sync_from_airtable(
         record: normalized_record,
