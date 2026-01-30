@@ -3,7 +3,7 @@
 module Api
   module V1
     class CodesController < BaseController
-      skip_before_action :authenticate_api_key!, only: [:lookup]
+      skip_before_action :authenticate_api_key!, only: [ :lookup ]
 
       # GET /api/v1/codes
       # Returns all valid referral codes for the campaign
