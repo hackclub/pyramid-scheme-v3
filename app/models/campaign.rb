@@ -112,7 +112,11 @@ class Campaign < ApplicationRecord
   end
 
   def effective_field_mappings
-    DEFAULT_FIELD_MAPPINGS.merge(airtable_field_mappings || {})
+    # Priority: campaign logic > database field mappings > defaults
+    logic = BaseCampaignLogic.for(self)
+    logic_mappings = logic.respond_to?(:airtable_field_mappings) ? logic.airtable_field_mappings : {}
+
+    DEFAULT_FIELD_MAPPINGS.merge(airtable_field_mappings || {}).merge(logic_mappings || {})
   end
 
   # Poster template helpers
