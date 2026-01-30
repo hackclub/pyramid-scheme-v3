@@ -88,7 +88,7 @@ end
 gem "shadcn-ui", "~> 0.0.15"
 
 # QR code generation
-gem "rqrcode", "~> 3.1"
+gem "rqrcode", "~> 3.2"
 
 # HTTP client for OAuth and QReader service
 gem "faraday", "~> 2.9"
