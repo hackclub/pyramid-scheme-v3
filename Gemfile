@@ -95,7 +95,7 @@ gem "faraday", "~> 2.9"
 gem "faraday-multipart", "~> 1.0"
 
 # CORS support
-gem "rack-cors", "~> 2.0"
+gem "rack-cors", "~> 3.0"
 
 # Rate limiting
 gem "rack-attack", "~> 6.7"
