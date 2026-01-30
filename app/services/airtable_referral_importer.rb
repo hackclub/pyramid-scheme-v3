@@ -193,7 +193,7 @@ class AirtableReferralImporter
 
     # Get campaign-specific field mappings
     field_mappings = campaign&.effective_field_mappings || Campaign::DEFAULT_FIELD_MAPPINGS
-    ref_field = field_mappings["referral_code"] || "ref"
+    ref_field = field_mappings["referral_code"] || "Referral Code"
     email_field = field_mappings["email"] || "Email"
     hours_field = field_mappings["hours"] || "Hours"
     idv_field = field_mappings["idv_status"] || "IDV Status"
@@ -201,7 +201,7 @@ class AirtableReferralImporter
     projects_field = field_mappings["projects_count"] || "Project Count"
 
     # Extract data from Airtable using field mappings (with fallbacks)
-    referrer_code = (fields[ref_field] || fields["ref"])&.strip&.upcase
+    referrer_code = (fields[ref_field] || fields["Referral Code"])&.strip&.upcase
     referred_email = (fields[email_field] || fields["email"] || fields["Email"])&.strip&.downcase
     hours = (fields[hours_field] || fields["hours"] || fields["Hours"] || 0).to_f
     verification_status = fields[idv_field] || fields["verification_status"] || fields["IDV Status"]
@@ -345,7 +345,7 @@ class AirtableReferralImporter
   # Get the referral code field name from campaign mappings
   def referral_code_field_name
     field_mappings = campaign&.effective_field_mappings || Campaign::DEFAULT_FIELD_MAPPINGS
-    field_mappings["referral_code"] || "ref"
+    field_mappings["referral_code"] || "Referral Code"
   end
 
   # Check if this is a ships-based campaign (like Construct)
