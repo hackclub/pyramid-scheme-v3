@@ -225,9 +225,11 @@ class QrCodeWriterService
         "printer_efficient" => { x: 20, y: 132, size: 175 }
       },
       "hctg" => {
-        # 1728x2160 poster, QR box in bottom-right of footer bar
-        "color" => { x: 1330, y: 88, size: 200 },
-        "bw" => { x: 1330, y: 88, size: 200 }
+        # 1728x2160 poster, QR box bottom-right of footer bar
+        # Box bounds: (1196.4, 47.5) to (1436.0, 266.7), 239.6x219.2 pts
+        # QR centered in box with 10pt padding
+        "color" => { x: 1217, y: 58, size: 199 },
+        "bw" => { x: 1217, y: 58, size: 199 }
       }
     }
 

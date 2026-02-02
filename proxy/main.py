@@ -65,8 +65,8 @@ QR_COORDINATES = {
         "printer_efficient": {"x": 1149, "y": 82, "size": 318}
     },
     "hctg": {
-        "color": {"x": 1330, "y": 88, "size": 200},
-        "bw": {"x": 1330, "y": 88, "size": 200}
+        "color": {"x": 1217, "y": 58, "size": 199},
+        "bw": {"x": 1217, "y": 58, "size": 199}
     }
 }
 
