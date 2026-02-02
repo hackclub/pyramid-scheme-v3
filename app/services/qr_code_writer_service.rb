@@ -223,6 +223,11 @@ class QrCodeWriterService
         "color" => { x: 20, y: 132, size: 175 },
         "bw" => { x: 20, y: 132, size: 175 },
         "printer_efficient" => { x: 20, y: 132, size: 175 }
+      },
+      "hctg" => {
+        # 1728x2160 poster, QR box in bottom-right of footer bar
+        "color" => { x: 1330, y: 88, size: 200 },
+        "bw" => { x: 1330, y: 88, size: 200 }
       }
     }
 
@@ -256,6 +261,11 @@ class QrCodeWriterService
         "color" => { x: 530, y: 50, size: 18, color: "5D4A7A" },
         "bw" => { x: 530, y: 50, size: 18, color: "000000" },
         "printer_efficient" => { x: 530, y: 50, size: 18, color: "000000" }
+      },
+      "hctg" => {
+        # Centered in the footer text area, left of QR box
+        "color" => { x: 600, y: 68, size: 22, color: "FFFFFF" },
+        "bw" => { x: 600, y: 68, size: 22, color: "000000" }
       }
     }
 
