@@ -466,6 +466,63 @@
   --campaign-modal-header-border: 2px solid rgba(109, 144, 227, 0.2);
 }
 
+/* Campaign theme: HCTG (Hack Club The Game) - Dark with red/blue accents (from ref/the-game) */
+.theme-hctg {
+  /* Dark palette matching the-game: black sidebar, gray-200 bg, red-500/blue-600 accents */
+  --background: 0 0% 7%;              /* #121212 - near-black */
+  --foreground: 0 0% 93%;             /* #ededed - light gray text */
+  --card: 0 0% 11%;                   /* #1c1c1c - dark card */
+  --card-foreground: 0 0% 93%;
+  --popover: 0 0% 9%;
+  --popover-foreground: 0 0% 93%;
+  --primary: 0 84% 60%;               /* #ef4444 - red-500 */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 217 91% 60%;           /* #2563eb - blue-600 */
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 64%;       /* gray-400 */
+  --accent: 0 84% 60%;                /* red-500 accent */
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 20%;                 /* subtle dark borders */
+  --input: 0 0% 15%;
+  --ring: 0 84% 60%;
+
+  /* Campaign-specific component variables */
+  --campaign-font: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+  --campaign-surface-foreground: #1f2937;   /* gray-800 */
+  --campaign-surface-background: #e5e7eb;   /* gray-200 - matches the-game bg */
+  --campaign-text-primary: #1f2937;
+  --campaign-text-secondary: rgba(31, 41, 55, 0.8);
+  --campaign-text-muted: rgba(31, 41, 55, 0.6);
+  --campaign-border-color: rgba(239, 68, 68, 0.3);
+  --campaign-panel-radius: 0.75rem;
+  --campaign-panel-border: 3px solid rgba(239, 68, 68, 0.2);
+  --campaign-panel-background: #ffffff;
+  --campaign-panel-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  --campaign-panel-inner-radius: 0.5rem;
+  --campaign-panel-inner-border: 1px solid rgba(0, 0, 0, 0.08);
+  --campaign-panel-inner-background: #f9fafb;   /* gray-50 */
+  --campaign-input-background: #ffffff;
+  --campaign-input-border: 2px solid rgba(0, 0, 0, 0.12);
+  --campaign-btn-radius: 0.5rem;
+  --campaign-btn-padding: 0.625rem 1.25rem;
+  --campaign-btn-weight: 600;
+  --campaign-btn-border: none;
+  --campaign-btn-background: #ef4444;       /* red-500 */
+  --campaign-btn-color: #ffffff;
+  --campaign-btn-primary-background: #ef4444;
+  --campaign-btn-primary-color: #ffffff;
+  --campaign-btn-secondary-background: #2563eb;  /* blue-600 */
+  --campaign-btn-secondary-color: #ffffff;
+  --campaign-accent-color: #ef4444;
+  --campaign-gradient: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #000000 100%);
+  --campaign-modal-background: #ffffff;
+  --campaign-modal-border: 3px solid rgba(239, 68, 68, 0.2);
+  --campaign-modal-header-border: 2px solid rgba(0, 0, 0, 0.08);
+}
+
 /* Range input styles */
 input[type="range"] {
   -webkit-appearance: none;

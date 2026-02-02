@@ -63,6 +63,10 @@ QR_COORDINATES = {
         "color": {"x": 1133, "y": 71, "size": 326},
         "bw": {"x": 1144, "y": 81, "size": 299},
         "printer_efficient": {"x": 1149, "y": 82, "size": 318}
+    },
+    "hctg": {
+        "color": {"x": 1330, "y": 88, "size": 200},
+        "bw": {"x": 1330, "y": 88, "size": 200}
     }
 }
 
@@ -87,6 +91,10 @@ REFERRAL_CODE_COORDINATES = {
         "color": {"x": 530, "y": 50, "size": 18, "color": "5D4A7A"},
         "bw": {"x": 530, "y": 50, "size": 18, "color": "000000"},
         "printer_efficient": {"x": 530, "y": 50, "size": 18, "color": "000000"}
+    },
+    "hctg": {
+        "color": {"x": 600, "y": 68, "size": 22, "color": "FFFFFF"},
+        "bw": {"x": 600, "y": 68, "size": 22, "color": "000000"}
     }
 }
 

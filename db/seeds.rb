@@ -79,6 +79,24 @@ campaigns_data = [
       secondary_color: "#0097a7",
       background_color: "#0d1117"
     }
+  },
+  {
+    slug: "hctg",
+    name: "Hack Club: The Game",
+    theme: "hctg",
+    description: "Build projects, then compete in a scavenger hunt adventure game across Manhattan.",
+    active: true,
+    status: "open",
+    referral_shards: 3,
+    poster_shards: 1,
+    required_coding_minutes: 60,
+    subdomain: "hctg",
+    base_url: "https://hctg.hack.club",
+    theme_config: {
+      primary_color: "#ef4444",
+      secondary_color: "#2563eb",
+      background_color: "#000000"
+    }
   }
 ]
 
