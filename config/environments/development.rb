@@ -28,9 +28,15 @@ Rails.application.configure do
   # Change to :null_store to avoid any caching.
   config.cache_store = :memory_store
 
-  # Store uploaded files on Azure Blob Storage (see config/storage.yml for options).
-  # Use :local for local development if needed
-  config.active_storage.service = ENV["USE_LOCAL_STORAGE"] == "true" ? :local : :azure
+  # Store uploaded files on Cloudflare R2 or local disk (see config/storage.yml for options).
+  # Use USE_LOCAL_STORAGE=true for local development, otherwise uses R2
+  # Use STORAGE_SERVICE=azure to use Azure instead
+  storage_service = if ENV["USE_LOCAL_STORAGE"] == "true"
+    :local
+  else
+    ENV.fetch("STORAGE_SERVICE", "r2").to_sym
+  end
+  config.active_storage.service = storage_service
 
   # Don't care if the mailer can't send.
   config.action_mailer.raise_delivery_errors = false

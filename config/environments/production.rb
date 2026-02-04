@@ -25,8 +25,9 @@ Rails.application.configure do
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
 
-  # Store uploaded files on Azure Blob Storage (see config/storage.yml for options).
-  config.active_storage.service = :azure
+  # Store uploaded files on Cloudflare R2 (S3-compatible) or Azure Blob Storage
+  # Set STORAGE_SERVICE env var to 'azure' to use Azure, defaults to R2
+  config.active_storage.service = ENV.fetch("STORAGE_SERVICE", "r2").to_sym
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   # config.assume_ssl = true

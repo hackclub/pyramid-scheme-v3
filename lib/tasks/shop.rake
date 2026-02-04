@@ -4,6 +4,119 @@ require "faraday"
 require "stringio"
 
 namespace :shop do
+  desc "Upload product images from local files to R2/storage service"
+  task upload_local_images: :environment do
+    # Local images saved in tmp/shop_images/
+    local_images_dir = Rails.root.join("tmp/shop_images")
+
+    unless Dir.exist?(local_images_dir)
+      puts "ERROR: #{local_images_dir} does not exist. Download images first."
+      exit 1
+    end
+
+    storage_service = ActiveStorage::Blob.service
+    uploaded_urls = {}
+
+    Dir.glob(local_images_dir.join("*.{webp,png,jpg,jpeg}")).each do |filepath|
+      filename = File.basename(filepath)
+      target_filename = filename.sub(/\.(webp|jpg|jpeg)$/, ".png") # normalize extension
+
+      puts "Processing #{filename}..."
+
+      begin
+        content = File.read(filepath, mode: "rb")
+        content_type = case File.extname(filepath).downcase
+        when ".webp" then "image/webp"
+        when ".png" then "image/png"
+        when ".jpg", ".jpeg" then "image/jpeg"
+        else "application/octet-stream"
+        end
+
+        key = "shop/#{target_filename}"
+        io = StringIO.new(content)
+
+        puts "  Uploading to storage as #{key}"
+        storage_service.upload(key, io, content_type: content_type, filename: target_filename)
+
+        # Get public URL based on service type
+        public_url = if storage_service.respond_to?(:public_url)
+          storage_service.public_url(key)
+        else
+          # For S3/R2, construct the URL
+          bucket = ENV.fetch("R2_BUCKET", "pyramid")
+          "#{ENV['R2_PUBLIC_URL']}/#{key}"
+        end
+
+        uploaded_urls[target_filename] = public_url
+        puts "  Uploaded: #{public_url}"
+      rescue => e
+        puts "  ERROR: #{e.message}"
+        puts "  #{e.backtrace.first(3).join("\n  ")}"
+      end
+    end
+
+    puts "\n" + "=" * 80
+    puts "UPLOAD SUMMARY"
+    puts "=" * 80
+    uploaded_urls.each { |filename, url| puts "#{filename}: #{url}" }
+  end
+
+  desc "Update prod database shop items with R2 URLs"
+  task update_prod_urls: :environment do
+    # Mapping of image filenames to R2 public URLs
+    r2_base_url = ENV.fetch("R2_PUBLIC_URL") do
+      puts "ERROR: R2_PUBLIC_URL environment variable not set"
+      exit 1
+    end
+
+    prod_db_url = ENV.fetch("PROD_DATABASE_URL") do
+      # Fallback to the postgres URL provided
+      "postgres://postgres:vpmKiPvC4eCwDLGJBwkTAvsHBERWj9HdBogtrv2gQU00YqtcS1tayk4T87bxGPxg@a.selfhosted.hackclub.com:8789/postgres"
+    end
+
+    # Image filename mappings (what's in the DB vs what we uploaded)
+    image_mappings = {
+      "pile_of_stickers.png" => "pile_of_stickers.png",
+      "cloudflare_credits.png" => "cloudflare_credits.png",
+      "ai_credits.png" => "ai_credits.png",
+      "domain_grant.png" => "domain_grant.png",
+      "cloud_hosting_credits.png" => "cloud_hosting_credits.png",
+      "ifixit_credits.png" => "ifixit_credits.png",
+      "pcb_credits.png" => "pcb_credits.png",
+      "smolhaj.png" => "smolhaj.png",
+      "pinecil.png" => "pinecil.png",
+      "github_notebook.png" => "github_notebook.png",
+      "yubikey.png" => "yubikey.png",
+      "raspberry_pi_5.png" => "raspberry_pi_5.png",
+      "mac_mini.png" => "mac_mini.png",
+      "framework_laptop_12.png" => "framework_laptop_12.png"
+    }
+
+    puts "Connecting to production database..."
+    conn = PG.connect(prod_db_url)
+
+    puts "Updating shop item image URLs to R2..."
+    puts "=" * 80
+
+    image_mappings.each do |old_filename, new_filename|
+      new_url = "#{r2_base_url}/shop/#{new_filename}"
+      old_pattern = "%/shop/#{old_filename}"
+
+      result = conn.exec_params(
+        "UPDATE shop_items SET image_url = $1, updated_at = NOW() WHERE image_url LIKE $2 RETURNING id, name",
+        [ new_url, old_pattern ]
+      )
+
+      if result.ntuples > 0
+        result.each { |row| puts "Updated #{row['name']} (id: #{row['id']}) -> #{new_url}" }
+      end
+    end
+
+    conn.close
+    puts "=" * 80
+    puts "Done!"
+  end
+
   desc "Download and upload product images from Flavortown to Azure"
   task upload_flavortown_images: :environment do
     # Product images from Flavortown with their actual ActiveStorage URLs

@@ -94,6 +94,9 @@ gem "rqrcode", "~> 3.1"
 gem "faraday", "~> 2.9"
 gem "faraday-multipart", "~> 1.0"
 
+# AWS SDK for S3-compatible storage (Cloudflare R2)
+gem "aws-sdk-s3", "~> 1.0"
+
 # CORS support
 gem "rack-cors", "~> 2.0"
 
