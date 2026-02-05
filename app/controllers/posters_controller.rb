@@ -495,5 +495,17 @@ class PostersController < ApplicationController
         }
       end
     end
+  rescue => e
+    Rails.logger.error "Proof upload failed: #{e.class} - #{e.message}\n#{e.backtrace.first(5).join("\n")}"
+    respond_to do |format|
+      format.html { redirect_to campaign_path(@poster.campaign.slug), alert: "Upload failed. Please try again." }
+      format.turbo_stream {
+        render turbo_stream: turbo_stream.replace(
+          "proof_upload_result_#{@poster.id}",
+          partial: "posters/proof_error",
+          locals: { poster: @poster, error: "Upload failed. Please try again." }
+        )
+      }
+    end
   end
 end
