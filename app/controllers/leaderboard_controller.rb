@@ -17,7 +17,7 @@ class LeaderboardController < ApplicationController
     @referral_prizes = ranking_service.calculate_prizes(@ranks)
 
     # Giveaway end date (configure as needed)
-    @giveaway_end_date = Time.zone.parse("2026-01-30 23:59:59")
+    @giveaway_end_date = Time.zone.parse("2026-02-28 23:59:59")
   end
 
   private

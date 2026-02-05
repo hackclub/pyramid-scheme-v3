@@ -466,27 +466,27 @@
   --campaign-modal-header-border: 2px solid rgba(109, 144, 227, 0.2);
 }
 
-/* Campaign theme: HCTG (Hack Club The Game) - Dark with red/blue accents (from ref/the-game) */
+/* Campaign theme: HCTG (Hack Club The Game) - Light gray bg, dark text, red/blue accents (from ref/the-game) */
 .theme-hctg {
-  /* Dark palette matching the-game: black sidebar, gray-200 bg, red-500/blue-600 accents */
-  --background: 0 0% 7%;              /* #121212 - near-black */
-  --foreground: 0 0% 93%;             /* #ededed - light gray text */
-  --card: 0 0% 11%;                   /* #1c1c1c - dark card */
-  --card-foreground: 0 0% 93%;
-  --popover: 0 0% 9%;
-  --popover-foreground: 0 0% 93%;
+  /* Light palette matching the-game main content area: gray-200 bg, dark text, red/blue accents */
+  --background: 220 13% 91%;          /* #e5e7eb - gray-200 (the-game main bg) */
+  --foreground: 221 39% 11%;          /* #1f2937 - gray-800 (dark text) */
+  --card: 0 0% 100%;                  /* #ffffff - white cards */
+  --card-foreground: 221 39% 11%;     /* gray-800 */
+  --popover: 0 0% 100%;
+  --popover-foreground: 221 39% 11%;
   --primary: 0 84% 60%;               /* #ef4444 - red-500 */
   --primary-foreground: 0 0% 100%;
   --secondary: 217 91% 60%;           /* #2563eb - blue-600 */
   --secondary-foreground: 0 0% 100%;
-  --muted: 0 0% 15%;
-  --muted-foreground: 0 0% 64%;       /* gray-400 */
+  --muted: 220 14% 96%;               /* #f3f4f6 - gray-100 */
+  --muted-foreground: 220 9% 46%;     /* #6b7280 - gray-500 */
   --accent: 0 84% 60%;                /* red-500 accent */
   --accent-foreground: 0 0% 100%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
-  --border: 0 0% 20%;                 /* subtle dark borders */
-  --input: 0 0% 15%;
+  --border: 220 13% 82%;              /* #d1d5db - gray-300 */
+  --input: 220 13% 91%;               /* gray-200 */
   --ring: 0 84% 60%;
 
   /* Campaign-specific component variables */
@@ -498,9 +498,9 @@
   --campaign-text-muted: rgba(31, 41, 55, 0.6);
   --campaign-border-color: rgba(239, 68, 68, 0.3);
   --campaign-panel-radius: 0.75rem;
-  --campaign-panel-border: 3px solid rgba(239, 68, 68, 0.2);
+  --campaign-panel-border: 3px solid rgba(239, 68, 68, 0.15);
   --campaign-panel-background: #ffffff;
-  --campaign-panel-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  --campaign-panel-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
   --campaign-panel-inner-radius: 0.5rem;
   --campaign-panel-inner-border: 1px solid rgba(0, 0, 0, 0.08);
   --campaign-panel-inner-background: #f9fafb;   /* gray-50 */
@@ -517,9 +517,9 @@
   --campaign-btn-secondary-background: #2563eb;  /* blue-600 */
   --campaign-btn-secondary-color: #ffffff;
   --campaign-accent-color: #ef4444;
-  --campaign-gradient: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #000000 100%);
+  --campaign-gradient: linear-gradient(135deg, #e5e7eb 0%, #f3f4f6 50%, #e5e7eb 100%);
   --campaign-modal-background: #ffffff;
-  --campaign-modal-border: 3px solid rgba(239, 68, 68, 0.2);
+  --campaign-modal-border: 3px solid rgba(239, 68, 68, 0.15);
   --campaign-modal-header-border: 2px solid rgba(0, 0, 0, 0.08);
 }
 

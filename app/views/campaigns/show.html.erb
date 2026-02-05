@@ -6,11 +6,12 @@
 
 <%# Use the campaign's theme class for styling %>
 <% theme_class = @campaign.theme_class %>
-<% has_custom_theme = @campaign.theme.in?(%w[flavortown aces construct sleepover]) %>
+<% has_custom_theme = @campaign.theme.in?(%w[flavortown aces construct sleepover hctg]) %>
 <% is_flavortown = @campaign.theme == "flavortown" %>
 <% is_aces = @campaign.theme == "aces" %>
 <% is_construct = @campaign.theme == "construct" %>
 <% is_sleepover = @campaign.theme == "sleepover" %>
+<% is_hctg = @campaign.theme == "hctg" %>
 
 <% if has_custom_theme %>
   <% content_for :main_class, "campaign-surface #{theme_class}" %>
@@ -28,6 +29,8 @@
     <% elsif is_sleepover %>
       <div class="pointer-events-none absolute inset-0 opacity-[0.2]" style="background-image: url('<%= asset_path('sleepover/bunny-tile.png') %>'); background-size: 220px;"></div>
       <div class="pointer-events-none absolute inset-0" style="background: linear-gradient(180deg, rgba(217, 218, 248, 0.95) 0%, rgba(199, 214, 255, 0.75) 55%, rgba(255, 255, 255, 0.9) 100%);"></div>
+    <% elsif is_hctg %>
+      <div class="pointer-events-none absolute inset-0 opacity-[0.04]" style="background: repeating-linear-gradient(90deg, #ef4444 0, #ef4444 1px, transparent 1px, transparent 40px), repeating-linear-gradient(0deg, #ef4444 0, #ef4444 1px, transparent 1px, transparent 40px);"></div>
     <% end %>
 
     <div class="container relative pt-8 pb-10">
@@ -67,6 +70,10 @@
         <% elsif is_sleepover %>
           <div class="relative flex justify-center lg:justify-end">
             <%= image_tag "sleepover/bunny-sleeping.png", class: "w-44 md:w-60 drop-shadow-[0_30px_60px_rgba(61,72,132,0.35)]", alt: "Sleepover" %>
+          </div>
+        <% elsif is_hctg %>
+          <div class="relative flex justify-center lg:justify-end">
+            <%= image_tag "hctg/icon.png", class: "w-36 md:w-48 drop-shadow-[0_20px_40px_rgba(239,68,68,0.25)]", alt: "Hack Club: The Game" %>
           </div>
         <% end %>
       </div>
