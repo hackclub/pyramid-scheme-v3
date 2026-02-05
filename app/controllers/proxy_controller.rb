@@ -47,7 +47,7 @@ class ProxyController < ApplicationController
     "flavortown.hack.club" => "https://flavortown.hackclub.com",
     "aces.hack.club" => "https://aces.hackclub.com",
     "construct.hack.club" => "https://construct.hackclub.com",
-    "hctg.hack.club" => "https://hctg.hackclub.com"
+    "hctg.hack.club" => "https://game.hackclub.com"
   }.freeze
 
   DEFAULT_TARGET = "https://flavortown.hackclub.com"

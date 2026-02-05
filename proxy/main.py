@@ -37,7 +37,7 @@ CAMPAIGN_DOMAINS = {
     "aces.hack.club": {"slug": "aces", "target": "https://aces.hackclub.com"},
     "construct.hack.club": {"slug": "construct", "target": "https://construct.hackclub.com"},
     "sleepover.hack.club": {"slug": "sleepover", "target": "https://sleepover.hackclub.com"},
-    "hctg.hack.club": {"slug": "hctg", "target": "https://hctg.hackclub.com"},
+    "hctg.hack.club": {"slug": "hctg", "target": "https://game.hackclub.com"},
 }
 
 DEFAULT_CAMPAIGN = {"slug": "flavortown", "target": "https://flavortown.hackclub.com"}
