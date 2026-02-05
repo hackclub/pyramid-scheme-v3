@@ -92,10 +92,19 @@ campaigns_data = [
     required_coding_minutes: 60,
     subdomain: "hctg",
     base_url: "https://hctg.hack.club",
+    airtable_sync_enabled: true,
+    airtable_base_id: "appG8V9462X6QDhpZ",
+    airtable_table_id: "tblHCL4IAfIHmjyy7",
+    airtable_field_mappings: {
+      "email" => "Email",
+      "referral_code" => "Referral Code",
+      "idv_status" => "IDV Status",
+      "hours" => "Hours"
+    },
     theme_config: {
-      primary_color: "#ef4444",
-      secondary_color: "#2563eb",
-      background_color: "#000000"
+      primary_color: "#C93919",
+      secondary_color: "#1C6DAF",
+      background_color: "#ffffff"
     }
   }
 ]

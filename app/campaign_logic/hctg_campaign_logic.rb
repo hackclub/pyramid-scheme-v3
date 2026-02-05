@@ -11,6 +11,16 @@ class HctgCampaignLogic < BaseCampaignLogic
   end
 
   def logo_path
-    "hctg/logo.png"
+    "hctg/icon.svg"
+  end
+
+  # Field mappings for the HCTG Airtable "Pyramid" table
+  def airtable_field_mappings
+    {
+      "email" => "Email",
+      "referral_code" => "Referral Code",
+      "idv_status" => "IDV Status",
+      "hours" => "Hours"
+    }
   end
 end

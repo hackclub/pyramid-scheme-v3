@@ -30,7 +30,15 @@
       <div class="pointer-events-none absolute inset-0 opacity-[0.2]" style="background-image: url('<%= asset_path('sleepover/bunny-tile.png') %>'); background-size: 220px;"></div>
       <div class="pointer-events-none absolute inset-0" style="background: linear-gradient(180deg, rgba(217, 218, 248, 0.95) 0%, rgba(199, 214, 255, 0.75) 55%, rgba(255, 255, 255, 0.9) 100%);"></div>
     <% elsif is_hctg %>
-      <div class="pointer-events-none absolute inset-0 opacity-[0.04]" style="background: repeating-linear-gradient(90deg, #ef4444 0, #ef4444 1px, transparent 1px, transparent 40px), repeating-linear-gradient(0deg, #ef4444 0, #ef4444 1px, transparent 1px, transparent 40px);"></div>
+      <%# Four colored SVG accent lines from the-game identity: Red, Blue, Yellow, Green %>
+      <div class="pointer-events-none absolute inset-0 overflow-hidden">
+        <svg class="absolute inset-0 w-full h-full opacity-[0.07]" preserveAspectRatio="none" viewBox="0 0 1200 800">
+          <line x1="0" y1="120" x2="1200" y2="120" stroke="#C93919" stroke-width="40" />
+          <line x1="0" y1="320" x2="1200" y2="320" stroke="#1C6DAF" stroke-width="40" />
+          <line x1="0" y1="520" x2="1200" y2="520" stroke="#ECA82D" stroke-width="40" />
+          <line x1="0" y1="720" x2="1200" y2="720" stroke="#48A71B" stroke-width="40" />
+        </svg>
+      </div>
     <% end %>
 
     <div class="container relative pt-8 pb-10">
@@ -72,8 +80,20 @@
             <%= image_tag "sleepover/bunny-sleeping.png", class: "w-44 md:w-60 drop-shadow-[0_30px_60px_rgba(61,72,132,0.35)]", alt: "Sleepover" %>
           </div>
         <% elsif is_hctg %>
+          <%# Logo card matching The Game identity: thick black border, HC flag + title %>
           <div class="relative flex justify-center lg:justify-end">
-            <%= image_tag "hctg/icon.png", class: "w-36 md:w-48 drop-shadow-[0_20px_40px_rgba(239,68,68,0.25)]", alt: "Hack Club: The Game" %>
+            <div class="flex flex-col sm:flex-row border-t-[12px] border-r-4 border-b-4 border-l-4 border-solid border-black bg-white">
+              <div class="flex items-center justify-center px-4 py-4">
+                <div class="h-14 w-auto sm:h-16">
+                  <%= inline_svg_tag "hctg/icon.svg", class: "block h-full w-auto text-black" %>
+                </div>
+              </div>
+              <div class="flex flex-col justify-center border-t-4 sm:border-t-0 sm:border-l-4 border-black px-4 py-3 sm:px-5 sm:py-4">
+                <p class="text-xl sm:text-2xl leading-tight tracking-[-0.05em] whitespace-nowrap text-black">
+                  <span class="font-normal">hack club: </span><span class="font-bold">the game</span>
+                </p>
+              </div>
+            </div>
           </div>
         <% end %>
       </div>
