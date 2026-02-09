@@ -37,7 +37,7 @@ class LeaderboardController < ApplicationController
 
   def posters_leaderboard_scope(base_scope)
     base_scope
-      .joins("LEFT JOIN posters ON posters.user_id = users.id AND posters.verification_status IS DISTINCT FROM 'rejected'")
+      .joins("LEFT JOIN posters ON posters.user_id = users.id AND posters.verification_status IN ('success', 'approved')")
       .group("users.id")
       .select("users.*, COUNT(posters.id) AS all_time_poster_count")
       .order(Arel.sql("COUNT(posters.id) DESC, users.id ASC"))
