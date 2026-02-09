@@ -119,6 +119,9 @@ Rails.application.routes.draw do
     get "statistics", to: "statistics#index", as: :statistics
     get "statistics/data", to: "statistics#data", as: :statistics_data
 
+    # Uncensored leaderboard (admin-only)
+    get "leaderboard", to: "leaderboards#index", as: :leaderboard
+
     # Progress (v2 vs v3 comparison)
     get "progress", to: "progress#index", as: :progress
     get "progress/data", to: "progress#data", as: :progress_data

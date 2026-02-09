@@ -142,17 +142,24 @@ class Poster < ApplicationRecord
   end
 
   def request_resubmission!(reason, requested_by_user)
-    update!(
-      verification_status: "pending",
-      metadata: (metadata || {}).merge(
-        resubmission_requested: true,
-        resubmission_reason: reason,
-        resubmission_requested_at: Time.current.iso8601
-      ),
-      verified_by: requested_by_user
-    )
-    # Clear existing proof so user can upload new one
-    proof_image.purge if proof_image.attached?
+    transaction do
+      # Detach files first to avoid remote storage failures blocking resubmission.
+      proof_image.detach if proof_image.attached?
+      supporting_evidence.detach if supporting_evidence.attached?
+
+      update!(
+        verification_status: "pending",
+        rejection_reason: nil,
+        verified_at: nil,
+        verified_by: nil,
+        metadata: (metadata || {}).merge(
+          "resubmission_requested" => true,
+          "resubmission_reason" => reason,
+          "resubmission_requested_at" => Time.current.iso8601,
+          "resubmission_requested_by_id" => requested_by_user&.id
+        )
+      )
+    end
   end
 
   def resubmission_requested?

@@ -1,0 +1,126 @@
+<% content_for :title, "Leaderboard" %>
+
+<div class="space-y-6">
+  <div class="flex flex-col gap-2">
+    <h1 class="text-2xl font-bold tracking-tight text-foreground">Leaderboard (Admin)</h1>
+    <p class="text-sm text-muted-foreground">
+      Uncensored leaderboard view. Referral leaderboard ends on
+      <strong><%= @giveaway_end_date.strftime("%B %-d, %Y") %></strong>.
+    </p>
+  </div>
+
+  <div class="flex items-center gap-1 p-1.5 bg-secondary rounded-lg w-full max-w-lg">
+    <%= link_to admin_leaderboard_path(category: "referrals", q: params[:q]),
+        class: "flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-semibold rounded-md transition-colors #{@category == 'referrals' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'}" do %>
+      <%= icon :users, size: 16 %>
+      <span>Referrals</span>
+    <% end %>
+    <%= link_to admin_leaderboard_path(category: "posters", q: params[:q]),
+        class: "flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-semibold rounded-md transition-colors #{@category == 'posters' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'}" do %>
+      <%= icon :qr_code, size: 16 %>
+      <span>Posters</span>
+    <% end %>
+    <%= link_to admin_leaderboard_path(category: "shards", q: params[:q]),
+        class: "flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-semibold rounded-md transition-colors #{@category == 'shards' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'}" do %>
+      <%= icon :pyramid, size: 16 %>
+      <span>Shards</span>
+    <% end %>
+  </div>
+
+  <%= form_with url: admin_leaderboard_path, method: :get, class: "w-full max-w-md" do %>
+    <input type="hidden" name="category" value="<%= @category %>">
+    <div class="relative">
+      <input type="text"
+             name="q"
+             value="<%= params[:q] %>"
+             placeholder="Search by name, email, or Slack ID..."
+             class="flex h-11 w-full rounded-md border border-input bg-background pl-10 pr-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+      <div class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+        <%= icon :search, size: 16 %>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="border-b border-border">
+          <tr class="text-left text-xs text-muted-foreground">
+            <th class="px-4 py-3">Rank</th>
+            <th class="px-4 py-3">User</th>
+            <th class="px-4 py-3">Email</th>
+            <th class="px-4 py-3">Slack ID</th>
+            <th class="px-4 py-3 text-right">Score</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <% if @leaders.any? %>
+            <% @leaders.each_with_index do |user, index| %>
+              <%
+                rank = if @category == "referrals" && @ranks[user.id]
+                  @ranks[user.id][:rank]
+                else
+                  @pagy.offset + index + 1
+                end
+
+                score = case @category
+                when "referrals"
+                  user.respond_to?(:campaign_referral_count) ? user.campaign_referral_count : user.referral_count
+                when "posters"
+                  user.poster_count
+                else
+                  user.total_shards
+                end
+
+                prize = @category == "referrals" && @pagy.page == 1 ? @referral_prizes[user.id] : nil
+              %>
+              <tr class="hover:bg-muted/30">
+                <td class="px-4 py-3 font-semibold text-foreground tabular-nums"><%= rank %></td>
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-2">
+                    <span class="font-medium text-foreground"><%= user.display_name %></span>
+                    <% if user == current_user %>
+                      <span class="inline-flex items-center rounded-full bg-foreground text-background px-2 py-0.5 text-[10px] font-semibold">You</span>
+                    <% end %>
+                    <% if user.leaderboard_opted_out? %>
+                      <span class="inline-flex items-center rounded-full bg-amber-500/10 text-amber-700 px-2 py-0.5 text-[10px] font-semibold">Hidden Publicly</span>
+                    <% end %>
+                    <% if prize %>
+                      <span class="inline-flex items-center gap-1 rounded-full bg-black text-white px-2 py-0.5 text-[10px] font-semibold">
+                        <%= icon :pyramid, size: 10 %>
+                        +<%= prize[:shards] %>
+                      </span>
+                    <% end %>
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-muted-foreground"><%= user.email %></td>
+                <td class="px-4 py-3 text-muted-foreground font-mono"><%= user.slack_id.presence || "—" %></td>
+                <td class="px-4 py-3 text-right font-semibold text-foreground tabular-nums"><%= number_with_delimiter(score) %></td>
+              </tr>
+            <% end %>
+          <% else %>
+            <tr>
+              <td colspan="5" class="px-4 py-8 text-center text-muted-foreground">No users found.</td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <% if @pagy.pages > 1 %>
+      <div class="flex items-center justify-between p-4 border-t border-border">
+        <div>
+          <% if @pagy.page > 1 %>
+            <%= link_to "Previous", admin_leaderboard_path(page: @pagy.page - 1, category: @category, q: params[:q]), class: "inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
+          <% end %>
+        </div>
+        <span class="text-sm text-muted-foreground"><%= t("common.page_of", page: @pagy.page, pages: @pagy.pages) %></span>
+        <div>
+          <% if @pagy.page < @pagy.pages %>
+            <%= link_to "Next", admin_leaderboard_path(page: @pagy.page + 1, category: @category, q: params[:q]), class: "inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -241,6 +241,7 @@ class PostersController < ApplicationController
     end
 
     if params[:proof_image].present?
+      clear_resubmission_flag!
       @poster.proof_image.attach(params[:proof_image])
     end
 
@@ -450,10 +451,23 @@ class PostersController < ApplicationController
     PosterAutoVerificationService.new(poster).call
   end
 
+  def clear_resubmission_flag!
+    return unless @poster.resubmission_requested?
+
+    @poster.update!(
+      metadata: (@poster.metadata || {}).merge(
+        "resubmission_requested" => false,
+        "resubmitted_at" => Time.current.iso8601
+      )
+    )
+  end
+
   def handle_proof_upload
     uploaded_file = params[:proof_image]
     supporting_files = params[:supporting_evidence]
     location_description = params[:location_description]
+
+    clear_resubmission_flag! if uploaded_file.present?
 
     # Update location description if provided
     @poster.update(location_description: location_description) if location_description.present?

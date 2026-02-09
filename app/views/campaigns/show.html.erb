@@ -25,13 +25,14 @@
     <% elsif is_aces %>
       <div class="pointer-events-none absolute inset-0 opacity-[0.15]" style="background: radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255, 215, 0, 0.08) 0%, transparent 50%);"></div>
     <% elsif is_construct %>
-      <div class="pointer-events-none fixed inset-0 opacity-[0.06] z-0" style="background: repeating-linear-gradient(45deg, #000 0, #000 10px, #f5a623 10px, #f5a623 20px);"></div>
+      <%# Construct background texture is applied in theme CSS from ref/construct %>
     <% elsif is_sleepover %>
       <div class="pointer-events-none absolute inset-0 opacity-[0.2]" style="background-image: url('<%= asset_path('sleepover/bunny-tile.png') %>'); background-size: 220px;"></div>
       <div class="pointer-events-none absolute inset-0" style="background: linear-gradient(180deg, rgba(217, 218, 248, 0.95) 0%, rgba(199, 214, 255, 0.75) 55%, rgba(255, 255, 255, 0.9) 100%);"></div>
     <% elsif is_hctg %>
-      <%# Subtle dot grid pattern matching B&W identity %>
-      <div class="pointer-events-none absolute inset-0 opacity-[0.04]" style="background-image: radial-gradient(circle, #000 1px, transparent 1px); background-size: 24px 24px;"></div>
+      <%# Solid stripe bands matching ref/the-game line colors (non-translucent) %>
+      <div class="pointer-events-none absolute inset-x-0 top-0 h-4 sm:h-5 border-b-4 border-black hctg-stripe-band"></div>
+      <div class="pointer-events-none absolute inset-x-0 bottom-0 h-4 sm:h-5 border-t-4 border-black hctg-stripe-band"></div>
     <% end %>
 
     <div class="container relative pt-6 sm:pt-8 pb-8 sm:pb-10">
@@ -75,16 +76,19 @@
         <% elsif is_hctg %>
           <%# Logo card matching The Game identity: thick black border, HC flag + title %>
           <div class="relative flex justify-center lg:justify-end flex-shrink-0">
-            <div class="flex flex-row border-t-[10px] sm:border-t-[12px] border-r-[3px] sm:border-r-4 border-b-[3px] sm:border-b-4 border-l-[3px] sm:border-l-4 border-solid border-black bg-white">
-              <div class="flex items-center justify-center px-3 sm:px-4 py-3 sm:py-4">
-                <div class="h-10 sm:h-14 w-auto">
-                  <%= inline_svg_tag "hctg/icon.svg", class: "block h-full w-auto text-black" %>
+            <div class="border-[3px] sm:border-4 border-black bg-white">
+              <div class="h-3 sm:h-4 border-b-[3px] sm:border-b-4 border-black hctg-stripe-band"></div>
+              <div class="flex flex-row">
+                <div class="flex items-center justify-center px-3 sm:px-4 py-3 sm:py-4">
+                  <div class="h-10 sm:h-14 w-auto">
+                    <%= inline_svg_tag "hctg/icon.svg", class: "block h-full w-auto text-black" %>
+                  </div>
                 </div>
-              </div>
-              <div class="flex flex-col justify-center border-l-[3px] sm:border-l-4 border-black px-3 sm:px-5 py-2 sm:py-4">
-                <p class="text-base sm:text-2xl leading-tight tracking-[-0.05em] whitespace-nowrap text-black">
-                  <span class="font-normal">hack club: </span><span class="font-bold">the game</span>
-                </p>
+                <div class="flex flex-col justify-center border-l-[3px] sm:border-l-4 border-black px-3 sm:px-5 py-2 sm:py-4">
+                  <p class="text-base sm:text-2xl leading-tight tracking-[-0.05em] whitespace-nowrap text-black">
+                    <span class="font-normal">hack club: </span><span class="font-bold">the game</span>
+                  </p>
+                </div>
               </div>
             </div>
           </div>
