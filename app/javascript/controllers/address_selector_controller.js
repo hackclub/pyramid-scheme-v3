@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["select", "reauth"]
+  static targets = ["select"]
 
   connect() {
     this.fetchAddresses()
@@ -16,21 +16,12 @@ export default class extends Controller {
       
       this.selectTarget.innerHTML = ''
 
-      if (this.hasReauthTarget) {
-        this.reauthTarget.classList.add('hidden')
-      }
-
       if (response.status === 401) {
         const option = document.createElement('option')
         option.value = ''
-        option.textContent = 'Please reconnect Hack Club Auth to load your saved addresses.'
+        option.textContent = 'Unable to load saved addresses right now. Please open Manage Addresses and refresh.'
         this.selectTarget.appendChild(option)
         this.selectTarget.value = ''
-        
-        if (this.hasReauthTarget && data.reauth_url) {
-          this.reauthTarget.href = data.reauth_url
-          this.reauthTarget.classList.remove('hidden')
-        }
         return
       }
       

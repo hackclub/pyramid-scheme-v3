@@ -36,7 +36,10 @@
           <%= button_to poster_path(poster), method: :delete,
               data: { turbo_confirm: "Are you sure you want to delete this poster? This cannot be undone." },
               class: "campaign-btn campaign-btn--secondary w-full justify-center",
-              form: { data: { turbo: false } } do %>
+              form: {
+                data: { turbo: false },
+                onsubmit: "return confirm(\"Are you sure you want to delete this poster? This cannot be undone.\")"
+              } do %>
             <%= icon :trash_2, size: 18 %>
             Delete
           <% end %>
