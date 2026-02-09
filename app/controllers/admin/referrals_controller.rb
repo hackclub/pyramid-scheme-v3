@@ -3,12 +3,15 @@
 module Admin
   class ReferralsController < BaseController
     def index
+      @search_query = params[:q].to_s.strip
+      @status_filter = normalized_status_filter(params[:status])
+
       @referrals = Referral.includes(:referrer, :referred, :campaign)
                            .order(Arel.sql("COALESCE(completed_at, verified_at, created_at) DESC"))
 
       # Filter by status
-      if params[:status].present? && params[:status] != "all"
-        @referrals = @referrals.where(status: params[:status])
+      if @status_filter.present? && @status_filter != "all"
+        @referrals = @referrals.where(status: @status_filter)
       end
 
       # Filter by campaign
@@ -24,27 +27,48 @@ module Admin
       # Filter by poster subtype (digital vs manual)
       if params[:poster_subtype].present? && params[:poster_subtype] != "all"
         if params[:poster_subtype] == "digital"
-          @referrals = @referrals.where(referral_type: "poster")
-                                 .joins("INNER JOIN posters ON posters.user_id = referrals.referrer_id")
-                                 .where("posters.verification_status = 'digital'")
+          @referrals = @referrals
+            .where(referral_type: "poster")
+            .where(
+              "EXISTS (SELECT 1 FROM posters WHERE posters.user_id = referrals.referrer_id AND posters.verification_status = ?)",
+              "digital"
+            )
         elsif params[:poster_subtype] == "manual"
-          @referrals = @referrals.where(referral_type: "poster")
-                                 .joins("INNER JOIN posters ON posters.user_id = referrals.referrer_id")
-                                 .where("posters.verification_status != 'digital'")
+          @referrals = @referrals
+            .where(referral_type: "poster")
+            .where(
+              "NOT EXISTS (SELECT 1 FROM posters WHERE posters.user_id = referrals.referrer_id AND posters.verification_status = ?)",
+              "digital"
+            )
         end
       end
 
-      # Search by referrer email or referred identifier
-      if params[:q].present?
-        search_term = "%#{params[:q]}%"
+      # Search across referral + user identity fields
+      if @search_query.present?
+        escaped_query = ActiveRecord::Base.sanitize_sql_like(@search_query)
+        search_term = "%#{escaped_query}%"
         @referrals = @referrals.joins("LEFT JOIN users AS referrer_users ON referrer_users.id = referrals.referrer_id")
                                .joins("LEFT JOIN users AS referred_users ON referred_users.id = referrals.referred_id")
                                .where(
-                                 "referrer_users.email ILIKE ? OR referrals.referred_identifier ILIKE ? OR referred_users.email ILIKE ?",
-                                 search_term, search_term, search_term
+                                 <<~SQL.squish,
+                                   referrer_users.display_name ILIKE :search
+                                   OR referrer_users.email ILIKE :search
+                                   OR referrer_users.slack_id ILIKE :search
+                                   OR referrer_users.referral_code ILIKE :search
+                                   OR referrer_users.custom_referral_code ILIKE :search
+                                   OR referred_users.display_name ILIKE :search
+                                   OR referred_users.email ILIKE :search
+                                   OR referred_users.slack_id ILIKE :search
+                                   OR referrals.referred_identifier ILIKE :search
+                                   OR COALESCE(referrals.metadata->>'censored_email', '') ILIKE :search
+                                   OR referrals.id::text = :exact
+                                 SQL
+                                 search: search_term,
+                                 exact: @search_query
                                )
       end
 
+      @referrals = @referrals.distinct
       @pagy, @referrals = pagy(@referrals, limit: 25)
       @campaigns = Campaign.order(name: :asc)
 
@@ -126,6 +150,16 @@ module Admin
       redirect_to admin_referrals_path, notice: "Referral deleted successfully#{was_completed ? " and #{[ campaign.referral_shards, referrer.total_shards + [ campaign.referral_shards, referrer.total_shards ].min ].min} shards deducted from #{referrer.display_name}" : ''}"
     rescue => e
       redirect_to admin_referral_path(@referral), alert: "Error deleting referral: #{e.message}"
+    end
+
+    private
+
+    def normalized_status_filter(raw_status)
+      status = raw_status.to_s.strip
+      return "all" if status.blank? || status == "all"
+      return status if Referral.statuses.key?(status)
+
+      Referral.statuses.key(status.to_i)
     end
   end
 end

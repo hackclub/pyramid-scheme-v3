@@ -68,8 +68,8 @@
       <!-- Status Filter -->
       <div>
         <%= filter_dropdown "status", 
-          [["all", "All Statuses"], ["0", "Pending"], ["1", "ID Verified"], ["2", "Completed"]], 
-          params[:status] || "all", 
+          [["all", "All Statuses"], ["pending", "Pending"], ["id_verified", "ID Verified"], ["completed", "Completed"]], 
+          @status_filter || "all", 
           "referrals-filter-form" %>
       </div>
 

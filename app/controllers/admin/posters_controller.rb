@@ -82,8 +82,8 @@ module Admin
       @poster = Poster.find(params[:id])
       @poster.request_resubmission!(params[:reason].presence || "Please resubmit with clearer evidence", current_user)
       redirect_to admin_posters_path(status: params[:status].presence || "pending"), notice: "Poster sent back for resubmission."
-    rescue ActiveRecord::RecordInvalid => e
-      redirect_to admin_poster_path(@poster), alert: e.message
+    rescue => e
+      redirect_to admin_poster_path(@poster), alert: "Failed to request resubmission: #{e.message}"
     end
 
     private

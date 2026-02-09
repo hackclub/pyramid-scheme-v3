@@ -354,59 +354,59 @@
 
 /* Campaign theme: Construct (hardware event) - Dark industrial theme */
 .theme-construct {
-  /* Industrial dark palette with warm amber/orange accents */
-  --background: 30 8% 12%;           /* #201e1b - dark charcoal */
-  --foreground: 35 30% 90%;          /* #f0e8df - warm off-white */
-  --card: 30 15% 18%;                /* #302a24 - warmer dark card */
-  --card-foreground: 35 30% 90%;
-  --popover: 30 12% 15%;
-  --popover-foreground: 35 30% 90%;
-  --primary: 35 100% 50%;            /* #ff9500 - vibrant amber */
-  --primary-foreground: 30 8% 12%;
-  --secondary: 30 20% 22%;           /* #3d352d */
-  --secondary-foreground: 35 30% 90%;
-  --muted: 30 15% 20%;
-  --muted-foreground: 35 20% 65%;    /* better contrast */
-  --accent: 35 100% 50%;
-  --accent-foreground: 30 8% 12%;
+  /* Industrial dark palette tuned to ref/construct */
+  --background: 30 4% 13%;           /* #22211f */
+  --foreground: 30 65% 86%;          /* #f3dcc6 */
+  --card: 25 62% 14%;                /* #3f1e0d */
+  --card-foreground: 30 65% 86%;
+  --popover: 25 62% 14%;
+  --popover-foreground: 30 65% 86%;
+  --primary: 26 85% 35%;             /* #a84a0e */
+  --primary-foreground: 30 65% 92%;
+  --secondary: 24 61% 20%;           /* #5f2a0c */
+  --secondary-foreground: 30 65% 86%;
+  --muted: 24 50% 18%;
+  --muted-foreground: 28 35% 66%;
+  --accent: 40 99% 62%;              /* #fecb3e */
+  --accent-foreground: 25 62% 14%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
-  --border: 30 25% 30%;              /* visible borders */
-  --input: 30 20% 20%;
-  --ring: 35 100% 50%;
+  --border: 25 62% 30%;
+  --input: 25 62% 18%;
+  --ring: 40 99% 62%;
 
   /* Campaign-specific component variables */
   --campaign-font: "Phantom Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --campaign-surface-foreground: #f0e8df;
-  --campaign-surface-background: #201e1b;
-  --campaign-text-primary: #f0e8df;
-  --campaign-text-secondary: rgba(240, 232, 223, 0.85);
-  --campaign-text-muted: rgba(240, 232, 223, 0.65);
-  --campaign-border-color: rgba(255, 149, 0, 0.3);
+  --campaign-surface-foreground: #f3dcc6;
+  --campaign-surface-background: #22211f;
+  --campaign-text-primary: #f3dcc6;
+  --campaign-text-secondary: #ddc4ad;
+  --campaign-text-muted: #bca48e;
+  --campaign-border-color: #79320e;
   --campaign-panel-radius: 0.75rem;
-  --campaign-panel-border: 3px solid rgba(255, 149, 0, 0.25);
-  --campaign-panel-background: #2a2420;
+  --campaign-panel-border: 3px dashed #79320e;
+  --campaign-panel-background: #461802;
   --campaign-panel-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
   --campaign-panel-inner-radius: 0.5rem;
-  --campaign-panel-inner-border: 2px solid rgba(255, 149, 0, 0.15);
-  --campaign-panel-inner-background: rgba(42, 36, 32, 0.9);
-  --campaign-input-background: #1a1816;
-  --campaign-input-border: 2px solid rgba(255, 149, 0, 0.3);
+  --campaign-panel-inner-border: 2px dashed #943c0c;
+  --campaign-panel-inner-background: #5a2206;
+  --campaign-input-background: #2f1204;
+  --campaign-input-border: 2px solid #943c0c;
   --campaign-btn-radius: 0.5rem;
   --campaign-btn-padding: 0.75rem 1.5rem;
   --campaign-btn-weight: 700;
-  --campaign-btn-border: none;
-  --campaign-btn-background: var(--color-primary-800);
-  --campaign-btn-color: #f0e8df;
-  --campaign-btn-primary-background: var(--color-primary-800);
-  --campaign-btn-primary-color: #f0e8df;
-  --campaign-btn-secondary-background: rgba(255, 149, 0, 0.15);
-  --campaign-btn-secondary-color: #ff9500;
-  --campaign-accent-color: #ff9500;
-  --campaign-gradient: linear-gradient(135deg, #201e1b 0%, #2a2420 50%, #201e1b 100%);
-  --campaign-modal-background: #201e1b;
-  --campaign-modal-border: 3px solid rgba(255, 149, 0, 0.25);
-  --campaign-modal-header-border: 2px solid rgba(255, 149, 0, 0.2);
+  --campaign-btn-border: 2px solid #fecb3e;
+  --campaign-btn-background: #943c0c;
+  --campaign-btn-color: #f3dcc6;
+  --campaign-btn-primary-background: #943c0c;
+  --campaign-btn-primary-color: #f3dcc6;
+  --campaign-btn-secondary-background: #79320e;
+  --campaign-btn-secondary-color: #fecb3e;
+  --campaign-accent-color: #fecb3e;
+  --campaign-gradient: none;
+  --campaign-modal-background: #461802;
+  --campaign-modal-border: 3px dashed #79320e;
+  --campaign-modal-header-border: 2px dashed #943c0c;
   --color-primary-700: #B64E07;
   --color-primary-800: #943C0C;
 }
@@ -495,16 +495,16 @@
   --campaign-surface-foreground: #000000;
   --campaign-surface-background: #ffffff;
   --campaign-text-primary: #000000;
-  --campaign-text-secondary: rgba(0, 0, 0, 0.75);
-  --campaign-text-muted: rgba(0, 0, 0, 0.5);
+  --campaign-text-secondary: #1f2937;
+  --campaign-text-muted: #4b5563;
   --campaign-border-color: #000000;
   --campaign-panel-radius: 0;
   --campaign-panel-border: 4px solid #000000;
   --campaign-panel-background: #ffffff;
   --campaign-panel-shadow: none;
   --campaign-panel-inner-radius: 0;
-  --campaign-panel-inner-border: 2px solid rgba(0, 0, 0, 0.12);
-  --campaign-panel-inner-background: #f9fafb;
+  --campaign-panel-inner-border: 2px solid #000000;
+  --campaign-panel-inner-background: #ffffff;
   --campaign-input-background: #ffffff;
   --campaign-input-border: 2px solid #000000;
   --campaign-btn-radius: 0;
@@ -517,14 +517,64 @@
   --campaign-btn-primary-color: #ffffff;
   --campaign-btn-secondary-background: #ffffff;
   --campaign-btn-secondary-color: #000000;
-  --campaign-accent-color: #C93919;
+  --campaign-accent-color: #1C6DAF;
   --campaign-gradient: none;
   --campaign-modal-background: #ffffff;
   --campaign-modal-border: 4px solid #000000;
   --campaign-modal-header-border: 4px solid #000000;
 }
 
-/* HCTG: no top stripe — clean B&W identity */
+/* Construct surface texture from ref/construct */
+.theme-construct.campaign-surface {
+  background:
+    linear-gradient(-90deg, #2e2a27 1px, transparent 1px),
+    linear-gradient(#2e2a27 1px, transparent 1px),
+    linear-gradient(-90deg, #342f2c 1px, transparent 1px),
+    linear-gradient(#342f2c 1px, transparent 1px),
+    linear-gradient(transparent 3px, #22211f 3px, #22211f 78px, transparent 78px),
+    linear-gradient(-90deg, #94857d 1px, transparent 1px),
+    linear-gradient(-90deg, transparent 3px, #22211f 3px, #22211f 78px, transparent 78px),
+    linear-gradient(#94857d 1px, transparent 1px),
+    #22211f;
+  background-size: 4px 4px, 4px 4px, 80px 80px, 80px 80px, 80px 80px, 80px 80px, 80px 80px, 80px 80px;
+  background-attachment: fixed;
+}
+
+.theme-construct .campaign-panel,
+.theme-construct .campaign-panel-inner,
+.theme-construct .campaign-modal {
+  backdrop-filter: none;
+}
+
+.theme-construct .campaign-btn {
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* HCTG accents from ref/the-game */
+.theme-hctg .hctg-stripe-band {
+  background: repeating-linear-gradient(90deg, #1C6DAF 0 64px, #ECA82D 64px 128px, #C93919 128px 192px, #48A71B 192px 256px);
+}
+
+.theme-hctg .campaign-panel,
+.theme-hctg .campaign-modal {
+  box-shadow: 6px 6px 0 #000000;
+}
+
+.theme-hctg .campaign-btn {
+  box-shadow: 4px 4px 0 #000000;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+}
+
+.theme-hctg .campaign-btn:hover {
+  filter: none;
+}
+
+.theme-hctg .campaign-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 #000000;
+}
 
 /* Range input styles */
 input[type="range"] {
