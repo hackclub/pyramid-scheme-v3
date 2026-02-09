@@ -1,22 +1,22 @@
 <% content_for :title, "#{@item.name} · #{t('shop.title')} · #{t('site.name')}" %>
 
 <div class="mb-6">
-  <%= link_to shop_path, class: "inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors" do %>
-    <%= icon :chevron_left, size: 16 %>
-    Back to Shop
+  <%= link_to shop_path, class: "inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors group" do %>
+    <%= icon :arrow_left, size: 14, class_name: "group-hover:-translate-x-0.5 transition-transform" %>
+    Shop
   <% end %>
 </div>
 
 <div class="max-w-4xl mx-auto">
-  <div class="grid md:grid-cols-2 gap-6">
+  <div class="grid md:grid-cols-2 gap-8">
     <div>
       <% if @item.image_url.present? %>
-        <div class="aspect-square rounded-lg overflow-hidden border border-border/40 bg-white">
-          <%= image_tag @item.image_url, class: "w-full h-full object-contain p-4" %>
+        <div class="aspect-square rounded-xl overflow-hidden border border-border/30 bg-neutral-950/5">
+          <%= image_tag @item.image_url, class: "w-full h-full object-contain p-6" %>
         </div>
       <% else %>
-        <div class="aspect-square rounded-lg border border-border/40 flex items-center justify-center bg-white">
-          <%= icon :shopping_bag, size: 64, class_name: "text-muted-foreground" %>
+        <div class="aspect-square rounded-xl border border-border/30 flex items-center justify-center bg-neutral-950/5">
+          <%= icon :package, size: 48, class_name: "text-muted-foreground/40" %>
         </div>
       <% end %>
     </div>
@@ -123,21 +123,35 @@
         </div>
       <% end %>
 
-      <div class="pt-3 border-t border-border/40">
-        <div class="flex gap-6 text-sm">
-          <% unless @item.unlimited_stock? %>
-            <div>
-              <p class="text-xs text-muted-foreground mb-0.5">In Stock</p>
-              <p class="font-medium text-foreground"><%= @item.stock_quantity || 0 %></p>
-            </div>
+      <div class="flex items-center gap-3 pt-3 border-t border-border/40 text-xs text-muted-foreground">
+        <% unless @item.unlimited_stock? %>
+          <% stock = @item.stock_quantity || 0 %>
+          <% if stock == 0 %>
+            <span class="inline-flex items-center gap-1">
+              <%= icon :x_circle, size: 12, class_name: "text-red-400" %>
+              Out of stock
+            </span>
+          <% elsif stock < 10 %>
+            <span class="inline-flex items-center gap-1 text-amber-500">
+              <%= icon :alert_triangle, size: 12 %>
+              Only <%= stock %> left
+            </span>
+          <% else %>
+            <span class="inline-flex items-center gap-1">
+              <%= icon :check_circle, size: 12, class_name: "text-emerald-500" %>
+              In stock
+            </span>
           <% end %>
-          <% if @item.max_per_user %>
-            <div>
-              <p class="text-xs text-muted-foreground mb-0.5">Limit Per User</p>
-              <p class="font-medium text-foreground"><%= @item.max_per_user %></p>
-            </div>
-          <% end %>
-        </div>
+        <% else %>
+          <span class="inline-flex items-center gap-1">
+            <%= icon :check_circle, size: 12, class_name: "text-emerald-500" %>
+            In stock
+          </span>
+        <% end %>
+        <% if @item.max_per_user %>
+          <span class="text-border">·</span>
+          <span>Limit <%= @item.max_per_user %> per person</span>
+        <% end %>
       </div>
     </div>
   </div>
