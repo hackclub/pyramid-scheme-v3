@@ -31,6 +31,9 @@ module Admin
       # Total hours (completed + incomplete)
       @total_hours = @verified_hours + @unverified_hours
 
+      # Verified ships (Construct campaign)
+      @verified_ships = Referral.completed.joins(:campaign).where(campaigns: { slug: "construct" }).count
+
       @recent_users = User.order(created_at: :desc).limit(10)
       @recent_referrals = Referral.includes(:referrer, :campaign).order(created_at: :desc).limit(10)
       @pending_posters = Poster.pending.includes(:user, :campaign).limit(10)

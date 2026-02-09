@@ -45,7 +45,7 @@
         <div class="text-sm font-normal text-muted-foreground tracking-wider">Shards</div>
       </div>
       <div class="text-4xl font-black text-foreground tabular-nums mb-1"><%= number_with_delimiter(@total_shards_awarded) %></div>
-      <div class="text-xs text-muted-foreground"><%= number_with_delimiter(@verified_hours.round(1)) %> verified hours · <%= number_with_delimiter(@total_hours.round(1)) %> total</div>
+      <div class="text-xs text-muted-foreground"><%= number_with_delimiter(@verified_hours.round(1)) %> verified hours · <%= number_with_delimiter(@total_hours.round(1)) %> total · <%= number_with_delimiter(@verified_ships) %> verified ships</div>
     </div>
   </div>
 
@@ -155,9 +155,12 @@
                   <% status_class = case run.status
                     when "succeeded" then "bg-green-500/10 text-green-500"
                     when "running" then "bg-yellow-500/10 text-yellow-500"
+                    when "partial" then "bg-amber-500/10 text-amber-500"
                     else "bg-red-500/10 text-red-500"
                   end %>
-                  <span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium <%= status_class %>">
+                  <% error_details = run.stats&.dig("errors") || run.stats&.dig(:errors) %>
+                  <span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium <%= status_class %> <%= 'cursor-help' if error_details.present? %>"
+                        <% if error_details.present? %>title="<%= Array(error_details).join('; ') %>"<% end %>>
                     <%= run.status.humanize %>
                   </span>
                 </td>

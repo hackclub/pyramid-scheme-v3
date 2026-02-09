@@ -4,7 +4,8 @@ class AirtableSyncRun < ApplicationRecord
   enum :status, {
     running: "running",
     succeeded: "succeeded",
-    failed: "failed"
+    failed: "failed",
+    partial: "partial"
   }
 
   validates :status, presence: true

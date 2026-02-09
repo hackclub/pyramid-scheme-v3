@@ -30,22 +30,22 @@
       <div class="pointer-events-none absolute inset-0 opacity-[0.2]" style="background-image: url('<%= asset_path('sleepover/bunny-tile.png') %>'); background-size: 220px;"></div>
       <div class="pointer-events-none absolute inset-0" style="background: linear-gradient(180deg, rgba(217, 218, 248, 0.95) 0%, rgba(199, 214, 255, 0.75) 55%, rgba(255, 255, 255, 0.9) 100%);"></div>
     <% elsif is_hctg %>
-      <%# Four colored SVG accent lines from the-game identity: Red, Blue, Yellow, Green %>
+      <%# Metro-style curved lines from The Game identity: Red, Blue, Yellow, Green %>
       <div class="pointer-events-none absolute inset-0 overflow-hidden">
-        <svg class="absolute inset-0 w-full h-full opacity-[0.07]" preserveAspectRatio="none" viewBox="0 0 1200 800">
-          <line x1="0" y1="120" x2="1200" y2="120" stroke="#C93919" stroke-width="40" />
-          <line x1="0" y1="320" x2="1200" y2="320" stroke="#1C6DAF" stroke-width="40" />
-          <line x1="0" y1="520" x2="1200" y2="520" stroke="#ECA82D" stroke-width="40" />
-          <line x1="0" y1="720" x2="1200" y2="720" stroke="#48A71B" stroke-width="40" />
+        <svg class="absolute inset-0 w-full h-full opacity-[0.09]" preserveAspectRatio="none" viewBox="0 0 1485 2500" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0 141H608.5C654.892 141 692.5 178.608 692.5 225V335C692.5 381.392 730.108 419 776.5 419H1270C1316.39 419 1354 456.608 1354 503V964C1354 1010.39 1316.39 1048 1270 1048H1242C1195.61 1048 1158 1085.61 1158 1132V1526.5C1158 1572.89 1195.61 1610.5 1242 1610.5H1562.5" stroke="#C93919" stroke-width="40"/>
+          <path d="M0 181C256.237 181 368.314 181 608.429 181C632.73 181 652.5 200.706 652.5 225.007C652.5 412.024 652.5 518.055 652.5 693.972C652.5 740.364 690.108 778 736.5 778H957.5L1171.71 779.8C1217.82 780.188 1255 817.681 1255 863.797V1359.25C1255 1403.85 1291.15 1440 1335.75 1440C1380.35 1440 1416.5 1476.15 1416.5 1520.75V3197" stroke="#1C6DAF" stroke-width="40"/>
+          <path d="M279.5 1358V712.5C279.5 649.54 330.54 598.5 393.5 598.5H808C837.823 598.5 862 574.323 862 544.5V118.5C862 72.1081 899.652 34.5 946.044 34.5C1139.54 34.5 1250.51 34.5 1470 34.5" stroke="#ECA82D" stroke-width="40"/>
+          <path d="M822.5 0V544C822.5 552.284 815.727 559 807.442 559C644.294 559 532.198 559 393.015 559C308.516 559 240 627.5 240 712V1336.75C240 1387.15 199.146 1428 148.75 1428C98.354 1428 57.5 1468.85 57.5 1519.25V3320" stroke="#48A71B" stroke-width="40"/>
         </svg>
       </div>
     <% end %>
 
-    <div class="container relative pt-8 pb-10">
-      <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-8">
-        <div class="space-y-3 max-w-2xl">
+    <div class="container relative pt-6 sm:pt-8 pb-8 sm:pb-10">
+      <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5 sm:gap-8">
+        <div class="space-y-2 sm:space-y-3 max-w-2xl">
           <div class="flex items-center gap-3">
-            <h1 class="campaign-font text-4xl md:text-5xl font-black tracking-tight"><%= @campaign.name %></h1>
+            <h1 class="campaign-font text-3xl sm:text-4xl md:text-5xl font-black tracking-tight"><%= @campaign.name %></h1>
             <% if is_construct || is_aces %>
               <span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2.5 py-1 text-xs font-bold text-emerald-400 uppercase tracking-wide flex-shrink-0 border border-emerald-500/30"
                     style="display: none;"
@@ -59,7 +59,7 @@
               </span>
             <% end %>
           </div>
-          <p class="text-base leading-relaxed opacity-90"><%= @campaign.description %></p>
+          <p class="text-sm sm:text-base leading-relaxed opacity-90"><%= @campaign.description %></p>
         </div>
 
         <%# Campaign mascot/image %>
@@ -81,15 +81,15 @@
           </div>
         <% elsif is_hctg %>
           <%# Logo card matching The Game identity: thick black border, HC flag + title %>
-          <div class="relative flex justify-center lg:justify-end">
-            <div class="flex flex-col sm:flex-row border-t-[12px] border-r-4 border-b-4 border-l-4 border-solid border-black bg-white">
-              <div class="flex items-center justify-center px-4 py-4">
-                <div class="h-14 w-auto sm:h-16">
+          <div class="relative flex justify-center lg:justify-end flex-shrink-0">
+            <div class="flex flex-row border-t-[10px] sm:border-t-[12px] border-r-[3px] sm:border-r-4 border-b-[3px] sm:border-b-4 border-l-[3px] sm:border-l-4 border-solid border-black bg-white">
+              <div class="flex items-center justify-center px-3 sm:px-4 py-3 sm:py-4">
+                <div class="h-10 sm:h-14 w-auto">
                   <%= inline_svg_tag "hctg/icon.svg", class: "block h-full w-auto text-black" %>
                 </div>
               </div>
-              <div class="flex flex-col justify-center border-t-4 sm:border-t-0 sm:border-l-4 border-black px-4 py-3 sm:px-5 sm:py-4">
-                <p class="text-xl sm:text-2xl leading-tight tracking-[-0.05em] whitespace-nowrap text-black">
+              <div class="flex flex-col justify-center border-l-[3px] sm:border-l-4 border-black px-3 sm:px-5 py-2 sm:py-4">
+                <p class="text-base sm:text-2xl leading-tight tracking-[-0.05em] whitespace-nowrap text-black">
                   <span class="font-normal">hack club: </span><span class="font-bold">the game</span>
                 </p>
               </div>
@@ -125,9 +125,9 @@
           </div>
         <% end %>
 
-        <div class="mt-7 space-y-5">
+        <div class="mt-5 sm:mt-7 space-y-4 sm:space-y-5">
           <%# Actions %>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
             <% if has_custom_theme %>
               <button type="button"
                       data-action="click->poster-modal#open"
@@ -165,10 +165,10 @@
           </div>
 
           <%# Lists (posters + referrals) %>
-          <div class="grid gap-5 lg:grid-cols-2">
+          <div class="grid gap-4 sm:gap-5 lg:grid-cols-2">
             <div class="p-1 min-h-0">
-              <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 sm:gap-4 mb-4">
-                <h2 class="campaign-font text-2xl font-black">Your posters</h2>
+              <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 sm:gap-4 mb-3 sm:mb-4">
+                <h2 class="campaign-font text-xl sm:text-2xl font-black">Your posters</h2>
                 <div class="flex items-center gap-3">
                   <div class="campaign-font text-sm font-black tabular-nums opacity-70"><%= number_with_delimiter(@user_posters.size) %> total</div>
                   <div class="text-xs opacity-60">|</div>
@@ -332,8 +332,8 @@
             </div>
 
             <div class="p-1 min-h-0">
-              <div class="flex items-center justify-between gap-4 mb-4">
-                <h2 class="campaign-font text-2xl font-black">Your referrals</h2>
+              <div class="flex items-center justify-between gap-4 mb-3 sm:mb-4">
+                <h2 class="campaign-font text-xl sm:text-2xl font-black">Your referrals</h2>
                 <div class="flex items-center gap-2 campaign-font text-base font-black tabular-nums">
                   <%= icon :users, size: 16, class_name: 'opacity-50' %>
                   <span><%= number_with_delimiter(@user_referrals.size) %></span>
@@ -448,8 +448,8 @@
           </div>
 
           <%# Video Submissions Section %>
-          <div class="mt-8">
-            <h2 class="campaign-font text-2xl font-black mb-4">Video Submissions</h2>
+          <div class="mt-6 sm:mt-8">
+            <h2 class="campaign-font text-xl sm:text-2xl font-black mb-3 sm:mb-4">Video Submissions</h2>
             <%= render "shared/video_submissions", campaign: @campaign %>
           </div>
         </div>

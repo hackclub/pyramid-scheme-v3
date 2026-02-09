@@ -152,7 +152,20 @@ class AirtableReferralImporter
     is_new = referral.new_record?
     referral.save!
 
-    if referral.id_verified? && referral.tracked_minutes >= campaign.required_coding_minutes
+    # Try to complete based on campaign type
+    should_complete = if ships_based_campaign?
+      (ar.metadata&.dig("ships_count") || ar.metadata&.dig("raw_fields", "Verified Shipped Count")).to_i >= 1
+    else
+      referral.id_verified? && referral.tracked_minutes >= campaign.required_coding_minutes
+    end
+
+    if should_complete && !referral.completed?
+      if ships_based_campaign?
+        referral.update!(
+          status: :id_verified,
+          tracked_minutes: [referral.tracked_minutes, campaign.required_coding_minutes].max
+        )
+      end
       referral.complete!
     end
 
@@ -300,8 +313,14 @@ class AirtableReferralImporter
     end
 
     if should_complete && !referral.completed?
-      # For ships-based campaigns, mark as id_verified first if not already
-      referral.update!(status: :id_verified) if ships_based_campaign? && referral.pending?
+      if ships_based_campaign?
+        # Ships-based: mark as id_verified and set tracked_minutes to meet the
+        # required_coding_minutes threshold so complete! doesn't bail out.
+        referral.update!(
+          status: :id_verified,
+          tracked_minutes: [referral.tracked_minutes, campaign.required_coding_minutes].max
+        )
+      end
       referral.complete!
     end
 

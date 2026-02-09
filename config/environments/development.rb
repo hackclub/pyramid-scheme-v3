@@ -30,13 +30,8 @@ Rails.application.configure do
 
   # Store uploaded files on Cloudflare R2 or local disk (see config/storage.yml for options).
   # Use USE_LOCAL_STORAGE=true for local development, otherwise uses R2
-  # Use STORAGE_SERVICE=azure to use Azure instead
-  storage_service = if ENV["USE_LOCAL_STORAGE"] == "true"
-    :local
-  else
-    ENV.fetch("STORAGE_SERVICE", "r2").to_sym
-  end
-  config.active_storage.service = storage_service
+  # All new uploads go to R2 only (Azure is down).
+  config.active_storage.service = ENV["USE_LOCAL_STORAGE"] == "true" ? :local : :r2
 
   # Don't care if the mailer can't send.
   config.action_mailer.raise_delivery_errors = false
