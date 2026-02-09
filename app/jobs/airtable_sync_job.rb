@@ -21,6 +21,7 @@ class AirtableSyncJob < ApplicationJob
 
     started_at = Time.current
     run = AirtableSyncRun.create!(status: "running", started_at: started_at)
+    @campaign_errors = []
 
     # Sync global Airtable (backward compatibility)
     sync_stats = AirtableSyncService.new.perform
@@ -68,11 +69,16 @@ class AirtableSyncJob < ApplicationJob
       message_parts << "Total hours: #{hours_stats[:total_hours].round(1)}h from #{hours_stats[:completed_referrals]} completed"
     end
 
+    final_status = @campaign_errors.any? ? "partial" : "succeeded"
+    if @campaign_errors.any?
+      message_parts << "Errors: #{@campaign_errors.join('; ')}"
+    end
+
     run.update!(
-      status: "succeeded",
+      status: final_status,
       finished_at: Time.current,
       duration_seconds: Time.current - started_at,
-      stats: { sync: sync_stats, campaign_syncs: campaign_sync_stats, import: import_stats, repair: repair_stats, hours: hours_stats }.compact,
+      stats: { sync: sync_stats, campaign_syncs: campaign_sync_stats, import: import_stats, repair: repair_stats, hours: hours_stats, errors: @campaign_errors.presence }.compact,
       message: message_parts.join(" | ")
     )
     { sync: sync_stats, campaign_syncs: campaign_sync_stats, import: import_stats, hours: hours_stats }
@@ -98,9 +104,16 @@ class AirtableSyncJob < ApplicationJob
   def sync_campaign_airtables
     results = {}
     Campaign.with_airtable_sync.find_each do |campaign|
-      Rails.logger.info "[AirtableSync] Syncing campaign: #{campaign.slug}"
-      service = AirtableSyncService.new(campaign: campaign)
-      results[campaign.slug] = service.perform
+      begin
+        Rails.logger.info "[AirtableSync] Syncing campaign: #{campaign.slug}"
+        service = AirtableSyncService.new(campaign: campaign)
+        results[campaign.slug] = service.perform
+      rescue => e
+        Rails.logger.error "[AirtableSync] Campaign sync failed for #{campaign.slug}: #{e.class} - #{e.message}"
+        results[campaign.slug] = { error: "#{e.class}: #{e.message}" }
+        @campaign_errors ||= []
+        @campaign_errors << "#{campaign.slug} sync: #{e.message}"
+      end
     end
     results
   end
@@ -110,22 +123,36 @@ class AirtableSyncJob < ApplicationJob
 
     # Import for all campaigns with Airtable sync enabled (including campaign-specific bases)
     Campaign.with_airtable_sync.find_each do |campaign|
-      Rails.logger.info "[AirtableSync] Importing referrals for campaign: #{campaign.slug}"
-      importer = AirtableReferralImporter.new(campaign: campaign)
-      # Always do incremental import for per-campaign imports
-      results[campaign.slug] = importer.import_new
+      begin
+        Rails.logger.info "[AirtableSync] Importing referrals for campaign: #{campaign.slug}"
+        importer = AirtableReferralImporter.new(campaign: campaign)
+        # Always do incremental import for per-campaign imports
+        results[campaign.slug] = importer.import_new
+      rescue => e
+        Rails.logger.error "[AirtableSync] Referral import failed for #{campaign.slug}: #{e.class} - #{e.message}"
+        results[campaign.slug] = { error: "#{e.class}: #{e.message}" }
+        @campaign_errors ||= []
+        @campaign_errors << "#{campaign.slug} import: #{e.message}"
+      end
     end
 
     # Also do the global import for backward compatibility (flavortown or env-specified campaign)
     global_campaign = Campaign.find_by(slug: ENV["AIRTABLE_CAMPAIGN_SLUG"]) || Campaign.flavortown || Campaign.current.first
     if global_campaign && !global_campaign.airtable_sync_enabled?
-      # Only import globally if the campaign doesn't have its own Airtable config
-      importer_job = AirtableReferralImportJob.new
-      any_imports = AirtableImport.for_table(default_table_name).exists?
-      if any_imports
-        results[:global] = importer_job.perform(global_campaign.id, import_all: false, table_name: default_table_name)
-      else
-        results[:global] = importer_job.perform(global_campaign.id, import_all: true, table_name: default_table_name)
+      begin
+        # Only import globally if the campaign doesn't have its own Airtable config
+        importer_job = AirtableReferralImportJob.new
+        any_imports = AirtableImport.for_table(default_table_name).exists?
+        if any_imports
+          results[:global] = importer_job.perform(global_campaign.id, import_all: false, table_name: default_table_name)
+        else
+          results[:global] = importer_job.perform(global_campaign.id, import_all: true, table_name: default_table_name)
+        end
+      rescue => e
+        Rails.logger.error "[AirtableSync] Global import failed: #{e.class} - #{e.message}"
+        results[:global] = { error: "#{e.class}: #{e.message}" }
+        @campaign_errors ||= []
+        @campaign_errors << "global import: #{e.message}"
       end
     end
 
@@ -139,20 +166,34 @@ class AirtableSyncJob < ApplicationJob
 
     # Repair for all campaigns with Airtable sync enabled
     Campaign.with_airtable_sync.find_each do |campaign|
-      Rails.logger.info "[AirtableSync] Repairing missing referrals for campaign: #{campaign.slug}"
-      importer = AirtableReferralImporter.new(campaign: campaign)
-      all_stats[campaign.slug] = importer.repair_missing
+      begin
+        Rails.logger.info "[AirtableSync] Repairing missing referrals for campaign: #{campaign.slug}"
+        importer = AirtableReferralImporter.new(campaign: campaign)
+        all_stats[campaign.slug] = importer.repair_missing
+      rescue => e
+        Rails.logger.error "[AirtableSync] Repair failed for #{campaign.slug}: #{e.class} - #{e.message}"
+        all_stats[campaign.slug] = { error: "#{e.class}: #{e.message}" }
+        @campaign_errors ||= []
+        @campaign_errors << "#{campaign.slug} repair: #{e.message}"
+      end
     end
 
     # Also repair for global campaign for backward compatibility
     global_campaign = Campaign.find_by(slug: ENV["AIRTABLE_CAMPAIGN_SLUG"]) || Campaign.flavortown || Campaign.current.first
     if global_campaign && !global_campaign.airtable_sync_enabled?
-      importer = AirtableReferralImporter.new(campaign: global_campaign)
-      all_stats[:global] = importer.repair_missing
+      begin
+        importer = AirtableReferralImporter.new(campaign: global_campaign)
+        all_stats[:global] = importer.repair_missing
+      rescue => e
+        Rails.logger.error "[AirtableSync] Global repair failed: #{e.class} - #{e.message}"
+        all_stats[:global] = { error: "#{e.class}: #{e.message}" }
+        @campaign_errors ||= []
+        @campaign_errors << "global repair: #{e.message}"
+      end
     end
 
     # Return combined stats
-    total_created = all_stats.values.sum { |s| s&.dig(:created).to_i }
+    total_created = all_stats.values.sum { |s| s.is_a?(Hash) ? s[:created].to_i : 0 }
     { created: total_created, campaigns: all_stats }
   end
 
