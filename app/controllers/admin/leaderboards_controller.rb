@@ -28,12 +28,20 @@ module Admin
 
       case @category
       when "posters"
-        base_scope.by_posters
+        posters_leaderboard_scope(base_scope)
       when "shards"
         base_scope.by_shards
       else
         base_scope.by_referrals
       end
+    end
+
+    def posters_leaderboard_scope(base_scope)
+      base_scope
+        .joins("LEFT JOIN posters ON posters.user_id = users.id AND posters.verification_status IS DISTINCT FROM 'rejected'")
+        .group("users.id")
+        .select("users.*, COUNT(posters.id) AS all_time_poster_count")
+        .order(Arel.sql("COUNT(posters.id) DESC, users.id ASC"))
     end
   end
 end

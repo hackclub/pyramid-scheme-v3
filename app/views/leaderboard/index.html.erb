@@ -124,7 +124,7 @@
                   end
                   display_value = case @category
                     when "referrals" then user.respond_to?(:campaign_referral_count) ? user.campaign_referral_count : user.referral_count
-                    when "posters" then user.poster_count
+                    when "posters" then user.respond_to?(:all_time_poster_count) ? user.all_time_poster_count : user.poster_count
                     when "shards" then user.total_shards
                   end
                 %>

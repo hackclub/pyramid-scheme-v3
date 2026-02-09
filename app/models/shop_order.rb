@@ -99,6 +99,9 @@ class ShopOrder < ApplicationRecord
   private
 
   def calculate_total_shards
-    self.total_shards = shop_item.price_shards * quantity if shop_item && quantity
+    return if total_shards.present?
+    return unless shop_item && quantity
+
+    self.total_shards = shop_item.current_price * quantity
   end
 end

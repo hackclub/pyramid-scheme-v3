@@ -89,6 +89,11 @@
                 { value: "bw", title: "Black & White", preview: "sleepover-poster-bw-preview.webp" },
                 { value: "printer_efficient", title: "Printer Efficient", preview: "sleepover-poster-printer_efficient-preview.webp" }
               ]
+            when "hctg"
+              [
+                { value: "color", title: "Color Poster", preview: "hctg-poster-color-preview.webp" },
+                { value: "bw", title: "Black & White", preview: "hctg-poster-bw-preview.webp" }
+              ]
             else # flavortown and others
               [
                 { value: "color", title: "Color Poster", preview: "poster-color-preview.webp" },
@@ -96,7 +101,22 @@
                 { value: "printer_efficient", title: "Printer Efficient", preview: "poster-printer_efficient-preview.webp" }
               ]
             end
-            grid_cols = poster_styles.length == 1 ? "grid-cols-1 max-w-xs mx-auto" : "grid-cols-3"
+            grid_cols = if poster_styles.length == 2
+                          "grid-cols-2 max-w-md mx-auto"
+                        elsif poster_styles.length == 1
+                          "grid-cols-1 max-w-xs mx-auto"
+                        else
+                          "grid-cols-3"
+                        end
+            designer_credit = if campaign.slug == "construct"
+                                "Posters by Shayaan"
+                              elsif campaign.slug == "hctg"
+                                "Posters by Jovie"
+                              elsif campaign.slug == "sleepover"
+                                "Posters by Reem"
+                              else
+                                t("posters.credit.designer")
+                              end
           %>
           <div class="grid <%= grid_cols %> gap-3 sm:gap-4">
             <% poster_styles.each do |style| %>
@@ -119,7 +139,7 @@
               </label>
             <% end %>
           </div>
-          <p class="text-xs campaign-text-muted mt-2 text-center italic"><%= t("posters.credit.designer") %></p>
+          <p class="text-xs campaign-text-muted mt-2 text-center italic"><%= designer_credit %></p>
         </div>
 
         <!-- Country (for stats) -->

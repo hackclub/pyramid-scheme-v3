@@ -244,7 +244,8 @@
                   <% end %>
 
                   <%= button_to poster_path(poster), method: :delete,
-                      data: { turbo_confirm: "Delete this poster? This cannot be undone!", turbo_frame: "poster_#{poster.id}" },
+                      data: { turbo_frame: "poster_#{poster.id}" },
+                      form: { onsubmit: "return confirm(\"Delete this poster? This cannot be undone.\")" },
                       class: "campaign-text-muted hover:opacity-70 text-xs font-medium inline-flex items-center gap-1 cursor-pointer" do %>
                     <%= icon :trash_2, size: 12 %>
                     Delete
@@ -282,7 +283,7 @@
         </details>
         <% unless @poster_group.has_submitted_posters? %>
           <%= button_to poster_group_path(@poster_group), method: :delete,
-              data: { turbo_confirm: "Delete group and all #{@poster_group.poster_count} posters? This cannot be undone!" },
+              form: { onsubmit: "return confirm(\"Delete group and all #{@poster_group.poster_count} posters? This cannot be undone.\")" },
               class: "campaign-btn campaign-btn--secondary text-xs h-9 px-4 inline-flex items-center gap-1.5 hover:!bg-red-500 hover:!text-white transition-colors" do %>
             <%= icon :trash_2, size: 14 %>
             Delete Entire Group

@@ -10,9 +10,8 @@ export default class extends Controller {
   updateTotal() {
     if (!this.hasUnitPriceTarget) return
     
-    const unitPrice = parseInt(this.unitPriceTarget.dataset.unitPrice)
-    const quantitySelect = this.element.querySelector('#quantity')
-    const quantity = quantitySelect ? parseInt(quantitySelect.value) : 1
+    const unitPrice = this.readUnitPrice()
+    const quantity = this.readQuantity()
     
     const total = unitPrice * quantity
     
@@ -29,14 +28,13 @@ export default class extends Controller {
     event.preventDefault()
     
     const form = event.target
-    const quantitySelect = form.querySelector('#quantity')
-    const quantity = quantitySelect ? parseInt(quantitySelect.value) : 1
+    const quantity = this.readQuantity()
     
     // Extract item name from the page
     const titleElement = document.querySelector('h1')
     const actualItemName = titleElement ? titleElement.textContent.trim() : 'this item'
     
-    const unitPrice = this.hasUnitPriceTarget ? parseInt(this.unitPriceTarget.dataset.unitPrice) : 0
+    const unitPrice = this.readUnitPrice()
     const total = unitPrice * quantity
     
     const message = quantity > 1 
@@ -46,5 +44,20 @@ export default class extends Controller {
     if (confirm(message)) {
       form.submit()
     }
+  }
+
+  readUnitPrice() {
+    if (!this.hasUnitPriceTarget) return 0
+
+    const value = Number.parseInt(this.unitPriceTarget.dataset.unitPrice || "0", 10)
+    return Number.isNaN(value) ? 0 : Math.max(value, 0)
+  }
+
+  readQuantity() {
+    const quantitySelect = this.element.querySelector('#quantity')
+    if (!quantitySelect) return 1
+
+    const value = Number.parseInt(quantitySelect.value || "1", 10)
+    return Number.isNaN(value) ? 1 : Math.max(value, 1)
   }
 }

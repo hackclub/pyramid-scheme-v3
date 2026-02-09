@@ -21,7 +21,7 @@
       <% end %>
     </div>
 
-    <div class="space-y-4">
+    <div class="space-y-4" data-controller="purchase-confirm">
       <div>
         <% if @item.on_sale? %>
           <div class="inline-flex items-center gap-2 mb-2 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">
@@ -61,8 +61,10 @@
 
       <% item_price = @item.current_price %>
       <% max_affordable = item_price > 0 ? (current_user.total_shards / item_price).to_i : 0 %>
+      <% select_input_class = "w-full rounded-lg border border-border bg-card px-3 py-2 pr-10 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring appearance-none cursor-pointer transition-all" %>
+      <% select_input_style = "background-image: url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\"); background-position: right 0.75rem center; background-repeat: no-repeat; background-size: 1.25rem 1.25rem;" %>
       <% if @item.in_stock? && max_affordable > 0 %>
-        <%= form_with url: shop_orders_path, method: :post, class: "space-y-3", data: { controller: "purchase-confirm", action: "submit->purchase-confirm#confirmPurchase" } do |f| %>
+        <%= form_with url: shop_orders_path, method: :post, class: "space-y-3", data: { action: "submit->purchase-confirm#confirmPurchase" } do |f| %>
           <%= f.hidden_field :shop_item_id, value: @item.id %>
           
           <div>
@@ -70,7 +72,7 @@
             <% if @item.physical? %>
               <% max_qty = @item.max_quantity_per_order || 10 %>
               <% max_available = @item.unlimited_stock? ? max_qty : [@item.stock_quantity, max_qty].min %>
-              <select name="quantity" id="quantity" required class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-foreground/20 transition-all" data-action="change->purchase-confirm#updateTotal">
+              <select name="quantity" id="quantity" required class="<%= select_input_class %>" style="<%= select_input_style %>" data-action="change->purchase-confirm#updateTotal">
                 <% (1..[max_available, max_affordable].min).each do |qty| %>
                   <option value="<%= qty %>"><%= qty %></option>
                 <% end %>
@@ -94,17 +96,12 @@
           <div data-controller="address-selector">
             <label class="block text-xs font-medium text-foreground mb-1.5">Shipping Address</label>
             <div id="address-selector" class="space-y-2">
-              <select name="shop_order[shipping_address]" id="address_select" data-address-selector-target="select" required class="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-foreground/20 transition-all">
+              <select name="shop_order[shipping_address]" id="address_select" data-address-selector-target="select" required class="<%= select_input_class %>" style="<%= select_input_style %>">
                 <option value="">Loading addresses...</option>
               </select>
             </div>
             <a href="https://auth.hackclub.com/addresses" target="_blank" class="text-xs text-muted-foreground hover:text-foreground mt-1.5 inline-flex items-center gap-1 transition-colors">
               <span>Manage Addresses</span>
-              <%= icon :external_link, size: 10 %>
-            </a>
-
-            <a href="<%= auth_path %>" data-address-selector-target="reauth" class="hidden text-xs text-muted-foreground hover:text-foreground mt-1.5 inline-flex items-center gap-1 transition-colors">
-              <span>Reconnect Hack Club Auth</span>
               <%= icon :external_link, size: 10 %>
             </a>
           </div>
