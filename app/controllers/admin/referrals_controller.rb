@@ -68,7 +68,6 @@ module Admin
                                )
       end
 
-      @referrals = @referrals.distinct
       @pagy, @referrals = pagy(@referrals, limit: 25)
       @campaigns = Campaign.order(name: :asc)
 

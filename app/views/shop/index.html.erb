@@ -6,17 +6,34 @@
     <p class="text-muted-foreground"><%= t('shop.subtitle') %></p>
   </div>
 
-  <%= form_with url: shop_update_region_path, method: :patch, local: true, data: { controller: "auto-submit" } do |f| %>
-    <div class="flex items-center gap-2">
-      <%= icon :globe, size: 14, class_name: "text-muted-foreground" %>
-      <%= f.select :region,
-          @region_options.map { |r| [r[:label], r[:value]] },
-          { selected: @user_region },
-          class: "text-sm rounded-lg border border-border bg-card px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-ring appearance-none cursor-pointer",
-          data: { action: "change->auto-submit#submit" },
-          style: "background-image: url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em;" %>
+  <div class="flex flex-wrap items-center gap-2">
+    <%= form_with url: shop_path, method: :get, local: true, data: { controller: "auto-submit" } do |f| %>
+      <div class="flex items-center gap-2">
+        <%= icon :arrow_up_down, size: 14, class_name: "text-muted-foreground" %>
+        <%= f.select :sort,
+            @sort_options,
+            { selected: @sort },
+            class: "text-sm rounded-lg border border-border bg-card px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-ring appearance-none cursor-pointer",
+            data: { action: "change->auto-submit#submit" },
+            style: "background-image: url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em;" %>
+        <% if @category.present? %>
+          <%= f.hidden_field :category, value: @category %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%= form_with url: shop_update_region_path, method: :patch, local: true, data: { controller: "auto-submit" } do |f| %>
+      <div class="flex items-center gap-2">
+        <%= icon :globe, size: 14, class_name: "text-muted-foreground" %>
+        <%= f.select :region,
+            @region_options.map { |r| [r[:label], r[:value]] },
+            { selected: @user_region },
+            class: "text-sm rounded-lg border border-border bg-card px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-ring appearance-none cursor-pointer",
+            data: { action: "change->auto-submit#submit" },
+            style: "background-image: url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em;" %>
+      </div>
+    <% end %>
     </div>
-  <% end %>
 </div>
 
 <% if @items.any? %>

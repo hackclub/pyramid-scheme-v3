@@ -8,6 +8,11 @@ Rails.application.routes.draw do
   # Root path - landing page for guests, dashboard for signed-in users
   root "landing#index"
 
+  # Common browser icon requests (avoid falling through to referral proxy)
+  get "/favicon.ico", to: redirect("/logo.png")
+  get "/apple-touch-icon.png", to: redirect("/logo.png")
+  get "/apple-touch-icon-precomposed.png", to: redirect("/logo.png")
+
   # Proxy routes for referral links (typically on flavortown.hackclub.com subdomain)
   # Poster referrals: flavortown.hackclub.com/p/:code (8 char uppercase)
   # Regular referrals: flavortown.hackclub.com/:code (direct links only, no /r/ prefix)
@@ -215,5 +220,5 @@ Rails.application.routes.draw do
 
   # Catch-all route for direct referral links /:code
   # MUST be last to avoid conflicts with other routes
-  get "/:code", to: "proxy#link_referral", as: :direct_referral_proxy, constraints: { code: /[A-Za-z0-9]{4,12}/ }
+  get "/:code", to: "proxy#link_referral", as: :direct_referral_proxy, constraints: { code: /[A-Za-z0-9]{4,12}/ }, format: false
 end

@@ -37,7 +37,12 @@ class VideoSubmissionsController < ApplicationController
       return
     end
 
-    @submission.update!(metadata: @submission.metadata.merge(virality_check_requested: true, virality_check_requested_at: Time.current.iso8601))
+    @submission.update!(
+      metadata: (@submission.metadata || {}).merge(
+        virality_check_requested: true,
+        virality_check_requested_at: Time.current.iso8601
+      )
+    )
 
     if request.turbo_frame_request?
       render turbo_stream: turbo_stream.replace("virality_check_#{@submission.id}", partial: "video_submissions/virality_check", locals: { submission: @submission })

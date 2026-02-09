@@ -508,7 +508,7 @@
   --campaign-input-background: #ffffff;
   --campaign-input-border: 2px solid #000000;
   --campaign-btn-radius: 0;
-  --campaign-btn-padding: 0.75rem 1.5rem;
+  --campaign-btn-padding: 0.9rem 1.8rem;
   --campaign-btn-weight: 700;
   --campaign-btn-border: 4px solid #000000;
   --campaign-btn-background: #000000;
@@ -563,8 +563,10 @@
 
 .theme-hctg .campaign-btn {
   box-shadow: 4px 4px 0 #000000;
-  letter-spacing: -0.03em;
-  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  line-height: 1.15;
+  min-height: 3.25rem;
 }
 
 .theme-hctg .campaign-btn:hover {
