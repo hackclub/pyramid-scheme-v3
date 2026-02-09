@@ -163,7 +163,7 @@ class AirtableReferralImporter
       if ships_based_campaign?
         referral.update!(
           status: :id_verified,
-          tracked_minutes: [referral.tracked_minutes, campaign.required_coding_minutes].max
+          tracked_minutes: [ referral.tracked_minutes, campaign.required_coding_minutes ].max
         )
       end
       referral.complete!
@@ -318,7 +318,7 @@ class AirtableReferralImporter
         # required_coding_minutes threshold so complete! doesn't bail out.
         referral.update!(
           status: :id_verified,
-          tracked_minutes: [referral.tracked_minutes, campaign.required_coding_minutes].max
+          tracked_minutes: [ referral.tracked_minutes, campaign.required_coding_minutes ].max
         )
       end
       referral.complete!

@@ -172,6 +172,8 @@ class BaseCampaignLogic
     def for(campaign)
       return new(nil) unless campaign
 
+      return new(campaign) unless campaign.slug
+
       logic_class_name = "#{campaign.slug.camelize}CampaignLogic"
       logic_class = logic_class_name.safe_constantize
 

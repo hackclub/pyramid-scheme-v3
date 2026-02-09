@@ -524,13 +524,7 @@
   --campaign-modal-header-border: 4px solid #000000;
 }
 
-/* HCTG metro-stripe top accent: Red, Blue, Yellow, Green */
-.theme-hctg::before {
-  content: "";
-  display: block;
-  height: 6px;
-  background: linear-gradient(to right, #C93919 25%, #1C6DAF 25%, #1C6DAF 50%, #ECA82D 50%, #ECA82D 75%, #48A71B 75%);
-}
+/* HCTG: no top stripe — clean B&W identity */
 
 /* Range input styles */
 input[type="range"] {
