@@ -6,6 +6,7 @@ module Admin
       @total_users = User.count
       @total_referrals = Referral.count
       @completed_referrals = Referral.completed.count
+      @self_referrals = Referral.where("referrer_id = referred_id").count
       @total_posters = Poster.count
       @verified_posters = Poster.verified.count
       @pending_orders = ShopOrder.pending.count
