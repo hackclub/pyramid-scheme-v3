@@ -121,6 +121,11 @@ Rails.application.configure do
   # Only use :id for inspections in production.
   config.active_record.attributes_for_inspect = [ :id ]
 
-  # Enable DNS rebinding protection and other `Host` header attacks.
-  config.hosts.clear
+  # Enable DNS rebinding protection while allowing the configured application host.
+  config.hosts = [ app_host_uri.host, "localhost", "127.0.0.1", "::1" ].compact
+
+  # Optional comma-separated extra hosts (for proxies or temporary domains).
+  ENV.fetch("RAILS_ALLOWED_HOSTS", "").split(",").map(&:strip).reject(&:blank?).each do |host|
+    config.hosts << host
+  end
 end

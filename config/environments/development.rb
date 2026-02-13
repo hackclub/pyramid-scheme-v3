@@ -45,6 +45,9 @@ Rails.application.configure do
   # Set default URL options for controllers (used by route helpers like auth_callback_url)
   config.action_controller.default_url_options = { protocol: "http", host: "localhost", port: 4444 }
 
+  # Allow access through production-like domains when using local proxies/tunnels.
+  config.hosts << "pyramid.hackclub.com"
+
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
 
