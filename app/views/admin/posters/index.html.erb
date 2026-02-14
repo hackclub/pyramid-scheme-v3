@@ -10,6 +10,7 @@
 <%# Status tabs %>
 <div class="flex gap-2 border-b border-border mb-6">
   <% status_labels = {
+    "all" => "All",
     "in_review" => "In Review",
     "pending" => "Pending",
     "success" => "Verified",
@@ -20,8 +21,42 @@
   <% status_labels.each do |key, label| %>
     <% active = @status == key %>
     <%= link_to label,
-        admin_posters_path(status: key),
+        admin_posters_path(status: key, q: @search_query.presence, user_id: @user_filter.presence),
         class: "px-4 py-2 text-sm font-medium transition-colors #{active ? 'text-foreground border-b-2 border-primary -mb-px' : 'text-muted-foreground hover:text-foreground'}" %>
+  <% end %>
+</div>
+
+<div class="rounded-lg border border-border bg-card p-4 shadow-sm mb-6">
+  <%= form_with url: admin_posters_path, method: :get, local: true, class: "flex flex-col gap-3 sm:flex-row sm:items-center" do %>
+    <%= hidden_field_tag :status, @status %>
+    <% if @user_filter.present? %>
+      <%= hidden_field_tag :user_id, @user_filter %>
+    <% end %>
+    <input
+      type="text"
+      name="q"
+      value="<%= @search_query %>"
+      class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      placeholder="Search by user, email, Slack ID, poster ID, or referral code..."
+    >
+    <div class="flex items-center gap-2 sm:flex-shrink-0">
+      <button type="submit" class="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+        Search
+      </button>
+      <%= link_to "Clear", admin_posters_path(status: @status, user_id: @user_filter.presence), class: "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
+    </div>
+  <% end %>
+
+  <% if @filtered_user.present? %>
+    <div class="mt-3 rounded-md border border-border/60 bg-secondary/30 px-3 py-2 text-sm text-foreground">
+      Filtering posters for
+      <span class="font-semibold"><%= @filtered_user.display_name %></span>
+      <% if @filtered_user.email.present? %>
+        <span class="text-muted-foreground">(<%= @filtered_user.email %>)</span>
+      <% end %>
+      <%= link_to "View user", admin_user_path(@filtered_user), class: "ml-2 text-primary hover:underline" %>
+      <%= link_to "Remove filter", admin_posters_path(status: @status, q: @search_query.presence), class: "ml-2 text-muted-foreground hover:text-foreground hover:underline" %>
+    </div>
   <% end %>
 </div>
 
@@ -92,7 +127,13 @@
                     </div>
                   <% end %>
                   <div>
-                    <div class="font-medium text-foreground"><%= poster.user&.display_name || "Deleted User" %></div>
+                    <div class="font-medium text-foreground">
+                      <% if poster.user.present? %>
+                        <%= link_to poster.user.display_name, admin_user_path(poster.user), class: "hover:text-primary" %>
+                      <% else %>
+                        Deleted User
+                      <% end %>
+                    </div>
                     <div class="text-xs text-muted-foreground"><%= poster.user&.email || "—" %></div>
                   </div>
                 </div>
@@ -115,14 +156,19 @@
                 <% end %>
               </td>
               <td class="px-6 py-4 text-sm text-muted-foreground"><%= time_ago_in_words(poster.created_at) %> ago</td>
-              <td class="px-6 py-4 text-sm text-muted-foreground">
-                <% if poster.proof_image.attached? || poster.proof_image_url.present? %>
-                  <span class="inline-flex items-center gap-2 text-green-600 font-medium">
-                    <%= icon :circle_check, size: 16, class_name: "text-green-600" %>
-                    Received
-                  </span>
+              <td class="px-6 py-4">
+                <% if poster.proof_image.attached? %>
+                  <%= link_to admin_poster_path(poster, status: @status), class: "inline-flex items-center gap-3 hover:opacity-90" do %>
+                    <%= image_tag url_for(poster.proof_image.variant(:thumb)), class: "h-14 w-14 rounded-md border border-border object-cover bg-black/5" %>
+                    <span class="text-xs font-medium text-green-600">View</span>
+                  <% end %>
+                <% elsif poster.proof_image_url.present? %>
+                  <a href="<%= poster.proof_image_url %>" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-xs font-medium text-primary hover:underline">
+                    <%= icon :external_link, size: 14 %>
+                    External proof
+                  </a>
                 <% else %>
-                  <span class="inline-flex items-center gap-2 text-yellow-700 font-medium">
+                  <span class="inline-flex items-center gap-2 text-yellow-700 text-sm font-medium">
                     <%= icon :circle_alert, size: 16, class_name: "text-yellow-700" %>
                     Missing
                   </span>
@@ -146,7 +192,7 @@
   <% if @pagy.pages > 1 %>
   <div class="flex items-center justify-center gap-2 p-4 mt-4 rounded-lg border border-border bg-card md:border-t md:border-x-0 md:border-b-0 md:rounded-none md:rounded-b-lg">
     <% if @pagy.page > 1 %>
-      <%= link_to admin_posters_path(page: @pagy.page - 1, status: @status), class: "inline-flex items-center justify-center rounded-md p-2 md:px-3 md:py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" do %>
+      <%= link_to admin_posters_path(page: @pagy.page - 1, status: @status, q: @search_query.presence, user_id: @user_filter.presence), class: "inline-flex items-center justify-center rounded-md p-2 md:px-3 md:py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" do %>
         <%= icon :chevron_left, size: 18 %>
         <span class="hidden md:inline ml-1">Previous</span>
       <% end %>
@@ -155,7 +201,7 @@
       <%= @pagy.page %> / <%= @pagy.pages %>
     </span>
     <% if @pagy.page < @pagy.pages %>
-      <%= link_to admin_posters_path(page: @pagy.page + 1, status: @status), class: "inline-flex items-center justify-center rounded-md p-2 md:px-3 md:py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" do %>
+      <%= link_to admin_posters_path(page: @pagy.page + 1, status: @status, q: @search_query.presence, user_id: @user_filter.presence), class: "inline-flex items-center justify-center rounded-md p-2 md:px-3 md:py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" do %>
         <span class="hidden md:inline mr-1">Next</span>
         <%= icon :chevron_right, size: 18 %>
       <% end %>

@@ -195,6 +195,7 @@ Rails.application.routes.draw do
     resources :shop_orders, only: [ :index, :show ] do
       member do
         post :approve
+        post :unapprove
         post :fulfill
         post :cancel
         post :mark_in_review

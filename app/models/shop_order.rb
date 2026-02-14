@@ -46,7 +46,11 @@ class ShopOrder < ApplicationRecord
   end
 
   def can_cancel?
-    %w[pending in_review on_hold].include?(status)
+    %w[pending in_review on_hold approved].include?(status)
+  end
+
+  def can_unapprove?
+    status == "approved"
   end
 
   def has_tracking?
@@ -71,7 +75,7 @@ class ShopOrder < ApplicationRecord
   end
 
   def cancel!
-    return unless can_cancel?
+    raise StandardError, "Order cannot be cancelled from #{status.humanize.downcase} status." unless can_cancel?
 
     transaction do
       user.credit_shards!(
@@ -90,6 +94,12 @@ class ShopOrder < ApplicationRecord
 
   def mark_on_hold!(notes = nil)
     update!(status: "on_hold", status_notes: notes)
+  end
+
+  def unapprove!
+    raise StandardError, "Only approved orders can be unapproved." unless can_unapprove?
+
+    update!(status: "in_review")
   end
 
   def add_tracking!(tracking_number: nil, tracking_url: nil)

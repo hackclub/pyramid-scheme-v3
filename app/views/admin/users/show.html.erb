@@ -218,6 +218,63 @@
 <div class="rounded-lg border border-border bg-card shadow-sm mb-8">
   <div class="p-6 border-b border-border flex items-center justify-between">
     <div>
+      <h3 class="text-lg font-semibold text-foreground">Recent Posters</h3>
+      <p class="text-sm text-muted-foreground">Review this user's latest poster submissions.</p>
+    </div>
+    <%= link_to "View poster queue", admin_posters_path(status: "in_review", user_id: @user.id), class: "text-xs text-primary hover:underline" %>
+  </div>
+  <% if @posters.any? %>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="border-b border-border">
+          <tr class="text-left">
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Campaign</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Status</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Submitted</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground">Proof</th>
+            <th class="px-6 py-3 text-sm font-medium text-muted-foreground"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          <% @posters.each do |poster| %>
+            <tr class="hover:bg-muted/50 transition-colors">
+              <td class="px-6 py-4 text-sm text-foreground"><%= poster.campaign&.name || "Deleted Campaign" %></td>
+              <td class="px-6 py-4">
+                <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium <%= poster_status_badge_class(poster.verification_status) %>">
+                  <%= poster.verification_status.to_s.humanize %>
+                </span>
+              </td>
+              <td class="px-6 py-4 text-sm text-muted-foreground"><%= time_ago_in_words(poster.created_at) %> ago</td>
+              <td class="px-6 py-4">
+                <% if poster.proof_image.attached? %>
+                  <%= link_to admin_poster_path(poster), class: "inline-flex items-center gap-3 hover:opacity-90" do %>
+                    <%= image_tag url_for(poster.proof_image.variant(:thumb)), class: "h-12 w-12 rounded-md border border-border object-cover bg-black/5" %>
+                    <span class="text-xs text-green-600 font-medium">View</span>
+                  <% end %>
+                <% elsif poster.proof_image_url.present? %>
+                  <a href="<%= poster.proof_image_url %>" target="_blank" rel="noopener" class="text-xs text-primary hover:underline">External proof</a>
+                <% else %>
+                  <span class="text-xs text-yellow-700 font-medium">Missing</span>
+                <% end %>
+              </td>
+              <td class="px-6 py-4 text-sm text-right">
+                <%= link_to "Review", admin_poster_path(poster), class: "text-primary hover:underline font-medium" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="p-6">
+      <p class="text-sm text-muted-foreground">No posters yet.</p>
+    </div>
+  <% end %>
+</div>
+
+<div class="rounded-lg border border-border bg-card shadow-sm mb-8">
+  <div class="p-6 border-b border-border flex items-center justify-between">
+    <div>
       <h3 class="text-lg font-semibold text-foreground">Proxy hits</h3>
       <p class="text-sm text-muted-foreground">Requests logged by the proxy for <%= @user.referral_code %>.</p>
     </div>

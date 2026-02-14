@@ -200,19 +200,71 @@
 
   <div class="rounded-lg border border-border bg-card shadow-sm">
     <div class="flex justify-between items-center p-4 border-b border-border">
-      <h3 class="text-sm font-semibold text-foreground">Pending Orders</h3>
+      <h3 class="text-sm font-semibold text-foreground">Orders</h3>
       <%= link_to "View all", admin_shop_orders_path(status: "pending"), class: "text-xs text-primary hover:underline" %>
     </div>
-    <div class="p-4">
-      <% if @pending_orders > 0 %>
-        <p class="text-3xl font-bold text-foreground tabular-nums"><%= @pending_orders %></p>
-        <p class="text-xs text-muted-foreground mt-1">awaiting review</p>
-      <% else %>
-        <div class="text-center py-6">
-          <p class="text-sm text-muted-foreground">No pending orders</p>
-        </div>
+    <div class="px-4 pt-4 pb-2 flex flex-wrap gap-2">
+      <% {
+        "pending" => "Pending",
+        "in_review" => "In Review",
+        "on_hold" => "On Hold",
+        "approved" => "Approved",
+        "fulfilled" => "Fulfilled",
+        "cancelled" => "Cancelled"
+      }.each do |status, label| %>
+        <% count = @orders_by_status[status].to_i %>
+        <% next if count.zero? %>
+
+        <%= link_to admin_shop_orders_path(status: status), class: "inline-flex items-center gap-1 rounded-md border border-border bg-secondary/30 px-2.5 py-1 text-xs text-foreground hover:bg-muted transition-colors" do %>
+          <span class="font-semibold"><%= count %></span>
+          <span class="text-muted-foreground"><%= label %></span>
+        <% end %>
+      <% end %>
+      <% if @orders_by_status.values.sum.zero? %>
+        <span class="text-xs text-muted-foreground">No orders yet.</span>
       <% end %>
     </div>
+    <% if @recent_orders.any? %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="border-y border-border">
+            <tr class="text-left text-xs text-muted-foreground">
+              <th class="px-4 py-2">Order</th>
+              <th class="px-4 py-2">User</th>
+              <th class="px-4 py-2">Item</th>
+              <th class="px-4 py-2">Status</th>
+              <th class="px-4 py-2">Placed</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <% @recent_orders.limit(6).each do |order| %>
+              <tr class="hover:bg-muted/30">
+                <td class="px-4 py-2">
+                  <%= link_to "##{order.id}", admin_shop_order_path(order), class: "font-medium text-foreground hover:text-primary" %>
+                </td>
+                <td class="px-4 py-2 text-foreground"><%= order.user.display_name %></td>
+                <td class="px-4 py-2 text-muted-foreground"><%= truncate(order.shop_item.name, length: 28) %></td>
+                <td class="px-4 py-2">
+                  <span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium <%= order_status_badge_class(order.status) %>">
+                    <%= order.status.humanize %>
+                  </span>
+                </td>
+                <td class="px-4 py-2 text-xs text-muted-foreground"><%= time_ago_in_words(order.created_at) %> ago</td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="text-center py-6">
+        <p class="text-sm text-muted-foreground">No orders yet.</p>
+      </div>
+    <% end %>
+    <% if @pending_orders > 0 %>
+      <div class="px-4 pb-4 pt-1">
+        <p class="text-xs text-muted-foreground"><%= @pending_orders %> pending orders are awaiting review.</p>
+      </div>
+    <% end %>
   </div>
 </div>
 

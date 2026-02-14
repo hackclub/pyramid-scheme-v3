@@ -7,7 +7,7 @@ module Admin
       @status_filter = normalized_status_filter(params[:status])
 
       @referrals = Referral.includes(:referrer, :referred, :campaign)
-                           .order(Arel.sql("COALESCE(completed_at, verified_at, created_at) DESC"))
+                           .order(Arel.sql("COALESCE(referrals.completed_at, referrals.verified_at, referrals.created_at) DESC"))
 
       # Filter by status
       if @status_filter.present? && @status_filter != "all"

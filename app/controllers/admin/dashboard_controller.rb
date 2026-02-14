@@ -9,7 +9,8 @@ module Admin
       @self_referrals = Referral.where("referrer_id = referred_id").count
       @total_posters = Poster.count
       @verified_posters = Poster.verified.count
-      @pending_orders = ShopOrder.pending.count
+      @orders_by_status = ShopOrder.group(:status).count
+      @pending_orders = @orders_by_status["pending"] || 0
       @total_shards_awarded = ShardTransaction.sum(:amount) || 0
 
       # Poster referral metrics
@@ -37,6 +38,7 @@ module Admin
 
       @recent_users = User.order(created_at: :desc).limit(10)
       @recent_referrals = Referral.includes(:referrer, :campaign).order(created_at: :desc).limit(10)
+      @recent_orders = ShopOrder.includes(:user, :shop_item).order(created_at: :desc).limit(10)
       @pending_posters = Poster.pending.includes(:user, :campaign).limit(10)
       @airtable_sync_runs = AirtableSyncRun.order(started_at: :desc, created_at: :desc).limit(10)
 

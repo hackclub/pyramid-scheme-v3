@@ -4,13 +4,37 @@ module Admin
   class PostersController < BaseController
     rescue_from ActiveRecord::RecordNotFound, with: :poster_not_found
 
-    STATUSES = %w[in_review pending success on_hold rejected digital].freeze
+    STATUSES = %w[all in_review pending success on_hold rejected digital].freeze
 
     def index
       @status = params[:status].presence_in(STATUSES) || "in_review"
+      @search_query = params[:q].to_s.strip
+      @user_filter = params[:user_id].presence
+      @filtered_user = User.select(:id, :display_name, :email).find_by(id: @user_filter) if @user_filter.present?
+
       @posters = Poster.includes(:user, :campaign, :poster_group, proof_image_attachment: :blob)
-                       .where(verification_status: @status)
-                       .order(Arel.sql("COALESCE(verified_at, created_at) DESC"))
+      @posters = @posters.where(verification_status: @status) unless @status == "all"
+
+      @posters = @posters.where(user_id: @user_filter) if @user_filter.present?
+
+      if @search_query.present?
+        escaped_query = ActiveRecord::Base.sanitize_sql_like(@search_query)
+        search_term = "%#{escaped_query}%"
+        @posters = @posters.joins("LEFT JOIN users ON users.id = posters.user_id")
+                           .where(
+                             <<~SQL.squish,
+                               users.display_name ILIKE :search
+                               OR users.email ILIKE :search
+                               OR users.slack_id ILIKE :search
+                               OR posters.referral_code ILIKE :search
+                               OR posters.id::text = :exact
+                             SQL
+                             search: search_term,
+                             exact: @search_query
+                           )
+      end
+
+      @posters = @posters.order(Arel.sql("COALESCE(posters.verified_at, posters.created_at) DESC")).distinct
       @pagy, @posters = pagy(@posters)
     end
 

@@ -30,12 +30,22 @@ module Admin
       @order = ShopOrder.find(params[:id])
       @order.cancel!
       redirect_to admin_shop_orders_path, notice: "Order cancelled and refunded."
+    rescue => e
+      redirect_to admin_shop_order_path(@order), alert: "Unable to cancel order: #{e.message}"
     end
 
     def mark_in_review
       @order = ShopOrder.find(params[:id])
       @order.mark_in_review!
       redirect_to admin_shop_order_path(@order), notice: "Order marked for review."
+    end
+
+    def unapprove
+      @order = ShopOrder.find(params[:id])
+      @order.unapprove!
+      redirect_to admin_shop_order_path(@order), notice: "Order moved back to in review."
+    rescue => e
+      redirect_to admin_shop_order_path(@order), alert: "Unable to unapprove order: #{e.message}"
     end
 
     def mark_on_hold

@@ -15,6 +15,10 @@
     </p>
   </div>
   <div class="flex items-center gap-3">
+    <%= link_to admin_user_path(@order.user), class: "inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors" do %>
+      <%= icon :user, size: 16 %>
+      View User
+    <% end %>
     <div class="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-semibold text-foreground">
       <%= icon :pyramid, size: 16 %>
       <%= number_with_delimiter(@order.total_shards) %> shards
@@ -40,8 +44,13 @@
       <dl class="grid md:grid-cols-2 gap-4">
         <div class="flex flex-col gap-1 rounded-md border border-border/60 bg-secondary/30 p-3">
           <dt class="text-xs uppercase tracking-wide text-muted-foreground">User</dt>
-          <dd class="text-sm text-foreground font-semibold"><%= @order.user.display_name %></dd>
+          <dd class="text-sm text-foreground font-semibold">
+            <%= link_to @order.user.display_name, admin_user_path(@order.user), class: "hover:text-primary" %>
+          </dd>
           <dd class="text-xs text-muted-foreground"><%= @order.user.email %></dd>
+          <dd class="text-xs">
+            <%= link_to "View this user's posters", admin_posters_path(status: "in_review", user_id: @order.user_id), class: "text-primary hover:underline" %>
+          </dd>
         </div>
         <div class="flex flex-col gap-1 rounded-md border border-border/60 bg-secondary/30 p-3">
           <dt class="text-xs uppercase tracking-wide text-muted-foreground">Item</dt>
@@ -137,6 +146,11 @@
           <%= icon :ban, size: 16, class_name: "mr-2" %> Cancel & refund
         <% end %>
       <% elsif @order.status == "approved" %>
+        <%= button_to unapprove_admin_shop_order_path(@order), method: :post,
+            class: "w-full inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors",
+            data: { turbo_confirm: "Move this order back to in review?" } do %>
+          <%= icon :undo_2, size: 16, class_name: "mr-2" %> Move to in review
+        <% end %>
         <%= button_to fulfill_admin_shop_order_path(@order), method: :post,
             class: "w-full inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition-colors",
             data: { turbo_confirm: "Mark as fulfilled and deduct stock?" } do %>
