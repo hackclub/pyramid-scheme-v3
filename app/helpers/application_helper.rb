@@ -30,12 +30,12 @@ module ApplicationHelper
   # @return [String] Tailwind CSS classes for the badge
   def order_status_badge_class(status)
     case status.to_s
-    when "fulfilled" then "bg-green-500/10 text-green-600"
-    when "cancelled" then "bg-destructive/10 text-destructive"
-    when "approved" then "bg-blue-500/10 text-blue-600"
-    when "in_review" then "bg-indigo-500/10 text-indigo-600"
-    when "on_hold" then "bg-orange-500/10 text-orange-600"
-    else "bg-amber-500/10 text-amber-700"
+    when "fulfilled" then "bg-emerald-500/15 text-emerald-400"
+    when "cancelled" then "bg-red-500/15 text-red-400"
+    when "approved" then "bg-blue-500/15 text-blue-400"
+    when "in_review" then "bg-indigo-500/15 text-indigo-400"
+    when "on_hold" then "bg-orange-500/15 text-orange-400"
+    else "bg-amber-500/15 text-amber-400"
     end
   end
 

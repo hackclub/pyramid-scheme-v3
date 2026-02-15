@@ -34,7 +34,7 @@ module Admin
                            )
       end
 
-      @posters = @posters.order(Arel.sql("COALESCE(posters.verified_at, posters.created_at) DESC")).distinct
+      @posters = @posters.order(Arel.sql("COALESCE(posters.verified_at, posters.created_at) DESC"))
       @pagy, @posters = pagy(@posters)
     end
 

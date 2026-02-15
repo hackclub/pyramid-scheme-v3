@@ -52,9 +52,11 @@
               </td>
               <td class="px-6 py-4 text-sm text-foreground"><%= order.shop_item.name %></td>
               <td class="px-6 py-4 text-sm text-foreground"><%= order.quantity %></td>
-              <td class="px-6 py-4 text-sm text-foreground inline-flex items-center gap-1">
-                <%= icon :pyramid, size: 14 %>
-                <span><%= number_with_delimiter(order.total_shards) %> shards</span>
+              <td class="px-6 py-4 text-sm text-foreground">
+                <div class="inline-flex items-center gap-1 whitespace-nowrap">
+                  <%= icon :pyramid, size: 14 %>
+                  <span><%= number_with_delimiter(order.total_shards) %> shards</span>
+                </div>
               </td>
               <td class="px-6 py-4 text-sm text-muted-foreground"><%= time_ago_in_words(order.created_at) %> ago</td>
               <td class="px-6 py-4">
