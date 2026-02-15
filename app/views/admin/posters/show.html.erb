@@ -97,19 +97,10 @@
     </div>
 
     <div class="rounded-lg border border-border bg-card p-6 shadow-sm space-y-6">
-      <div class="flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-foreground">Proof & Evidence</h2>
-        <% if @poster.proof_image_url.present? && !@poster.proof_image.attached? %>
-          <a href="<%= @poster.proof_image_url %>" target="_blank" class="text-sm font-medium text-primary hover:underline">Open original</a>
-        <% end %>
-      </div>
+      <h2 class="text-lg font-semibold text-foreground">Proof & Evidence</h2>
       <% if @poster.proof_image.attached? %>
         <div class="overflow-hidden rounded-xl border border-border">
           <%= image_tag @poster.proof_image, class: "w-full max-h-[480px] object-contain bg-black/5" %>
-        </div>
-      <% elsif @poster.proof_image_url.present? %>
-        <div class="rounded-lg border border-dashed border-border bg-secondary/30 p-6 text-center text-sm text-muted-foreground">
-          Proof image stored externally. <a href="<%= @poster.proof_image_url %>" target="_blank" class="font-semibold text-primary hover:underline">Open link</a>
         </div>
       <% else %>
         <div class="rounded-lg border border-dashed border-border bg-secondary/30 p-6 text-center text-sm text-muted-foreground">

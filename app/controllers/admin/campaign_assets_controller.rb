@@ -7,7 +7,7 @@ module Admin
 
     # GET /admin/campaigns/:campaign_id/assets
     def index
-      @assets = @campaign.campaign_assets.order(asset_type: :asc, variant: :asc)
+      @assets = @campaign.campaign_assets.includes(file_attachment: :blob).order(asset_type: :asc, variant: :asc)
       @grouped_assets = @assets.group_by(&:asset_type)
     end
 

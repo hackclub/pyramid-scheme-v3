@@ -6,14 +6,6 @@ local:
   service: Disk
   root: <%= Rails.root.join("storage") %>
 
-# Azure Blob Storage using REST API
-azure:
-  service: AzureStorage
-  account_name: <%= ENV.fetch('AZURE_STORAGE_ACCOUNT_NAME', 'dummy') %>
-  container: <%= ENV.fetch('AZURE_STORAGE_CONTAINER', 'dummy') %>
-  sas_token: <%= ENV['AZURE_STORAGE_SAS_TOKEN'] %>
-  access_key: <%= ENV['AZURE_STORAGE_ACCESS_KEY'] %>
-
 # Cloudflare R2 Storage (S3-compatible)
 r2:
   service: S3

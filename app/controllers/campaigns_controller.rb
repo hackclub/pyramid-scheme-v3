@@ -24,7 +24,15 @@ class CampaignsController < ApplicationController
     # Poster filtering
     @poster_filter = params[:poster_filter].presence || "all"
 
-    posters_scope = @user.posters.for_campaign(@campaign).standalone.includes(:campaign, :poster_scans)
+    posters_scope = @user.posters
+      .for_campaign(@campaign)
+      .standalone
+      .includes(
+        :campaign,
+        :poster_scans,
+        proof_image_attachment: :blob,
+        supporting_evidence_attachments: :blob
+      )
 
     # Apply poster filter
     @user_posters = case @poster_filter

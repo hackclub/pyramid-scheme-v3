@@ -74,7 +74,11 @@ class PosterGroupsController < ApplicationController
   end
 
   def show
-    @posters = @poster_group.posters.order(created_at: :asc)
+    @posters = @poster_group.posters
+      .includes(proof_image_attachment: :blob, supporting_evidence_attachments: :blob)
+      .order(created_at: :asc)
+    @has_pending_posters = @posters.any? { |poster| poster.verification_status == "pending" }
+    @can_delete_group = @posters.all? { |poster| poster.verification_status == "pending" }
   end
 
   def download_all

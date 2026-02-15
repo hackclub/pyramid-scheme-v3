@@ -49,22 +49,41 @@ class PosterGroup < ApplicationRecord
 
   # Check if group has any submitted/verified posters
   def has_submitted_posters?
-    posters.where.not(verification_status: "pending").exists?
+    if association(:posters).loaded?
+      posters.any? { |poster| poster.verification_status != "pending" }
+    else
+      posters.where.not(verification_status: "pending").exists?
+    end
   end
 
   # Check if all posters in the group are submitted
   def all_submitted?
-    posters.where(verification_status: "pending").empty?
+    if association(:posters).loaded?
+      posters.none? { |poster| poster.verification_status == "pending" }
+    else
+      posters.where(verification_status: "pending").empty?
+    end
   end
 
   # Check if any poster has been verified successfully
   def has_verified_posters?
-    posters.where(verification_status: "success").exists?
+    if association(:posters).loaded?
+      posters.any? { |poster| poster.verification_status == "success" }
+    else
+      posters.where(verification_status: "success").exists?
+    end
   end
 
   # Get submission status summary - single query instead of 6 separate queries
   def submission_summary
-    status_counts = posters.group(:verification_status).count
+    status_counts = if association(:posters).loaded?
+      posters.each_with_object(Hash.new(0)) do |poster, counts|
+        counts[poster.verification_status.to_s] += 1
+      end
+    else
+      posters.group(:verification_status).count
+    end
+
     {
       total: status_counts.values.sum,
       pending: status_counts["pending"] || 0,

@@ -251,8 +251,6 @@
                     <%= image_tag url_for(poster.proof_image.variant(:thumb)), class: "h-12 w-12 rounded-md border border-border object-cover bg-black/5" %>
                     <span class="text-xs text-green-600 font-medium">View</span>
                   <% end %>
-                <% elsif poster.proof_image_url.present? %>
-                  <a href="<%= poster.proof_image_url %>" target="_blank" rel="noopener" class="text-xs text-primary hover:underline">External proof</a>
                 <% else %>
                   <span class="text-xs text-yellow-700 font-medium">Missing</span>
                 <% end %>

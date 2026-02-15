@@ -68,10 +68,6 @@
         <div class="flex items-start gap-3">
           <% if poster.proof_image.attached? %>
             <%= image_tag url_for(poster.proof_image.variant(:thumb)), class: "w-16 h-16 rounded-lg object-cover flex-shrink-0" %>
-          <% elsif poster.proof_image_url.present? %>
-            <div class="w-16 h-16 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-              <%= icon :image, size: 20, class_name: "text-muted-foreground" %>
-            </div>
           <% else %>
             <div class="w-16 h-16 rounded-lg bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center flex-shrink-0">
               <%= icon :circle_alert, size: 20, class_name: "text-yellow-600" %>
@@ -162,11 +158,6 @@
                     <%= image_tag url_for(poster.proof_image.variant(:thumb)), class: "h-14 w-14 rounded-md border border-border object-cover bg-black/5" %>
                     <span class="text-xs font-medium text-green-600">View</span>
                   <% end %>
-                <% elsif poster.proof_image_url.present? %>
-                  <a href="<%= poster.proof_image_url %>" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-xs font-medium text-primary hover:underline">
-                    <%= icon :external_link, size: 14 %>
-                    External proof
-                  </a>
                 <% else %>
                   <span class="inline-flex items-center gap-2 text-yellow-700 text-sm font-medium">
                     <%= icon :circle_alert, size: 16, class_name: "text-yellow-700" %>

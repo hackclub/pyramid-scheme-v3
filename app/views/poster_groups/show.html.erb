@@ -41,7 +41,7 @@
     </div>
 
     <%# Auto-Detection Upload Widget %>
-    <% if @poster_group.posters.pending.any? %>
+    <% if @has_pending_posters %>
       <div class="campaign-panel-inner p-5 mb-5">
         <div class="flex items-start gap-3 mb-4">
           <%= icon :scan_line, size: 20, class_name: "campaign-text-primary flex-shrink-0 mt-0.5" %>
@@ -206,8 +206,9 @@
 
                   <%# Display existing supporting evidence %>
                   <% if poster.supporting_evidence.attached? %>
+                    <% evidence_count = poster.supporting_evidence_attachments.size %>
                     <div class="pt-2 border-t border-current/10">
-                      <p class="text-xs campaign-text-muted mb-2">Existing Evidence (<%= poster.supporting_evidence.count %> file<%= poster.supporting_evidence.count == 1 ? '' : 's' %>)</p>
+                      <p class="text-xs campaign-text-muted mb-2">Existing Evidence (<%= evidence_count %> file<%= evidence_count == 1 ? '' : 's' %>)</p>
                       <div class="space-y-1.5">
                         <% poster.supporting_evidence.each do |file| %>
                           <div class="flex items-center justify-between rounded-md border border-current/20 bg-current/5 px-2.5 py-1.5">
@@ -281,7 +282,7 @@
             <% end %>
           </div>
         </details>
-        <% unless @poster_group.has_submitted_posters? %>
+        <% if @can_delete_group %>
           <%= button_to poster_group_path(@poster_group), method: :delete,
               form: { onsubmit: "return confirm(\"Delete group and all #{@poster_group.poster_count} posters? This cannot be undone.\")" },
               class: "campaign-btn campaign-btn--secondary text-xs h-9 px-4 inline-flex items-center gap-1.5 hover:!bg-red-500 hover:!text-white transition-colors" do %>

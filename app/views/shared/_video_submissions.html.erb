@@ -1,5 +1,5 @@
 <%# Video Submissions Section - two panes %>
-<% user_video_submissions = current_user.video_submissions.for_campaign(campaign).recent %>
+<% user_video_submissions = current_user.video_submissions.for_campaign(campaign).recent.includes(video_files_attachments: :blob).load %>
 
 <div data-controller="video-submission video-submission-modal">
 <div class="grid gap-5 lg:grid-cols-2">
@@ -68,7 +68,7 @@
   <div class="campaign-panel p-4 sm:p-5" style="box-shadow: none; border-width: 2px;">
     <div class="flex items-baseline justify-between gap-4 mb-4">
       <h2 class="campaign-font text-xl font-black">Your Videos</h2>
-      <div class="campaign-font text-sm font-black tabular-nums opacity-70"><%= user_video_submissions.count %></div>
+      <div class="campaign-font text-sm font-black tabular-nums opacity-70"><%= user_video_submissions.size %></div>
     </div>
 
     <div class="max-h-[45vh] overflow-y-auto pr-1">
@@ -95,7 +95,7 @@
                         <span class="text-xs opacity-60">URL</span>
                       <% end %>
                       <% if submission.video_files.attached? %>
-                        <span class="text-xs opacity-60"><%= submission.video_files.count %> file(s)</span>
+                        <span class="text-xs opacity-60"><%= submission.video_files_attachments.size %> file(s)</span>
                       <% end %>
                     </div>
                     <div class="mt-1 text-xs opacity-60">

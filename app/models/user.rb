@@ -215,7 +215,7 @@ class User < ApplicationRecord
   # Count posters created this calendar week (Monday to Sunday)
   # Excludes rejected posters so they don't count against quota
   def posters_created_this_week
-    posters
+    @posters_created_this_week ||= posters
       .where(created_at: Time.current.beginning_of_week..Time.current.end_of_week)
       .where.not(verification_status: "rejected")
       .count
@@ -223,7 +223,7 @@ class User < ApplicationRecord
 
   # Count completed referrals this calendar week (Monday to Sunday)
   def completed_referrals_this_week
-    referrals_given.completed.where(completed_at: Time.current.beginning_of_week..Time.current.end_of_week).count
+    @completed_referrals_this_week ||= referrals_given.completed.where(completed_at: Time.current.beginning_of_week..Time.current.end_of_week).count
   end
 
   # How many paid posters remaining this week

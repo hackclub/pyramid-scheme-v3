@@ -150,8 +150,9 @@
 
       <!-- Supporting Evidence -->
       <% if poster.supporting_evidence.attached? %>
+        <% evidence_count = poster.supporting_evidence_attachments.size %>
         <div class="campaign-panel-inner p-3 sm:p-4">
-          <p class="campaign-font text-sm font-black campaign-text-primary mb-3">Supporting Evidence (<%= poster.supporting_evidence.count %> file<%= poster.supporting_evidence.count == 1 ? '' : 's' %>)</p>
+          <p class="campaign-font text-sm font-black campaign-text-primary mb-3">Supporting Evidence (<%= evidence_count %> file<%= evidence_count == 1 ? '' : 's' %>)</p>
           <div class="grid grid-cols-2 gap-3">
             <% poster.supporting_evidence.each_with_index do |evidence, index| %>
               <div class="relative group">

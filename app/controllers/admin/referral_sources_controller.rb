@@ -35,7 +35,7 @@ module Admin
         @users = User
           .where(signup_ref_source: @selected_ref)
           .order(created_at: :desc)
-          .includes(:user_emblems, :referrals_given)
+          .includes(:user_emblems)
           .limit(100)
       end
 

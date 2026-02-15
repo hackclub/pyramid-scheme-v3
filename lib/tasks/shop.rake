@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "faraday"
+require "pg"
 require "stringio"
 
 namespace :shop do
@@ -70,8 +71,8 @@ namespace :shop do
     end
 
     prod_db_url = ENV.fetch("PROD_DATABASE_URL") do
-      # Fallback to the postgres URL provided
-      ENV.fetch("PROD_DATABASE_URL")
+      puts "ERROR: PROD_DATABASE_URL environment variable not set"
+      exit 1
     end
 
     # Image filename mappings (what's in the DB vs what we uploaded)
@@ -117,7 +118,7 @@ namespace :shop do
     puts "Done!"
   end
 
-  desc "Download and upload product images from Flavortown to Azure"
+  desc "Download and upload product images from Flavortown to storage (R2)"
   task upload_flavortown_images: :environment do
     # Product images from Flavortown with their actual ActiveStorage URLs
     images = {
@@ -138,7 +139,7 @@ namespace :shop do
     }
 
     # Use the configured Active Storage service
-    azure_service = ActiveStorage::Blob.service
+    storage_service = ActiveStorage::Blob.service
 
     uploaded_urls = {}
 
@@ -158,15 +159,19 @@ namespace :shop do
         # Determine content type
         content_type = response.headers["content-type"] || "image/webp"
 
-        # Upload to Azure
+        # Upload to storage
         key = "shop/#{target_filename}"
         io = StringIO.new(response.body)
 
-        puts "  Uploading to Azure as #{key}"
-        azure_service.upload(key, io, content_type: content_type, filename: target_filename)
+        puts "  Uploading to storage as #{key}"
+        storage_service.upload(key, io, content_type: content_type, filename: target_filename)
 
         # Get public URL
-        public_url = azure_service.public_url(key)
+        public_url = if storage_service.respond_to?(:public_url)
+          storage_service.public_url(key)
+        else
+          "#{ENV.fetch('R2_PUBLIC_URL')}/#{key}"
+        end
         uploaded_urls[target_filename] = public_url
 
         puts "  ✓ Uploaded successfully: #{public_url}"
@@ -184,7 +189,7 @@ namespace :shop do
     end
   end
 
-  desc "Create shop items with Azure-hosted images"
+  desc "Create shop items with R2-hosted images"
   task create_items: :environment do
     # Product data in order of price (as requested)
     products = [
@@ -310,14 +315,19 @@ namespace :shop do
     ]
 
     # Use the configured Active Storage service
-    azure_service = ActiveStorage::Blob.service
+    storage_service = ActiveStorage::Blob.service
 
     puts "Creating shop items..."
     puts "="*80
 
     products.each do |product_data|
-      # Generate Azure blob URL
-      image_url = azure_service.public_url("shop/#{product_data[:image_filename]}")
+      # Generate a public URL for a pre-uploaded shop image.
+      key = "shop/#{product_data[:image_filename]}"
+      image_url = if storage_service.respond_to?(:public_url)
+        storage_service.public_url(key)
+      else
+        "#{ENV.fetch('R2_PUBLIC_URL')}/#{key}"
+      end
 
       # Create the shop item
       shop_item = ShopItem.create!(

@@ -124,7 +124,7 @@
                 </div>
               </td>
               <td class="px-6 py-4 text-sm text-muted-foreground"><%= user.email %></td>
-              <td class="px-6 py-4 text-sm text-foreground"><%= user.user_emblems.count %></td>
+              <td class="px-6 py-4 text-sm text-foreground"><%= user.user_emblems.size %></td>
               <td class="px-6 py-4 text-sm text-foreground"><%= user.referral_count %></td>
               <td class="px-6 py-4 text-sm text-foreground"><%= number_with_delimiter(user.total_shards) %></td>
               <td class="px-6 py-4 text-sm text-muted-foreground"><%= user.created_at.strftime("%b %d, %Y") %></td>
@@ -136,7 +136,7 @@
         </tbody>
       </table>
     </div>
-    <% if @users.count >= 100 %>
+    <% if @users.size >= 100 %>
       <div class="px-6 py-4 border-t border-border text-center text-sm text-muted-foreground">
         Showing first 100 users. Use search to filter further.
       </div>
