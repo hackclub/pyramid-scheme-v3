@@ -9,10 +9,10 @@ class ApplicationController < ActionController::Base
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
 
+  before_action :capture_ref_param
   before_action :authenticate_user!
   before_action :enforce_ban
   before_action :track_user_activity
-  before_action :capture_ref_param
 
   helper_method :current_user, :user_signed_in?, :current_campaign, :impersonating?, :impersonator
 
@@ -126,5 +126,11 @@ class ApplicationController < ActionController::Base
       expires: 30.days.from_now,
       httponly: true
     }
+
+    # Also store in session so ReferralFromSessionService can create the referral on login
+    session[:referral_code] = ref_value
+
+    # Log the click for analytics (non-blocking)
+    RefSourceClick.log(ref_value, request) if defined?(RefSourceClick)
   end
 end

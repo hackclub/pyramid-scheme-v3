@@ -26,7 +26,7 @@ en:
     settings: "Settings"
     admin: "Admin"
     faq: "FAQ"
-    login: "Login with Hack Club"
+    login: "Login / Sign Up with Hack Club"
     logout: "Logout"
     ranks: "Ranks"
     shards: "shards"
@@ -89,9 +89,9 @@ en:
             label: "Successful"
             description: "Successful. You've received a payout."
       login_panel:
-        heading: "Login to participate"
+        heading: "Login / Sign Up to participate"
         description: "Generate posters, track referrals, and earn shards in %{campaign_name}."
-        login_button: "Login"
+        login_button: "Login / Sign Up"
       poster_status:
         pending: "Pending: Submit Proof"
         awaiting_review: "Awaiting Review"

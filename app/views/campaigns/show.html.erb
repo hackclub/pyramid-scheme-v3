@@ -453,12 +453,12 @@
       <% else %>
         <div class="mt-8">
           <div class="campaign-panel p-6 max-w-2xl">
-            <h2 class="campaign-font text-2xl font-black">Login to participate</h2>
+            <h2 class="campaign-font text-2xl font-black">Login / Sign Up to participate</h2>
             <p class="mt-2 text-sm opacity-90">Generate posters, track referrals, and earn shards in <%= @campaign.name %>.</p>
             <div class="mt-4">
               <%= link_to auth_path, class: "campaign-btn campaign-btn--primary", data: { turbo: false } do %>
                 <%= icon :user_plus, size: 18 %>
-                Login
+                Login / Sign Up
               <% end %>
             </div>
           </div>

@@ -39,6 +39,22 @@ module Admin
           .limit(100)
       end
 
+      # Click counts from ref source tracking
+      if @search_query.present?
+        click_scope = RefSourceClick.where("ref_source ILIKE ?", "%#{@search_query}%")
+      else
+        click_scope = RefSourceClick.all
+      end
+      @click_counts = click_scope.click_counts
+      @unique_click_counts = click_scope.unique_click_counts
+      @total_clicks = RefSourceClick.count
+      @total_unique_clicks = RefSourceClick.distinct.count(:ip_address)
+
+      # Sources that have clicks but no signups yet
+      signup_sources = @ref_stats.map(&:signup_ref_source)
+      @click_only_sources = @click_counts.reject { |source, _| signup_sources.include?(source) }
+        .sort_by { |_, count| -count }
+
       # Overall stats
       @total_users_with_ref = User.where.not(signup_ref_source: nil).count
       @total_users = User.count

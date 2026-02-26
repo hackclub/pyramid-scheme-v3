@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_17_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_26_233312) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -266,6 +266,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_17_000001) do
     t.index ["user_id"], name: "index_posters_on_user_id"
     t.index ["verification_status"], name: "index_posters_on_verification_status"
     t.index ["verified_by_type", "verified_by_id"], name: "index_posters_on_verified_by_type_and_verified_by_id"
+  end
+
+  create_table "ref_source_clicks", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "ip_address"
+    t.string "path"
+    t.string "ref_source", null: false
+    t.datetime "updated_at", null: false
+    t.string "user_agent"
+    t.index ["created_at"], name: "index_ref_source_clicks_on_created_at"
+    t.index ["ref_source"], name: "index_ref_source_clicks_on_ref_source"
   end
 
   create_table "referral_code_logs", force: :cascade do |t|
