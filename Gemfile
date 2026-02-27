@@ -28,7 +28,7 @@ gem "solid_cache"
 gem "solid_cable"
 
 # Background jobs with solid_queue (uses Postgres, no Redis needed)
-gem "solid_queue", "~> 1.1"
+gem "solid_queue", "~> 1.3"
 
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
