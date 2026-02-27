@@ -104,7 +104,7 @@ gem "rack-cors", "~> 2.0"
 gem "rack-attack", "~> 6.7"
 
 # Pagination
-gem "pagy", "~> 43.2"
+gem "pagy", "~> 43.3"
 
 # View components
 gem "phlex-rails", "~> 2.0"

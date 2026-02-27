@@ -290,8 +290,9 @@ GEM
     nokogiri (1.19.0-x86_64-linux-musl)
       racc (~> 1.4)
     ostruct (0.6.3)
-    pagy (43.2.3)
+    pagy (43.3.1)
       json
+      uri
       yaml
     parallel (1.27.0)
     parser (3.3.10.0)
@@ -553,7 +554,7 @@ DEPENDENCIES
   kamal
   lucide-rails (~> 0.7.3)
   mocha
-  pagy (~> 43.2)
+  pagy (~> 43.3)
   pg (~> 1.6)
   phlex-rails (~> 2.0)
   prawn (~> 2.5)
