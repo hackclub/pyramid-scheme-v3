@@ -39,9 +39,10 @@ class SessionsController < ApplicationController
       # Get signup ref from cookie for new users
       signup_ref = cookies[:signup_ref]
       user = HackClubAuthService.find_or_create_user(user_info, signup_ref: signup_ref)
+      is_new_user = user.created_at >= 30.seconds.ago
 
-      # Capture signup ref source from cookie if this is a new user
-      capture_signup_ref_source(user)
+      # Only capture ref source and referral for brand-new signups, not returning users
+      capture_signup_ref_source(user) if is_new_user
 
       session[:user_id] = user.id
       session[:hc_auth_token] = token_response["access_token"]
@@ -54,8 +55,15 @@ class SessionsController < ApplicationController
 
       Rails.logger.info("User #{user.id} (#{user.slack_id}) signed in")
 
-      # Create referral if user came via referral link
-      create_referral_from_session(user)
+      # Create referral only for new signups — never retroactively for returning users
+      if is_new_user
+        create_referral_from_session(user)
+      else
+        # Clear stale ref data for returning users
+        session.delete(:referral_code)
+        session.delete(:referral_type)
+        cookies.delete(:signup_ref)
+      end
 
       # Redirect to stored path or default campaign
       return_path = session.delete(:return_to)
