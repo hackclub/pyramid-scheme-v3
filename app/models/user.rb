@@ -51,21 +51,11 @@ class User < ApplicationRecord
 
   # Find a user by any referral code (standard or custom)
   def self.find_by_any_referral_code(code)
-    return nil if code.blank?
+    normalized_code = code.to_s.strip
+    return nil if normalized_code.blank?
 
-    # Try standard referral code (8-char alphanumeric)
-    if code.match?(/^[A-Z0-9]{8}$/i)
-      user = find_by(referral_code: code.upcase)
-      return user if user
-    end
-
-    # Try custom referral code (letters only, 3-64 chars)
-    if code.match?(/^[a-zA-Z]{3,64}$/)
-      user = find_by("LOWER(custom_referral_code) = ?", code.downcase)
-      return user if user
-    end
-
-    nil
+    # Keep lookups format-agnostic so legacy Pyramid Scheme codes still resolve.
+    find_by("LOWER(referral_code) = :code OR LOWER(custom_referral_code) = :code", code: normalized_code.downcase)
   end
 
   def admin?

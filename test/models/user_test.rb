@@ -170,6 +170,28 @@ class UserTest < ActiveSupport::TestCase
     assert_equal @regular_user, found
   end
 
+  test "find_by_any_referral_code finds legacy referral_code format" do
+    legacy_user = User.create!(
+      email: "legacy-ref-#{SecureRandom.hex(4)}@example.com",
+      display_name: "Legacy Ref User"
+    )
+    legacy_user.update_column(:referral_code, "ab12")
+
+    found = User.find_by_any_referral_code("AB12")
+    assert_equal legacy_user, found
+  end
+
+  test "find_by_any_referral_code finds legacy custom code format" do
+    legacy_user = User.create!(
+      email: "legacy-custom-#{SecureRandom.hex(4)}@example.com",
+      display_name: "Legacy Custom User"
+    )
+    legacy_user.update_column(:custom_referral_code, "old-ref-99")
+
+    found = User.find_by_any_referral_code("OLD-REF-99")
+    assert_equal legacy_user, found
+  end
+
   test "find_by_any_referral_code returns nil for blank code" do
     assert_nil User.find_by_any_referral_code("")
     assert_nil User.find_by_any_referral_code(nil)
