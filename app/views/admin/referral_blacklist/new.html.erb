@@ -1,0 +1,91 @@
+<% content_for :title, "New Blacklist Entry" %>
+
+<div class="mb-6">
+  <%= link_to admin_referral_blacklist_index_path, class: "inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors" do %>
+    <%= icon :arrow_left, size: 16 %>
+    Back to Blacklist
+  <% end %>
+</div>
+
+<div class="max-w-2xl">
+  <h1 class="text-2xl font-bold tracking-tight text-foreground mb-2">New Blacklist Entry</h1>
+  <p class="text-sm text-muted-foreground mb-6">Block specific referral relationships from being created via signup or Airtable sync.</p>
+
+  <% if @entry.errors.any? %>
+    <div class="rounded-lg border border-red-500/20 bg-red-500/10 p-4 mb-6">
+      <h3 class="text-sm font-medium text-red-500 mb-2">Please fix the following errors:</h3>
+      <ul class="list-disc list-inside text-sm text-red-400">
+        <% @entry.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <%= form_with model: @entry, url: admin_referral_blacklist_index_path, class: "space-y-6" do |f| %>
+    <div class="rounded-lg border border-border bg-card p-6 shadow-sm space-y-6">
+      <!-- Block Type -->
+      <div>
+        <label class="block text-sm font-medium text-foreground mb-2">Block Type</label>
+        <div class="space-y-3">
+          <label class="flex items-start gap-3 cursor-pointer">
+            <%= f.radio_button :block_type, "pair", class: "mt-1" %>
+            <div>
+              <span class="text-sm font-medium text-foreground">Block Pair</span>
+              <p class="text-xs text-muted-foreground">Block a specific referrer → referred relationship. Use for targeted self-referral blocking.</p>
+            </div>
+          </label>
+          <label class="flex items-start gap-3 cursor-pointer">
+            <%= f.radio_button :block_type, "referrer", class: "mt-1" %>
+            <div>
+              <span class="text-sm font-medium text-foreground">Block Referrer</span>
+              <p class="text-xs text-muted-foreground">Block ALL referrals from a specific person. Use for spammers or abusers.</p>
+            </div>
+          </label>
+          <label class="flex items-start gap-3 cursor-pointer">
+            <%= f.radio_button :block_type, "referred", class: "mt-1" %>
+            <div>
+              <span class="text-sm font-medium text-foreground">Block Referred</span>
+              <p class="text-xs text-muted-foreground">Block all referrals TO a specific person. Use for alt accounts.</p>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Referrer Identifier -->
+      <div>
+        <label class="block text-sm font-medium text-foreground mb-1">Referrer Identifier</label>
+        <p class="text-xs text-muted-foreground mb-2">Email, Slack ID, or user ID of the referrer. Required for Pair and Referrer blocks.</p>
+        <%= f.text_field :referrer_identifier,
+          class: "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+          placeholder: "e.g. U12345678 or user@example.com" %>
+      </div>
+
+      <!-- Referred Identifier -->
+      <div>
+        <label class="block text-sm font-medium text-foreground mb-1">Referred Identifier</label>
+        <p class="text-xs text-muted-foreground mb-2">Email or Slack ID of the referred person. Required for Pair and Referred blocks.</p>
+        <%= f.text_field :referred_identifier,
+          class: "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+          placeholder: "e.g. U12345678 or user@example.com" %>
+      </div>
+
+      <!-- Reason -->
+      <div>
+        <label class="block text-sm font-medium text-foreground mb-1">Reason</label>
+        <p class="text-xs text-muted-foreground mb-2">Why is this being blocked? Required.</p>
+        <%= f.text_area :reason,
+          class: "flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+          rows: 3,
+          placeholder: "e.g. Self-referral via alt account, Airtable keeps re-syncing fraudulent referral" %>
+      </div>
+    </div>
+
+    <div class="flex gap-3">
+      <%= f.submit "Create Blacklist Entry",
+        class: "inline-flex items-center justify-center rounded-md px-6 py-2 text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors cursor-pointer" %>
+      <%= link_to "Cancel", admin_referral_blacklist_index_path,
+        class: "inline-flex items-center justify-center rounded-md px-6 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
+    </div>
+  <% end %>
+</div>

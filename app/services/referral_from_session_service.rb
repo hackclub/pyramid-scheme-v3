@@ -20,6 +20,7 @@ class ReferralFromSessionService
     referrer = find_referrer
     return nil unless referrer
     return nil if self_referral?(referrer)
+    return nil if blacklisted?(referrer)
     return nil if referral_exists?(referrer)
 
     create_referral(referrer)
@@ -49,6 +50,23 @@ class ReferralFromSessionService
     else
       false
     end
+  end
+
+  def blacklisted?(referrer)
+    # Check all identifier combinations for both referrer and referred
+    referrer_ids = [ referrer.slack_id, referrer.email, referrer.id.to_s ].compact
+    referred_ids = [ @referred_user.slack_id, @referred_user.email, @referred_user.id.to_s ].compact
+
+    referrer_ids.each do |r_id|
+      referred_ids.each do |rd_id|
+        if ReferralBlacklistEntry.blocked?(referrer_identifier: r_id, referred_identifier: rd_id)
+          Rails.logger.warn("Blacklisted referral: #{referrer.slack_id} -> #{@referred_user.slack_id}")
+          return true
+        end
+      end
+    end
+
+    false
   end
 
   def referral_exists?(referrer)

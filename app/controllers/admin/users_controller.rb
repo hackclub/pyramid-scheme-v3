@@ -26,6 +26,7 @@ module Admin
       @transactions = @user.shard_transactions.recent.limit(20)
       @orders = @user.shop_orders.includes(:shop_item).recent.limit(20)
       @referral_logs = @user.referral_code.present? ? ReferralCodeLog.for_code(@user.referral_code).recent.limit(25) : []
+      @code_histories = @user.referral_code_histories.order(created_at: :desc)
     end
 
     def edit

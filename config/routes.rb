@@ -16,7 +16,6 @@ Rails.application.routes.draw do
   # Proxy routes for referral links (typically on flavortown.hackclub.com subdomain)
   # Poster referrals: flavortown.hackclub.com/p/:code (8 char uppercase)
   # Regular referrals: flavortown.hackclub.com/:code (direct links only, no /r/ prefix)
-  get "/avatar", to: "proxy#avatar", as: :avatar_proxy
 
   # Authentication
   get "/auth/hackclub", to: "sessions#new", as: :auth
@@ -179,6 +178,16 @@ Rails.application.routes.draw do
     end
 
     resources :referral_sources, only: [ :index ]
+
+    resources :referral_blacklist, only: [ :index, :new, :create, :destroy ] do
+      member do
+        post :reactivate
+      end
+    end
+    post "referral_blacklist/quick_block_referrer", to: "referral_blacklist#quick_block_referrer", as: :quick_block_referrer
+
+    # Referral code lookup tool
+    get "referral_lookup", to: "referral_lookup#index", as: :referral_lookup
 
     resources :posters, only: [ :index, :show ] do
       member do

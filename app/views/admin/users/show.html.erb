@@ -48,6 +48,51 @@
         <p class="text-lg font-bold text-foreground"><%= @user.created_at.strftime("%b %d, %Y") %></p>
       </div>
     </div>
+
+    <!-- Referral Codes Section -->
+    <div class="mt-6 pt-6 border-t border-border">
+      <h3 class="text-sm font-medium text-muted-foreground mb-3">Referral Codes</h3>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div>
+          <p class="text-xs text-muted-foreground mb-1">Standard Code</p>
+          <p class="font-mono font-medium text-foreground">
+            <% if @user.referral_code.present? %>
+              <%= link_to @user.referral_code, admin_referral_lookup_path(code: @user.referral_code), class: "hover:text-primary" %>
+            <% else %>
+              <span class="text-muted-foreground">—</span>
+            <% end %>
+          </p>
+        </div>
+        <div>
+          <p class="text-xs text-muted-foreground mb-1">Custom Code</p>
+          <p class="font-mono font-medium text-foreground">
+            <% if @user.custom_referral_code.present? %>
+              <%= link_to @user.custom_referral_code, admin_referral_lookup_path(code: @user.custom_referral_code), class: "hover:text-primary" %>
+            <% else %>
+              <span class="text-muted-foreground">—</span>
+            <% end %>
+          </p>
+        </div>
+        <div>
+          <p class="text-xs text-muted-foreground mb-1">Effective Code</p>
+          <p class="font-mono font-medium text-primary"><%= @user.effective_referral_code %></p>
+        </div>
+      </div>
+      <% if @user.custom_referral_code_changed_at.present? %>
+        <p class="text-xs text-muted-foreground mt-2">Custom code last changed: <%= @user.custom_referral_code_changed_at.strftime("%b %d, %Y %H:%M") %></p>
+      <% end %>
+      <% if @code_histories&.any? %>
+        <div class="mt-3">
+          <p class="text-xs text-muted-foreground mb-1">Previous Codes</p>
+          <div class="flex flex-wrap gap-2">
+            <% @code_histories.each do |h| %>
+              <%= link_to h.code, admin_referral_lookup_path(code: h.code),
+                class: "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-mono font-medium bg-muted text-muted-foreground hover:text-primary" %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
   </div>
 
   <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
@@ -122,6 +167,20 @@
         <input type="text" name="description" placeholder="Reason (optional)" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
         <button type="submit" class="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors">Debit Shards</button>
       <% end %>
+
+      <div class="border-t border-border"></div>
+
+      <!-- Referral Blacklist Actions -->
+      <%= form_with url: admin_quick_block_referrer_path, method: :post, class: "flex flex-col gap-2" do %>
+        <input type="hidden" name="user_id" value="<%= @user.id %>">
+        <input type="text" name="reason" placeholder="Reason for blocking referrals"
+          class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+        <button type="submit" class="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-orange-600 text-white hover:bg-orange-700 transition-colors w-full"
+          data-turbo-confirm="Block ALL referrals by this user? New referrals from Airtable sync and signups will be silently dropped.">
+          Block All Referrals by This User
+        </button>
+      <% end %>
+      <p class="text-xs text-muted-foreground">Prevents new referrals from being created during Airtable sync and signup.</p>
 
       <div class="border-t border-border"></div>
 

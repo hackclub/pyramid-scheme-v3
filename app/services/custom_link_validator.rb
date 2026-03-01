@@ -87,9 +87,15 @@ class CustomLinkValidator
   end
 
   def taken_by_other_user?
-    User.where.not(id: @user.id)
-        .where("LOWER(custom_referral_code) = ? OR LOWER(referral_code) = ?",
-               @code.downcase, @code.downcase)
-        .exists?
+    # Check current codes on other users
+    return true if User.where.not(id: @user.id)
+                       .where("LOWER(custom_referral_code) = ? OR LOWER(referral_code) = ?",
+                              @code.downcase, @code.downcase)
+                       .exists?
+
+    # Check historical codes (prevent stealing old codes from other users)
+    ReferralCodeHistory.where.not(user_id: @user.id)
+                       .where("LOWER(code) = ?", @code.downcase)
+                       .exists?
   end
 end

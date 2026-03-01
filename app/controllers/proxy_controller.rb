@@ -4,10 +4,9 @@
 # Routes:
 # - /p/:code - Poster referral
 # - /:code or /r/:code - Regular referral link
-# - /avatar - Proxies Slack avatars with aggressive caching
 class ProxyController < ApplicationController
   skip_before_action :verify_authenticity_token
-  skip_before_action :authenticate_user!, only: [ :poster_referral, :link_referral, :avatar ]
+  skip_before_action :authenticate_user!, only: [ :poster_referral, :link_referral ]
 
   # Handle poster referrals from flavortown.hackclub.com/p/:code
   def poster_referral
@@ -80,47 +79,5 @@ class ProxyController < ApplicationController
     end
 
     redirect_to redirect_url, allow_other_host: true
-  end
-
-  # Proxy Slack avatars with aggressive browser caching to avoid 429 rate limits
-  def avatar
-    url = params[:url]
-
-    unless url.present? && url.start_with?("https://")
-      head :bad_request
-      return
-    end
-
-    # Generate ETag from URL for conditional requests
-    etag = Digest::MD5.hexdigest(url)
-
-    # Check if client has cached version
-    if request.headers["If-None-Match"] == etag
-      head :not_modified
-      return
-    end
-
-    # Fetch the image from Slack CDN
-    begin
-      response = Faraday.get(url) do |req|
-        req.options.timeout = 10
-      end
-
-      if response.success?
-        # Set aggressive caching headers (1 year)
-        expires_in 1.year, public: true
-        response.headers["ETag"] = etag
-        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
-
-        send_data response.body,
-                  type: response.headers["Content-Type"] || "image/jpeg",
-                  disposition: "inline"
-      else
-        head :not_found
-      end
-    rescue Faraday::Error => e
-      Rails.logger.error("Avatar proxy failed: #{e.message}")
-      head :bad_gateway
-    end
   end
 end

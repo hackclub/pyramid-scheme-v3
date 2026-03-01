@@ -15,6 +15,7 @@ class User < ApplicationRecord
   has_many :video_submissions, dependent: :destroy, inverse_of: :user
   has_many :campaigns, through: :user_emblems
   has_many :login_logs, dependent: :destroy, inverse_of: :user
+  has_many :referral_code_histories, dependent: :destroy, inverse_of: :user
 
   validates :slack_id, uniqueness: true, allow_nil: true
   validates :email, presence: true, uniqueness: { case_sensitive: false }, format: { with: URI::MailTo::EMAIL_REGEXP }
@@ -44,18 +45,23 @@ class User < ApplicationRecord
 
     fuzzy_query = "%#{query}%".downcase
     where(
-      "LOWER(display_name) ILIKE ? OR LOWER(email) ILIKE ? OR LOWER(slack_id) = ?",
-      fuzzy_query, fuzzy_query, query.downcase
+      "LOWER(display_name) ILIKE ? OR LOWER(email) ILIKE ? OR LOWER(slack_id) = ? " \
+      "OR LOWER(referral_code) = ? OR LOWER(custom_referral_code) = ?",
+      fuzzy_query, fuzzy_query, query.downcase, query.strip.downcase, query.strip.downcase
     )
   }
 
-  # Find a user by any referral code (standard or custom)
+  # Find a user by any referral code (standard, custom, or historical)
   def self.find_by_any_referral_code(code)
     normalized_code = code.to_s.strip
     return nil if normalized_code.blank?
 
-    # Keep lookups format-agnostic so legacy Pyramid Scheme codes still resolve.
-    find_by("LOWER(referral_code) = :code OR LOWER(custom_referral_code) = :code", code: normalized_code.downcase)
+    # Check current codes first
+    user = find_by("LOWER(referral_code) = :code OR LOWER(custom_referral_code) = :code", code: normalized_code.downcase)
+    return user if user
+
+    # Check historical codes (old custom codes that were changed)
+    ReferralCodeHistory.find_original_owner(normalized_code)
   end
 
   def admin?
@@ -164,6 +170,13 @@ class User < ApplicationRecord
     raise InsufficientShardsError, "Not enough shards" unless can_change_custom_referral_code?
 
     transaction do
+      # Record the old code in history before changing it
+      if custom_referral_code.present?
+        referral_code_histories.find_or_create_by!(code: custom_referral_code, code_type: "custom") do |h|
+          h.expired_at = Time.current
+        end
+      end
+
       # Charge shards if this is a change (not first time)
       unless custom_referral_code_is_free?
         debit_shards!(

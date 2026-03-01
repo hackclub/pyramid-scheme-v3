@@ -118,6 +118,12 @@ class AirtableReferralImporter
       return :skipped
     end
 
+    # Check blacklist before creating/updating referral
+    if blacklisted?(referrer, referred_email)
+      Rails.logger.warn "Blacklisted referral: #{referrer.slack_id || referrer.email} -> #{referred_email}, skipping"
+      return :skipped
+    end
+
     # Find the referred user by email
     referred = User.find_by(email: referred_email)
 
@@ -240,6 +246,12 @@ class AirtableReferralImporter
 
     unless referrer
       Rails.logger.warn "Referrer not found for code: #{referrer_code}, skipping record #{airtable_record_id}"
+      return :skipped
+    end
+
+    # Check blacklist before creating/updating referral
+    if blacklisted?(referrer, referred_email)
+      Rails.logger.warn "Blacklisted referral: #{referrer.slack_id || referrer.email} -> #{referred_email}, skipping record #{airtable_record_id}"
       return :skipped
     end
 
@@ -371,5 +383,16 @@ class AirtableReferralImporter
   # Ships-based campaigns track project ships instead of coding hours
   def ships_based_campaign?
     campaign&.slug == "construct"
+  end
+
+  # Check if this referrer→referred pair is blacklisted
+  def blacklisted?(referrer, referred_identifier)
+    identifiers_for_referrer = [ referrer.slack_id, referrer.email, referrer.id.to_s ].compact
+    identifiers_for_referrer.each do |r_id|
+      if ReferralBlacklistEntry.blocked?(referrer_identifier: r_id, referred_identifier: referred_identifier)
+        return true
+      end
+    end
+    false
   end
 end

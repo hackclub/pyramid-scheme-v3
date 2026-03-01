@@ -45,9 +45,17 @@
             <%= icon :flag, size: 18 %>
             Campaigns
           <% end %>
-          <%= link_to admin_referrals_path, class: "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors #{request.path.include?('referrals') && !request.path.include?('referral_sources') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}" do %>
+          <%= link_to admin_referrals_path, class: "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors #{request.path.include?('referrals') && !request.path.include?('referral_sources') && !request.path.include?('referral_blacklist') && !request.path.include?('referral_lookup') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}" do %>
             <%= icon :link, size: 18 %>
             Referrals
+          <% end %>
+          <%= link_to admin_referral_lookup_path, class: "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors #{request.path.include?('referral_lookup') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}" do %>
+            <%= icon :search, size: 18 %>
+            Code Lookup
+          <% end %>
+          <%= link_to admin_referral_blacklist_index_path, class: "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors #{request.path.include?('referral_blacklist') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}" do %>
+            <%= icon :shield_off, size: 18 %>
+            Blacklist
           <% end %>
           <%= link_to admin_referral_sources_path, class: "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors #{request.path.include?('referral_sources') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}" do %>
             <%= icon :external_link, size: 18 %>

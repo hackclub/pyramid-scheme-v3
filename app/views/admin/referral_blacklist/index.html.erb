@@ -1,0 +1,122 @@
+<% content_for :title, "Referral Blacklist" %>
+
+<div class="flex justify-between items-center mb-6">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight text-foreground">Referral Blacklist</h1>
+    <p class="text-sm text-muted-foreground mt-1">Block referral relationships from being created or synced. Entries are checked during signup referral creation and Airtable sync.</p>
+  </div>
+  <%= link_to "New Entry", new_admin_referral_blacklist_path, class: "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors" %>
+</div>
+
+<div class="rounded-lg border border-border bg-card p-4 shadow-sm mb-6">
+  <%= form_with url: admin_referral_blacklist_index_path, method: :get, class: "space-y-4", id: "blacklist-filter-form" do %>
+    <div class="flex gap-3">
+      <input type="text" name="q" value="<%= params[:q] %>"
+        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        placeholder="Search by identifier or reason..." style="flex: 1;">
+
+      <select name="block_type" onchange="this.form.submit()"
+        class="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
+        <option value="">All Types</option>
+        <option value="pair" <%= "selected" if params[:block_type] == "pair" %>>Pair</option>
+        <option value="referrer" <%= "selected" if params[:block_type] == "referrer" %>>Referrer Block</option>
+        <option value="referred" <%= "selected" if params[:block_type] == "referred" %>>Referred Block</option>
+      </select>
+
+      <select name="active" onchange="this.form.submit()"
+        class="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
+        <option value="">All</option>
+        <option value="true" <%= "selected" if params[:active] == "true" %>>Active Only</option>
+        <option value="false" <%= "selected" if params[:active] == "false" %>>Inactive Only</option>
+      </select>
+
+      <button type="submit" class="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">Search</button>
+
+      <% if params[:q].present? || params[:block_type].present? || params[:active].present? %>
+        <%= link_to "Clear", admin_referral_blacklist_index_path, class: "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<div class="rounded-lg border border-border bg-card shadow-sm">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="border-b border-border">
+        <tr class="text-left text-xs text-muted-foreground">
+          <th class="px-4 py-2">Type</th>
+          <th class="px-4 py-2">Referrer</th>
+          <th class="px-4 py-2">Referred</th>
+          <th class="px-4 py-2">Reason</th>
+          <th class="px-4 py-2">Status</th>
+          <th class="px-4 py-2">Created</th>
+          <th class="px-4 py-2"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-border">
+        <% if @entries.any? %>
+          <% @entries.each do |entry| %>
+            <tr class="hover:bg-muted/30 <%= 'opacity-50' unless entry.active? %>">
+              <td class="px-4 py-2">
+                <% badge_class = case entry.block_type
+                  when "pair" then "bg-yellow-500/10 text-yellow-500"
+                  when "referrer" then "bg-red-500/10 text-red-500"
+                  when "referred" then "bg-orange-500/10 text-orange-500"
+                  end %>
+                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium <%= badge_class %>">
+                  <%= entry.block_type.humanize %>
+                </span>
+              </td>
+              <td class="px-4 py-2 font-mono text-foreground"><%= entry.referrer_identifier || "—" %></td>
+              <td class="px-4 py-2 font-mono text-foreground"><%= entry.referred_identifier || "—" %></td>
+              <td class="px-4 py-2 text-muted-foreground"><%= truncate(entry.reason, length: 60) %></td>
+              <td class="px-4 py-2">
+                <% if entry.active? %>
+                  <span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium bg-green-500/10 text-green-500">Active</span>
+                <% else %>
+                  <span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground">Inactive</span>
+                <% end %>
+              </td>
+              <td class="px-4 py-2 text-muted-foreground text-xs">
+                <%= entry.created_at.strftime("%b %d, %Y") %>
+                <% if entry.created_by %>
+                  <br>by <%= entry.created_by.display_name %>
+                <% end %>
+              </td>
+              <td class="px-4 py-2 text-right">
+                <% if entry.active? %>
+                  <%= button_to "Deactivate", admin_referral_blacklist_path(entry), method: :delete,
+                      class: "text-xs font-medium text-red-500 hover:underline",
+                      data: { turbo_confirm: "Deactivate this blacklist entry?" } %>
+                <% else %>
+                  <%= button_to "Reactivate", reactivate_admin_referral_blacklist_path(entry), method: :post,
+                      class: "text-xs font-medium text-green-500 hover:underline" %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        <% else %>
+          <tr>
+            <td colspan="7" class="px-4 py-8 text-center text-sm text-muted-foreground">
+              No blacklist entries found
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if @pagy && @pagy.pages > 1 %>
+    <div class="flex items-center justify-center gap-2 p-6 border-t border-border">
+      <% if @pagy.page > 1 %>
+        <%= link_to "Previous", admin_referral_blacklist_index_path(page: @pagy.page - 1, q: params[:q], block_type: params[:block_type], active: params[:active]),
+            class: "inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
+      <% end %>
+      <span class="text-sm text-muted-foreground">Page <%= @pagy.page %> of <%= @pagy.pages %></span>
+      <% if @pagy.page < @pagy.pages %>
+        <%= link_to "Next", admin_referral_blacklist_index_path(page: @pagy.page + 1, q: params[:q], block_type: params[:block_type], active: params[:active]),
+            class: "inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
+      <% end %>
+    </div>
+  <% end %>
+</div>
