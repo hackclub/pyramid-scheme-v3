@@ -69,9 +69,15 @@ module Admin
       end
     end
 
+    ALLOWED_DATE_COLUMNS = %w[created_at completed_at verified_at updated_at].freeze
+
     # Simple group_by_day helper if groupdate gem isn't available
     def self.group_by_day(records, column)
-      records.group("DATE(#{column})").order("DATE(#{column})")
+      col = column.to_s
+      raise ArgumentError, "Invalid column for group_by_day: #{col}" unless ALLOWED_DATE_COLUMNS.include?(col)
+
+      quoted = Arel.sql("DATE(#{col})")
+      records.group(quoted).order(quoted)
     end
   end
 end
@@ -79,8 +85,14 @@ end
 # Extend ActiveRecord with group_by_day if not using groupdate gem
 unless ActiveRecord::Relation.method_defined?(:group_by_day)
   module GroupByDayExtension
+    ALLOWED_DATE_COLUMNS = %w[created_at completed_at verified_at updated_at].freeze
+
     def group_by_day(column)
-      group("DATE(#{column})").order("DATE(#{column})")
+      col = column.to_s
+      raise ArgumentError, "Invalid column for group_by_day: #{col}" unless ALLOWED_DATE_COLUMNS.include?(col)
+
+      quoted = Arel.sql("DATE(#{col})")
+      group(quoted).order(quoted)
     end
   end
   ActiveRecord::Relation.include(GroupByDayExtension)

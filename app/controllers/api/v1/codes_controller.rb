@@ -3,7 +3,6 @@
 module Api
   module V1
     class CodesController < BaseController
-      skip_before_action :authenticate_api_key!, only: [ :lookup ]
 
       # GET /api/v1/codes
       # Returns all valid referral codes for the campaign
@@ -45,11 +44,7 @@ module Api
           return render_success(
             code: code,
             valid: true,
-            type: "user",
-            user: {
-              display_name: user.display_name,
-              referral_count: user.referral_count
-            }
+            type: "user"
           )
         end
 
@@ -100,7 +95,7 @@ module Api
       end
 
       # GET /api/v1/codes/lookup?slack_id=X&campaign_slug=Y
-      # Unauthenticated endpoint to lookup referral codes by Slack ID and Campaign
+      # Authenticated endpoint to lookup referral codes by Slack ID and Campaign
       def lookup
         slack_id = params[:slack_id]
         campaign_slug = params[:campaign_slug]
@@ -144,11 +139,7 @@ module Api
         end
 
         render_success({
-          slack_id: slack_id,
           campaign_slug: campaign_slug,
-          user: {
-            display_name: user.display_name
-          },
           codes: codes
         })
       end
