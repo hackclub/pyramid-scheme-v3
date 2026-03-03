@@ -76,7 +76,11 @@ class AirtableReferralImporter
 
     # Find airtable_referrals that don't have corresponding referrals
     missing = AirtableReferral
-                .joins("LEFT JOIN referrals ON LOWER(referrals.referred_identifier) = LOWER(airtable_referrals.email)")
+                .joins(<<~SQL.squish)
+                  LEFT JOIN referrals
+                    ON LOWER(referrals.referred_identifier) = LOWER(airtable_referrals.email)
+                   AND referrals.campaign_id = airtable_referrals.campaign_id
+                SQL
                 .where(referrals: { id: nil })
                 .where(campaign: campaign)
 

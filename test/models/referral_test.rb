@@ -33,7 +33,7 @@ class ReferralTest < ActiveSupport::TestCase
     assert_includes referral.errors[:referred_identifier], "can't be blank"
   end
 
-  test "referred_identifier must be unique per referrer" do
+  test "referred_identifier must be unique per referrer within a campaign" do
     duplicate = Referral.new(
       referrer: @pending_referral.referrer,
       campaign: @flavortown,
@@ -42,6 +42,16 @@ class ReferralTest < ActiveSupport::TestCase
     )
     assert_not duplicate.valid?
     assert_includes duplicate.errors[:referred_identifier], "has already been referred by you"
+  end
+
+  test "referred_identifier can be reused by same referrer in a different campaign" do
+    referral = Referral.new(
+      referrer: @pending_referral.referrer,
+      campaign: campaigns(:construct),
+      referred_identifier: @pending_referral.referred_identifier,
+      referral_type: "link"
+    )
+    assert referral.valid?
   end
 
   test "same identifier can be referred by different users" do

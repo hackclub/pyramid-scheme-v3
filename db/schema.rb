@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_26_233312) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_03_033022) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -279,6 +279,35 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_26_233312) do
     t.index ["ref_source"], name: "index_ref_source_clicks_on_ref_source"
   end
 
+  create_table "referral_blacklist_entries", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.string "block_type", default: "pair", null: false
+    t.datetime "created_at", null: false
+    t.bigint "created_by_id"
+    t.text "reason"
+    t.string "referred_identifier"
+    t.string "referrer_identifier"
+    t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_referral_blacklist_entries_on_active"
+    t.index ["block_type"], name: "index_referral_blacklist_entries_on_block_type"
+    t.index ["created_by_id"], name: "index_referral_blacklist_entries_on_created_by_id"
+    t.index ["referred_identifier"], name: "index_referral_blacklist_entries_on_referred_identifier"
+    t.index ["referrer_identifier", "referred_identifier"], name: "idx_blacklist_pair", unique: true, where: "(((block_type)::text = 'pair'::text) AND (active = true))"
+    t.index ["referrer_identifier"], name: "index_referral_blacklist_entries_on_referrer_identifier"
+  end
+
+  create_table "referral_code_histories", force: :cascade do |t|
+    t.string "code", null: false
+    t.string "code_type", default: "custom", null: false
+    t.datetime "created_at", null: false
+    t.datetime "expired_at"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index "lower((code)::text)", name: "index_referral_code_histories_on_lower_code"
+    t.index ["user_id", "code"], name: "index_referral_code_histories_on_user_id_and_code", unique: true
+    t.index ["user_id"], name: "index_referral_code_histories_on_user_id"
+  end
+
   create_table "referral_code_logs", force: :cascade do |t|
     t.string "city"
     t.string "country_code"
@@ -323,7 +352,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_26_233312) do
     t.index ["referral_type"], name: "index_referrals_on_referral_type"
     t.index ["referred_id"], name: "index_referrals_on_referred_id"
     t.index ["referred_identifier"], name: "index_referrals_on_referred_identifier"
-    t.index ["referrer_id", "referred_identifier"], name: "index_referrals_on_referrer_id_and_referred_identifier", unique: true
+    t.index ["referrer_id", "referred_identifier", "campaign_id"], name: "index_referrals_on_referrer_referred_campaign", unique: true
     t.index ["referrer_id"], name: "index_referrals_on_referrer_id"
     t.index ["status"], name: "index_referrals_on_status"
   end
@@ -521,6 +550,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_26_233312) do
   add_foreign_key "posters", "campaigns"
   add_foreign_key "posters", "poster_groups"
   add_foreign_key "posters", "users"
+  add_foreign_key "referral_blacklist_entries", "users", column: "created_by_id"
+  add_foreign_key "referral_code_histories", "users"
   add_foreign_key "referrals", "campaigns"
   add_foreign_key "referrals", "users", column: "referred_id"
   add_foreign_key "referrals", "users", column: "referrer_id"

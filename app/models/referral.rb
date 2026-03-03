@@ -8,7 +8,7 @@ class Referral < ApplicationRecord
   belongs_to :campaign, inverse_of: :referrals
 
   validates :referred_identifier, presence: true
-  validates :referred_identifier, uniqueness: { scope: :referrer_id, message: "has already been referred by you" }
+  validates :referred_identifier, uniqueness: { scope: [ :referrer_id, :campaign_id ], message: "has already been referred by you" }
   validates :status, presence: true
   validates :tracked_minutes, numericality: { greater_than_or_equal_to: 0 }
   validates :referral_type, presence: true, inclusion: { in: %w[link poster] }
