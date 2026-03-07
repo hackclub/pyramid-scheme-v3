@@ -188,6 +188,10 @@ class HackClubAuthService
         Rails.logger.info("Updating user #{user.id} profile from Slack: #{display_name}")
       end
 
+      if user_info["date_of_birth"].present?
+        update_attrs[:date_of_birth] = user_info["date_of_birth"]
+      end
+
       user.update!(update_attrs)
       return user
     end
@@ -198,7 +202,8 @@ class HackClubAuthService
       display_name: display_name,
       avatar: avatar,
       first_name: profile["first_name"],
-      last_name: profile["last_name"]
+      last_name: profile["last_name"],
+      date_of_birth: user_info["date_of_birth"]
     }
 
     # Add immutable signup_ref_source from cookie if present
@@ -274,7 +279,8 @@ class HackClubAuthService
       "display_name" => display_name,
       "avatar" => identity["picture"],
       "first_name" => first_name,
-      "last_name" => last_name
+      "last_name" => last_name,
+      "date_of_birth" => extract_date_of_birth(identity)
     }
   end
 
@@ -317,4 +323,19 @@ class HackClubAuthService
     }
   end
   private_class_method :fallback_profile
+
+  def self.extract_date_of_birth(identity)
+    raw_date_of_birth =
+      identity["date_of_birth"].presence ||
+      identity["birthdate"].presence ||
+      identity["dob"].presence
+
+    return if raw_date_of_birth.blank?
+
+    Date.iso8601(raw_date_of_birth)
+  rescue ArgumentError
+    Rails.logger.warn("Unable to parse date_of_birth from Hack Club Auth: #{raw_date_of_birth.inspect}")
+    nil
+  end
+  private_class_method :extract_date_of_birth
 end
