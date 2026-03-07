@@ -8,6 +8,12 @@ module Admin
         limit: 25
       )
 
+      @age_stats = {
+        adults: User.adults.count,
+        minors: User.minors.count,
+        unknown: User.where(date_of_birth: nil).count
+      }
+
       respond_to do |format|
         format.html
         format.text do

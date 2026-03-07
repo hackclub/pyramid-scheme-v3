@@ -7,6 +7,7 @@ module Admin
     def index
       @category = params[:category].presence_in(CATEGORIES) || "referrals"
       @search_query = params[:q].to_s.strip
+      @referral_leaderboard_period = ReferralLeaderboardPeriod.current
 
       @pagy, @leaders = pagy(leaderboard_scope, limit: 50)
 
@@ -18,7 +19,7 @@ module Admin
       @ranks = ranking_service.calculate_ranks
       @referral_prizes = ranking_service.calculate_prizes(@ranks)
 
-      @giveaway_end_date = Time.zone.parse("2026-02-28 23:59:59")
+      @giveaway_end_date = @referral_leaderboard_period.ends_at
     end
 
     private
@@ -32,7 +33,7 @@ module Admin
       when "shards"
         base_scope.by_shards
       else
-        base_scope.by_referrals
+        ReferralLeaderboardQuery.new(base_scope: base_scope, period: @referral_leaderboard_period).call
       end
     end
 

@@ -88,7 +88,9 @@ class LeaderboardRankingService
   private
 
   def extract_referral_count(user)
-    if user.respond_to?(:campaign_referral_count)
+    if user.respond_to?(:leaderboard_referral_count)
+      user.leaderboard_referral_count.to_i
+    elsif user.respond_to?(:campaign_referral_count)
       user.campaign_referral_count
     else
       user.referral_count

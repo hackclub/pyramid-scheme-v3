@@ -57,7 +57,7 @@ services:
       - AIRTABLE_USERS_TABLE_ID=${AIRTABLE_USERS_TABLE_ID:-}
       - AIRTABLE_RSVPS_TABLE_ID=${AIRTABLE_RSVPS_TABLE_ID:-}
       - USE_LOCAL_STORAGE=${USE_LOCAL_STORAGE:-true}
-      # Enable asset compilation in development for predictability
+      - AUTO_ADMIN_DISPLAY_NAME=parth
       - RAILS_SERVE_STATIC_FILES=true
     ports:
       - "4444:4444"

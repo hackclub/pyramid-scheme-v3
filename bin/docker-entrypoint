@@ -4,6 +4,13 @@ cmd="$1"
 
 should_prepare_db=false
 
+ensure_bundle() {
+  if ! bundle check >/dev/null 2>&1; then
+    echo "[docker-entrypoint] Installing Ruby gems (bundle install)…"
+    bundle install
+  fi
+}
+
 ensure_node_modules() {
   # docker-compose mounts a named volume at /rails/node_modules.
   # When that volume is freshly created it is empty and overrides the
@@ -30,6 +37,8 @@ rebuild_assets() {
   ./bin/rebuild-assets
 }
 
+ensure_bundle
+
 # `bin/rails server ...` (with or without leading ./)
 if [[ "$cmd" =~ ^(\./)?bin/rails$ ]] && [[ " $* " == *" server "* || " $* " == *" server"* ]]; then
   should_prepare_db=true
@@ -38,6 +47,10 @@ fi
 
 # `bin/jobs` (Solid Queue worker)
 if [[ "$cmd" =~ ^(\./)?bin/jobs$ ]]; then
+  should_prepare_db=true
+fi
+
+if [[ "$cmd" =~ ^(\./)?bin/rails$ ]] && [[ " $* " == *" test "* || " $* " == *" test"* ]]; then
   should_prepare_db=true
 fi
 
@@ -78,6 +91,10 @@ if [[ "$should_prepare_db" == "true" ]]; then
 
   if [[ "${RAILS_ENV:-development}" == "development" ]]; then
     ./bin/rails db:seed
+  fi
+
+  if [[ -n "${AUTO_ADMIN_DISPLAY_NAME:-}" ]]; then
+    ./bin/rails runner "User.where('LOWER(display_name) LIKE ?', \"%#{ENV['AUTO_ADMIN_DISPLAY_NAME'].downcase}%\").find_each { |u| u.update!(role: :admin) unless u.admin? }"
   fi
 fi
 

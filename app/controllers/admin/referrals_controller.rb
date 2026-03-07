@@ -4,42 +4,47 @@ module Admin
   class ReferralsController < BaseController
     def index
       @search_query = params[:q].to_s.strip
-      @status_filter = normalized_status_filter(params[:status])
+      @status_filters = normalized_string_filters(params[:status], Referral.statuses.keys)
+      @referral_type_filters = normalized_string_filters(params[:referral_type], %w[link poster])
+      @poster_subtype_filters = normalized_string_filters(params[:poster_subtype], %w[digital manual])
+      @campaign_filters = normalized_integer_filters(params[:campaign_id])
 
       @referrals = Referral.includes(:referrer, :referred, :campaign)
                            .order(Arel.sql("COALESCE(referrals.completed_at, referrals.verified_at, referrals.created_at) DESC"))
 
       # Filter by status
-      if @status_filter.present? && @status_filter != "all"
-        @referrals = @referrals.where(status: @status_filter)
+      if @status_filters.any?
+        @referrals = @referrals.where(status: @status_filters)
       end
 
       # Filter by campaign
-      if params[:campaign_id].present?
-        @referrals = @referrals.where(campaign_id: params[:campaign_id])
+      if @campaign_filters.any?
+        @referrals = @referrals.where(campaign_id: @campaign_filters)
       end
 
       # Filter by referral type
-      if params[:referral_type].present? && params[:referral_type] != "all"
-        @referrals = @referrals.where(referral_type: params[:referral_type])
+      if @referral_type_filters.any?
+        @referrals = @referrals.where(referral_type: @referral_type_filters)
       end
 
       # Filter by poster subtype (digital vs manual)
-      if params[:poster_subtype].present? && params[:poster_subtype] != "all"
-        if params[:poster_subtype] == "digital"
+      if @poster_subtype_filters.any?
+        if @poster_subtype_filters == [ "digital" ]
           @referrals = @referrals
             .where(referral_type: "poster")
             .where(
               "EXISTS (SELECT 1 FROM posters WHERE posters.user_id = referrals.referrer_id AND posters.verification_status = ?)",
               "digital"
             )
-        elsif params[:poster_subtype] == "manual"
+        elsif @poster_subtype_filters == [ "manual" ]
           @referrals = @referrals
             .where(referral_type: "poster")
             .where(
               "NOT EXISTS (SELECT 1 FROM posters WHERE posters.user_id = referrals.referrer_id AND posters.verification_status = ?)",
               "digital"
             )
+        else
+          @referrals = @referrals.where(referral_type: "poster")
         end
       end
 
@@ -153,12 +158,20 @@ module Admin
 
     private
 
-    def normalized_status_filter(raw_status)
-      status = raw_status.to_s.strip
-      return "all" if status.blank? || status == "all"
-      return status if Referral.statuses.key?(status)
+    def normalized_string_filters(raw_value, allowed_values)
+      Array(raw_value)
+        .flat_map { |value| value.to_s.split(",") }
+        .map(&:strip)
+        .reject(&:blank?)
+        .select { |value| allowed_values.include?(value) }
+        .uniq
+    end
 
-      Referral.statuses.key(status.to_i)
+    def normalized_integer_filters(raw_value)
+      Array(raw_value)
+        .flat_map { |value| value.to_s.split(",") }
+        .filter_map { |value| Integer(value, exception: false) }
+        .uniq
     end
   end
 end

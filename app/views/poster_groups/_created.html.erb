@@ -19,9 +19,9 @@
             Your <%= poster_group.poster_count %> posters are ready, each with a unique QR code.
           <% end %>
         <% end %>
-        <% if defined?(unpaid_count) && unpaid_count.to_i > 0 %>
-          <br><span class="text-amber-600 font-semibold">Note: <%= unpaid_count %> poster<%= unpaid_count == 1 ? '' : 's' %> won't earn shards (quota exceeded).</span>
-        <% end %>
+      </p>
+      <p class="text-xs campaign-text-muted mb-4 leading-relaxed">
+        Quota is checked when you submit proof, so generating a batch does not reserve this week's shard slots.
       </p>
       
       <div class="space-y-3">

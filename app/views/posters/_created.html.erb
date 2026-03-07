@@ -11,6 +11,9 @@
           <br><span class="text-amber-600 font-semibold">Note: This poster won't earn shards (quota exceeded).</span>
         <% end %>
       </p>
+      <p class="text-xs sm:text-sm campaign-text-muted mb-4 leading-relaxed">
+        Quota is checked when you submit proof, not when you generate posters.
+      </p>
       
       <div class="space-y-3">
         <%= link_to download_poster_path(poster), class: "campaign-btn campaign-btn--primary w-full justify-center text-base" do %>

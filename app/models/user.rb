@@ -35,6 +35,9 @@ class User < ApplicationRecord
   scope :by_posters, -> { order(poster_count: :desc) }
   scope :by_shards, -> { order(total_shards: :desc) }
   scope :admins, -> { where(role: :admin) }
+  scope :with_dob, -> { where.not(date_of_birth: nil) }
+  scope :adults, -> { with_dob.where("date_of_birth <= ?", 18.years.ago.to_date) }
+  scope :minors, -> { with_dob.where("date_of_birth > ?", 18.years.ago.to_date) }
   scope :banned, -> { where(is_banned: true) }
   scope :active, -> { where(is_banned: false) }
   scope :with_referral_code, -> { where.not(referral_code: nil) }
@@ -195,10 +198,9 @@ class User < ApplicationRecord
 
   class InsufficientShardsError < StandardError; end
 
-  # Weekly paid poster constants
-  # Users can create unlimited posters, but only get shards for the first X per week
   BASE_WEEKLY_PAID_POSTERS = 10
   PAID_POSTER_BONUS_PER_REFERRAL = 5
+  BONUS_ELIGIBLE_POSTER_STATUSES = %w[in_review on_hold success].freeze
 
   # Calculate the paid poster limit for the current week
   # Base: 10 + 5 for each completed referral (permanent bonus) + admin bonus
@@ -215,18 +217,16 @@ class User < ApplicationRecord
   # Alias for backwards compatibility
   alias_method :weekly_poster_limit, :weekly_paid_poster_limit
 
-  # Count posters created this calendar week (Monday to Sunday)
-  # Excludes rejected posters so they don't count against quota
   def posters_created_this_week
-    @posters_created_this_week ||= posters
-      .where(created_at: Time.current.beginning_of_week..Time.current.end_of_week)
-      .where.not(verification_status: "rejected")
+    posters
+      .where(submitted_at: Time.current.beginning_of_week..Time.current.end_of_week)
+      .where(verification_status: BONUS_ELIGIBLE_POSTER_STATUSES)
       .count
   end
 
   # Count completed referrals this calendar week (Monday to Sunday)
   def completed_referrals_this_week
-    @completed_referrals_this_week ||= referrals_given.completed.where(completed_at: Time.current.beginning_of_week..Time.current.end_of_week).count
+    referrals_given.completed.where(completed_at: Time.current.beginning_of_week..Time.current.end_of_week).count
   end
 
   # How many paid posters remaining this week

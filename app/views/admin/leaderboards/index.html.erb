@@ -65,7 +65,7 @@
 
                 score = case @category
                 when "referrals"
-                  user.respond_to?(:campaign_referral_count) ? user.campaign_referral_count : user.referral_count
+                  user.respond_to?(:leaderboard_referral_count) ? user.leaderboard_referral_count : user.referral_count
                 when "posters"
                   user.respond_to?(:all_time_poster_count) ? user.all_time_poster_count : user.poster_count
                 else

@@ -60,6 +60,7 @@ module ActiveSupport
         campaign: campaign,
         poster_type: "color",
         verification_status: "pending",
+        submitted_at: Time.current,
         qr_code_token: SecureRandom.alphanumeric(12),
         referral_code: SecureRandom.alphanumeric(8).upcase
       }.merge(attrs))

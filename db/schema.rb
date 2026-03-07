@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_03_033022) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_07_215036) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -134,6 +134,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_03_033022) do
     t.jsonb "airtable_field_mappings", default: {}, null: false
     t.boolean "airtable_sync_enabled", default: false, null: false
     t.string "airtable_table_id"
+    t.text "banner_text"
+    t.string "banner_type", default: "info"
     t.string "base_url"
     t.datetime "created_at", null: false
     t.text "custom_css"
@@ -252,6 +254,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_03_033022) do
     t.string "qr_code_token", null: false
     t.string "referral_code"
     t.text "rejection_reason"
+    t.datetime "submitted_at"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.string "verification_status", default: "pending", null: false
@@ -262,6 +265,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_03_033022) do
     t.index ["poster_group_id"], name: "index_posters_on_poster_group_id"
     t.index ["qr_code_token"], name: "index_posters_on_qr_code_token", unique: true
     t.index ["referral_code"], name: "index_posters_on_referral_code", unique: true
+    t.index ["submitted_at"], name: "index_posters_on_submitted_at"
     t.index ["user_id", "campaign_id", "verification_status"], name: "idx_posters_user_campaign_status"
     t.index ["user_id"], name: "index_posters_on_user_id"
     t.index ["verification_status"], name: "index_posters_on_verification_status"
@@ -468,6 +472,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_03_033022) do
     t.datetime "created_at", null: false
     t.string "custom_referral_code"
     t.datetime "custom_referral_code_changed_at"
+    t.date "date_of_birth"
     t.string "display_name", null: false
     t.string "email", null: false
     t.string "first_name"

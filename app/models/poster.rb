@@ -49,11 +49,13 @@ class Poster < ApplicationRecord
   scope :with_campaign, -> { includes(:campaign) }
   scope :with_associations, -> { includes(:user, :campaign, :poster_group) }
   scope :with_proof, -> { includes(proof_image_attachment: :blob) }
+  scope :submitted_this_week, -> { where(submitted_at: Time.current.beginning_of_week..Time.current.end_of_week) }
 
   before_validation :generate_qr_code_token, on: :create
   before_validation :generate_referral_code, on: :create
   before_validation :set_default_verification_status, on: :create
   before_validation :set_default_poster_type, on: :create
+  before_save :stamp_submitted_at, if: :should_stamp_submitted_at?
 
   # Check if poster is part of a group
   def in_group?
@@ -151,6 +153,7 @@ class Poster < ApplicationRecord
         verification_status: "pending",
         rejection_reason: nil,
         verified_at: nil,
+        submitted_at: nil,
         verified_by: nil,
         metadata: (metadata || {}).merge(
           "resubmission_requested" => true,
@@ -214,6 +217,17 @@ class Poster < ApplicationRecord
     self.poster_type ||= "color"
   end
 
+  def should_stamp_submitted_at?
+    return false unless will_save_change_to_verification_status?
+
+    from_status, to_status = verification_status_change_to_be_saved
+    from_status == "pending" && to_status.in?(%w[in_review on_hold success rejected])
+  end
+
+  def stamp_submitted_at
+    self.submitted_at = Time.current
+  end
+
   # Location is required when submitting proof (transitioning from pending to in_review)
   def location_required_for_proof_submission
     if verification_status_changed? && verification_status_was == "pending" && verification_status == "in_review"
@@ -250,11 +264,9 @@ class Poster < ApplicationRecord
   def award_shards_to_user
     return unless user.present? && campaign.present?
 
-    # Only award shards if user is within their weekly paid poster limit
-    # Count successful posters this week (excluding this one which is being verified now)
     successful_posters_this_week = user.posters
-      .success
-      .where(created_at: Time.current.beginning_of_week..Time.current.end_of_week)
+      .where(submitted_at: Time.current.beginning_of_week..Time.current.end_of_week)
+      .where(verification_status: User::BONUS_ELIGIBLE_POSTER_STATUSES)
       .where.not(id: id)
       .count
 

@@ -104,7 +104,7 @@
               </div>
             </div>
             <p class="text-xs text-muted-foreground">
-              Shards are only awarded for the first 10 posters/week (you can get shards for 5 extra posters for every referral you get in a week). You can continue putting posters but won't receive a reward after this limit.
+              Physical posters use your quota when you submit proof, not when you generate them. Referrals permanently add 5 more paid submissions to your weekly limit.
             </p>
             <div class="mt-2 bg-border/30 rounded-full h-2 overflow-hidden">
               <div class="bg-foreground/70 rounded-full h-2 transition-all duration-300"
@@ -112,9 +112,9 @@
             </div>
             <p class="text-xs text-muted-foreground mt-1">
               <% if @user.next_poster_will_be_paid? %>
-                <%= @user.remaining_paid_posters_this_week %> paid remaining this week
+                <%= @user.remaining_paid_posters_this_week %> paid submissions remaining this week
               <% else %>
-                Over limit (no shards for new posters)
+                New submissions this week won't earn shards
               <% end %>
             </p>
           </div>

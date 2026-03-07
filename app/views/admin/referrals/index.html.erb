@@ -67,40 +67,50 @@
     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <!-- Status Filter -->
       <div>
-        <%= filter_dropdown "status", 
-          [["all", "All Statuses"], ["pending", "Pending"], ["id_verified", "ID Verified"], ["completed", "Completed"]], 
-          @status_filter || "all", 
-          "referrals-filter-form" %>
+        <label for="referral_status_filter" class="block text-xs font-medium text-muted-foreground mb-2">Statuses</label>
+        <%= select_tag "status[]",
+            options_for_select([["Pending", "pending"], ["ID Verified", "id_verified"], ["Completed", "completed"]], @status_filters),
+            multiple: true,
+            id: "referral_status_filter",
+            class: "flex min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" %>
       </div>
 
       <!-- Referral Type Filter -->
       <div>
-        <%= filter_dropdown "referral_type", 
-          [["all", "All Types"], ["link", "Link"], ["poster", "Poster"]], 
-          params[:referral_type] || "all", 
-          "referrals-filter-form" %>
+        <label for="referral_type_filter" class="block text-xs font-medium text-muted-foreground mb-2">Referral Types</label>
+        <%= select_tag "referral_type[]",
+            options_for_select([["Link", "link"], ["Poster", "poster"]], @referral_type_filters),
+            multiple: true,
+            id: "referral_type_filter",
+            class: "flex min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" %>
       </div>
 
       <!-- Poster Subtype Filter -->
       <div>
-        <%= filter_dropdown "poster_subtype", 
-          [["all", "All Posters"], ["digital", "Digital Only"], ["manual", "Manual Only"]], 
-          params[:poster_subtype] || "all", 
-          "referrals-filter-form" %>
+        <label for="poster_subtype_filter" class="block text-xs font-medium text-muted-foreground mb-2">Poster Modes</label>
+        <%= select_tag "poster_subtype[]",
+            options_for_select([["Digital", "digital"], ["Manual", "manual"]], @poster_subtype_filters),
+            multiple: true,
+            id: "poster_subtype_filter",
+            class: "flex min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" %>
       </div>
 
       <!-- Campaign Filter -->
       <div>
-        <%= filter_dropdown "campaign_id", 
-          [["", "All Campaigns"]] + @campaigns.map { |c| [c.id.to_s, c.name] }, 
-          params[:campaign_id] || "", 
-          "referrals-filter-form" %>
+        <label for="campaign_filter" class="block text-xs font-medium text-muted-foreground mb-2">Campaigns</label>
+        <%= select_tag "campaign_id[]",
+            options_for_select(@campaigns.map { |campaign| [campaign.name, campaign.id] }, @campaign_filters),
+            multiple: true,
+            id: "campaign_filter",
+            class: "flex min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" %>
       </div>
     </div>
 
+    <p class="text-xs text-muted-foreground">Tip: hold <kbd class="rounded border border-border px-1 py-0.5 text-[10px]">⌘</kbd> on macOS to pick multiple values in the same filter.</p>
+
     <!-- Action Buttons -->
     <div class="flex gap-3 justify-end pt-4">
-      <% if params[:q].present? || params[:status].present? || params[:campaign_id].present? || params[:referral_type].present? || params[:poster_subtype].present? %>
+      <% if params[:q].present? || @status_filters.any? || @campaign_filters.any? || @referral_type_filters.any? || @poster_subtype_filters.any? %>
         <%= link_to "Clear All", admin_referrals_path, class: "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
       <% end %>
       <button type="submit" class="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
@@ -183,19 +193,19 @@
   <% if @pagy.pages > 1 %>
     <div class="flex items-center justify-center gap-2 p-6 border-t border-border">
       <% if @pagy.page > 1 %>
-        <%= link_to "Previous", admin_referrals_path(page: @pagy.page - 1, q: params[:q], status: params[:status], campaign_id: params[:campaign_id], referral_type: params[:referral_type], poster_subtype: params[:poster_subtype]),
+        <%= link_to "Previous", admin_referrals_path(request.query_parameters.merge("page" => @pagy.page - 1)),
             class: "inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
       <% end %>
       <% (1..@pagy.pages).each do |page_num| %>
         <% if page_num <= 3 || page_num > @pagy.pages - 3 || (page_num >= @pagy.page - 1 && page_num <= @pagy.page + 1) %>
-          <%= link_to page_num, admin_referrals_path(page: page_num, q: params[:q], status: params[:status], campaign_id: params[:campaign_id], referral_type: params[:referral_type], poster_subtype: params[:poster_subtype]),
+          <%= link_to page_num, admin_referrals_path(request.query_parameters.merge("page" => page_num)),
               class: "inline-flex items-center justify-center rounded-md w-9 h-9 text-sm font-medium #{page_num == @pagy.page ? 'bg-primary text-primary-foreground' : 'border border-border bg-background hover:bg-muted'} transition-colors" %>
         <% elsif page_num == 4 || page_num == @pagy.pages - 3 %>
           <span class="inline-flex items-center justify-center w-9 h-9 text-sm text-muted-foreground">...</span>
         <% end %>
       <% end %>
       <% if @pagy.page < @pagy.pages %>
-        <%= link_to "Next", admin_referrals_path(page: @pagy.page + 1, q: params[:q], status: params[:status], campaign_id: params[:campaign_id], referral_type: params[:referral_type], poster_subtype: params[:poster_subtype]),
+        <%= link_to "Next", admin_referrals_path(request.query_parameters.merge("page" => @pagy.page + 1)),
             class: "inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
       <% end %>
     </div>

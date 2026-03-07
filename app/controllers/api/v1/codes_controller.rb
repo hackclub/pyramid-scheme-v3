@@ -3,7 +3,6 @@
 module Api
   module V1
     class CodesController < BaseController
-
       # GET /api/v1/codes
       # Returns all valid referral codes for the campaign
       def index

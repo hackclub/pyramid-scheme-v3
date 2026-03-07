@@ -93,6 +93,8 @@ class Referral < ApplicationRecord
   end
 
   def award_shards_to_referrer
+    return if referrer.shard_transactions.where(transaction_type: "referral", transactable: self).where("amount > 0").exists?
+
     referrer.credit_shards!(
       campaign.referral_shards,
       transaction_type: "referral",

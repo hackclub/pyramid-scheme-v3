@@ -11,14 +11,9 @@ class PosterGroupsController < ApplicationController
     count = [ count, PosterGroup::MAX_POSTERS_PER_GROUP ].min
     count = [ count, 1 ].max
 
-    # Calculate how many will be paid vs unpaid
-    remaining_quota = current_user.remaining_paid_posters_this_week
-    paid_count = [ count, remaining_quota ].min
-    unpaid_count = count - paid_count
-
     # Single poster: create as standalone (not in a group)
     if count == 1
-      create_single_poster(paid_count, unpaid_count)
+      create_single_poster
       return
     end
 
@@ -42,7 +37,7 @@ class PosterGroupsController < ApplicationController
             render turbo_stream: turbo_stream.replace(
               "poster_result",
               partial: "poster_groups/created",
-              locals: { poster_group: @poster_group, paid_count: paid_count, unpaid_count: unpaid_count }
+              locals: { poster_group: @poster_group }
             )
           }
         end
@@ -332,7 +327,7 @@ class PosterGroupsController < ApplicationController
   end
 
   # Create a single standalone poster (not in a group)
-  def create_single_poster(paid_count, unpaid_count)
+  def create_single_poster
     mark_as_digital = poster_group_params[:mark_as_digital] == "1"
     location = poster_group_params[:location_description]
 
@@ -370,7 +365,7 @@ class PosterGroupsController < ApplicationController
             render turbo_stream: turbo_stream.replace(
               "poster_result",
               partial: "posters/created",
-              locals: { poster: @poster, paid_count: paid_count, unpaid_count: unpaid_count }
+              locals: { poster: @poster }
             )
           }
         end

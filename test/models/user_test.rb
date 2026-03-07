@@ -216,8 +216,7 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "posters_created_this_week counts current week posters" do
-    # Create a poster this week
-    create_poster(user: @regular_user, campaign: @flavortown)
+    create_poster(user: @regular_user, campaign: @flavortown, verification_status: "in_review")
 
     assert @regular_user.posters_created_this_week > 0
   end

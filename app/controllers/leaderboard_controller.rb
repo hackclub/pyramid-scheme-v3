@@ -4,6 +4,7 @@ class LeaderboardController < ApplicationController
   def index
     @category = params[:category] || "referrals"
     @search_query = params[:q]
+    @referral_leaderboard_period = ReferralLeaderboardPeriod.current
 
     @pagy, @leaders = pagy(leaderboard_scope, limit: 50)
 
@@ -16,8 +17,7 @@ class LeaderboardController < ApplicationController
     @ranks = ranking_service.calculate_ranks
     @referral_prizes = ranking_service.calculate_prizes(@ranks)
 
-    # Giveaway end date (configure as needed)
-    @giveaway_end_date = Time.zone.parse("2026-02-28 23:59:59")
+    @giveaway_end_date = @referral_leaderboard_period.ends_at
   end
 
   private
@@ -31,7 +31,7 @@ class LeaderboardController < ApplicationController
     when "shards"
       base_scope.by_shards
     else
-      base_scope.by_referrals
+      ReferralLeaderboardQuery.new(base_scope: base_scope, period: @referral_leaderboard_period).call
     end
   end
 

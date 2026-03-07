@@ -12,7 +12,7 @@ class CreateReferralCodeHistoriesAndBlacklistEntries < ActiveRecord::Migration[8
     end
 
     add_index :referral_code_histories, "LOWER(code)", name: "index_referral_code_histories_on_lower_code"
-    add_index :referral_code_histories, [:user_id, :code], unique: true
+    add_index :referral_code_histories, [ :user_id, :code ], unique: true
 
     # Blacklist specific referral relationships
     create_table :referral_blacklist_entries do |t|
@@ -33,7 +33,7 @@ class CreateReferralCodeHistoriesAndBlacklistEntries < ActiveRecord::Migration[8
     add_index :referral_blacklist_entries, :referrer_identifier
     add_index :referral_blacklist_entries, :referred_identifier
     add_index :referral_blacklist_entries, :active
-    add_index :referral_blacklist_entries, [:referrer_identifier, :referred_identifier],
+    add_index :referral_blacklist_entries, [ :referrer_identifier, :referred_identifier ],
               name: "idx_blacklist_pair", unique: true,
               where: "block_type = 'pair' AND active = true"
   end

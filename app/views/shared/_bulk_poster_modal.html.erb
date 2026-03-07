@@ -33,7 +33,7 @@
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <p class="campaign-font text-sm font-black campaign-text-primary">Weekly Paid Posters</p>
-              <p class="text-xs campaign-text-secondary mt-1">Bulk generation counts against your weekly quota. Max <%= PosterGroup::MAX_POSTERS_PER_GROUP %> posters per batch.</p>
+              <p class="text-xs campaign-text-secondary mt-1">Bulk generation does not reserve quota. Submitted physical posters count against your weekly limit. Max <%= PosterGroup::MAX_POSTERS_PER_GROUP %> posters per batch.</p>
             </div>
             <div class="text-right">
               <p class="campaign-font text-lg font-black campaign-text-primary tabular-nums">
@@ -41,34 +41,17 @@
               </p>
               <p class="text-xs campaign-text-secondary">
                 <% if current_user.next_poster_will_be_paid? %>
-                  <%= current_user.remaining_paid_posters_this_week %> paid remaining
+                  <%= current_user.remaining_paid_posters_this_week %> paid submissions remaining
                 <% else %>
-                  Over limit (no shards)
+                  New submissions this week won't earn shards
                 <% end %>
               </p>
             </div>
           </div>
         </div>
 
-        <% max_allowed = [current_user.remaining_paid_posters_this_week, PosterGroup::MAX_POSTERS_PER_GROUP].min %>
-        
-        <% if max_allowed <= 0 %>
-          <div class="campaign-panel-inner p-4 border-2 border-yellow-500/30 bg-yellow-500/10">
-            <div class="flex items-start gap-3">
-              <%= icon :circle_alert, size: 24, class_name: "text-yellow-600 flex-shrink-0 mt-0.5" %>
-              <div>
-                <p class="campaign-font text-sm font-black text-yellow-600 mb-1">Quota Exceeded</p>
-                <p class="text-sm campaign-text-secondary">
-                  You've reached your paid poster limit for this month. You're still free to:
-                </p>
-                <ul class="text-sm campaign-text-secondary mt-2 list-disc list-inside space-y-1">
-                  <li>Create individual unpaid posters (no shard reward)</li>
-                  <li>Repeatedly print any existing poster - it doesn't matter!</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        <% else %>
+        <% max_allowed = PosterGroup::MAX_POSTERS_PER_GROUP %>
+
           <!-- Number of Posters -->
           <div>
             <label class="block campaign-font text-sm font-black campaign-text-primary mb-2">Number of Posters</label>
@@ -180,7 +163,6 @@
               Cancel
             </button>
           </div>
-        <% end %>
       <% end %>
     </div>
   </div>

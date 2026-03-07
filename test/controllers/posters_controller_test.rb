@@ -87,8 +87,8 @@ class PostersControllerTest < ActionDispatch::IntegrationTest
   test "download generates PDF" do
     sign_in_as(@user)
 
-    # Stub the proxy service call
-    stub_request(:post, "http://pyramid-proxy:4446/generate_poster")
+    proxy_host = ENV.fetch("PROXY_URL", "http://pyramid-proxy:4446")
+    stub_request(:post, "#{proxy_host}/generate_poster")
       .with(
         body: hash_including(
           "content" => @pending_poster.referral_url,

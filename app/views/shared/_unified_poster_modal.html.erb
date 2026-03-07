@@ -39,9 +39,6 @@
           </div>
         </div>
 
-        <% max_allowed = [current_user.remaining_paid_posters_this_week, PosterGroup::MAX_POSTERS_PER_GROUP].min %>
-        <% max_allowed = [max_allowed, 1].max %>
-
         <!-- Number of Posters -->
         <div>
           <label class="block campaign-font text-sm font-black campaign-text-primary mb-2">Number of Posters</label>

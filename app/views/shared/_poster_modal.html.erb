@@ -33,7 +33,7 @@
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <p class="campaign-font text-sm font-black campaign-text-primary">Weekly Paid Posters</p>
-              <p class="text-xs campaign-text-secondary mt-1">You can create unlimited posters but shards are only awarded for your first 10 per week (+5 posters added to this quota per completed referral, i.e, you get 5 extra paid posters per referral).</p>
+              <p class="text-xs campaign-text-secondary mt-1">You can generate unlimited posters. Shard quota is checked when you submit physical proof, and only submitted physical posters count against your weekly limit.</p>
             </div>
             <div class="text-right">
               <p class="campaign-font text-lg font-black campaign-text-primary tabular-nums">
@@ -41,9 +41,9 @@
               </p>
               <p class="text-xs campaign-text-secondary">
                 <% if current_user.next_poster_will_be_paid? %>
-                  <%= current_user.remaining_paid_posters_this_week %> paid remaining
+                  <%= current_user.remaining_paid_posters_this_week %> paid submissions remaining
                 <% else %>
-                  No shards (over limit)
+                  New submissions this week won't earn shards
                 <% end %>
               </p>
             </div>
