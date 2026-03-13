@@ -220,7 +220,7 @@ GEM
       actionview (>= 7.0.0)
       activesupport (>= 7.0.0)
     jmespath (1.6.2)
-    json (2.18.1)
+    json (2.19.1)
     json-schema (6.1.0)
       addressable (~> 2.8)
       bigdecimal (>= 3.1, < 5)
@@ -297,7 +297,7 @@ GEM
     nokogiri (1.19.1-x86_64-linux-musl)
       racc (~> 1.4)
     ostruct (0.6.3)
-    pagy (43.3.1)
+    pagy (43.3.2)
       json
       uri
       yaml
@@ -561,7 +561,7 @@ DEPENDENCIES
   kamal
   lucide-rails (~> 0.7.3)
   mocha
-  pagy (~> 43.2)
+  pagy (~> 43.3)
   pg (~> 1.6)
   phlex-rails (~> 2.0)
   prawn (~> 2.5)
