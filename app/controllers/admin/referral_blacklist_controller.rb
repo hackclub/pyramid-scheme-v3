@@ -28,10 +28,6 @@ module Admin
       @entry = ReferralBlacklistEntry.new(entry_params)
       @entry.created_by = current_user
 
-      # Normalize identifiers
-      @entry.referrer_identifier = @entry.referrer_identifier&.strip&.downcase
-      @entry.referred_identifier = @entry.referred_identifier&.strip&.downcase
-
       if @entry.save
         redirect_to admin_referral_blacklist_index_path, notice: "Blacklist entry created."
       else
@@ -66,7 +62,14 @@ module Admin
     private
 
     def entry_params
-      params.require(:referral_blacklist_entry).permit(:block_type, :referrer_identifier, :referred_identifier, :reason)
+      attrs = params.require(:referral_blacklist_entry).permit(:block_type, :referrer_identifier, :referred_identifier, :custom_code, :reason)
+
+      if attrs[:block_type] == "custom_code"
+        attrs[:referrer_identifier] = attrs[:custom_code]
+        attrs[:referred_identifier] = nil
+      end
+
+      attrs
     end
   end
 end

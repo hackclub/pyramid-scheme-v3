@@ -72,6 +72,9 @@
               <span class="text-muted-foreground">—</span>
             <% end %>
           </p>
+          <% if @user.custom_referral_code_blacklisted? %>
+            <p class="mt-1 text-xs text-red-500">Blacklisted. New referrals will fall back to the standard code.</p>
+          <% end %>
         </div>
         <div>
           <p class="text-xs text-muted-foreground mb-1">Effective Code</p>
@@ -181,6 +184,24 @@
         </button>
       <% end %>
       <p class="text-xs text-muted-foreground">Prevents new referrals from being created during Airtable sync and signup.</p>
+
+      <% if @user.custom_referral_code.present? && !@user.custom_referral_code_blacklisted? %>
+        <div class="border-t border-border"></div>
+
+        <%= button_to admin_referral_blacklist_index_path,
+            method: :post,
+            params: {
+              referral_blacklist_entry: {
+                block_type: "custom_code",
+                custom_code: @user.custom_referral_code,
+                reason: "Blocked by admin from user profile"
+              }
+            },
+            class: "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 transition-colors w-full",
+            data: { turbo_confirm: "Blacklist custom code #{@user.custom_referral_code}? It will stop resolving immediately and the user will fall back to their standard referral code." } do %>
+          Blacklist Custom Code
+        <% end %>
+      <% end %>
 
       <div class="border-t border-border"></div>
 

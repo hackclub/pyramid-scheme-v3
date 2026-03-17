@@ -7,13 +7,14 @@ module Api
       # Returns all valid referral codes for the campaign
       def index
         codes = []
+        blocked_custom_codes = ReferralBlacklistEntry.active.custom_code_blocks.pluck(:referrer_identifier)
 
         # User referral codes (users are global, but we filter to those with activity in this campaign)
         # Actually, all user codes are valid for any campaign
         User.where.not(referral_code: nil).find_each do |user|
           codes << { code: user.referral_code, type: "user" }
           # Also include custom referral code if set
-          if user.custom_referral_code.present?
+          if user.custom_referral_code.present? && !blocked_custom_codes.include?(user.custom_referral_code.downcase)
             codes << { code: user.custom_referral_code, type: "user", custom: true }
           end
         end
@@ -131,10 +132,12 @@ module Api
         end
 
         if user.custom_referral_code.present?
-          codes << {
-            code: user.custom_referral_code,
-            type: "custom"
-          }
+          unless ReferralBlacklistEntry.custom_code_blocked?(user.custom_referral_code)
+            codes << {
+              code: user.custom_referral_code,
+              type: "custom"
+            }
+          end
         end
 
         render_success({

@@ -3,7 +3,7 @@
 <div class="flex justify-between items-center mb-6">
   <div>
     <h1 class="text-2xl font-bold tracking-tight text-foreground">Referral Blacklist</h1>
-    <p class="text-sm text-muted-foreground mt-1">Block referral relationships from being created or synced. Entries are checked during signup referral creation and Airtable sync.</p>
+    <p class="text-sm text-muted-foreground mt-1">Block referral relationships or reserve custom referral codes. Entries are checked during signup referral creation, Airtable sync, and custom-link validation.</p>
   </div>
   <%= link_to "New Entry", new_admin_referral_blacklist_path, class: "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors" %>
 </div>
@@ -21,6 +21,7 @@
         <option value="pair" <%= "selected" if params[:block_type] == "pair" %>>Pair</option>
         <option value="referrer" <%= "selected" if params[:block_type] == "referrer" %>>Referrer Block</option>
         <option value="referred" <%= "selected" if params[:block_type] == "referred" %>>Referred Block</option>
+        <option value="custom_code" <%= "selected" if params[:block_type] == "custom_code" %>>Custom Code Block</option>
       </select>
 
       <select name="active" onchange="this.form.submit()"
@@ -47,6 +48,7 @@
           <th class="px-4 py-2">Type</th>
           <th class="px-4 py-2">Referrer</th>
           <th class="px-4 py-2">Referred</th>
+          <th class="px-4 py-2">Custom Code</th>
           <th class="px-4 py-2">Reason</th>
           <th class="px-4 py-2">Status</th>
           <th class="px-4 py-2">Created</th>
@@ -62,13 +64,15 @@
                   when "pair" then "bg-yellow-500/10 text-yellow-500"
                   when "referrer" then "bg-red-500/10 text-red-500"
                   when "referred" then "bg-orange-500/10 text-orange-500"
+                  when "custom_code" then "bg-purple-500/10 text-purple-500"
                   end %>
                 <span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium <%= badge_class %>">
                   <%= entry.block_type.humanize %>
                 </span>
               </td>
-              <td class="px-4 py-2 font-mono text-foreground"><%= entry.referrer_identifier || "—" %></td>
-              <td class="px-4 py-2 font-mono text-foreground"><%= entry.referred_identifier || "—" %></td>
+              <td class="px-4 py-2 font-mono text-foreground"><%= entry.custom_code_block? ? "—" : (entry.referrer_identifier || "—") %></td>
+              <td class="px-4 py-2 font-mono text-foreground"><%= entry.custom_code_block? ? "—" : (entry.referred_identifier || "—") %></td>
+              <td class="px-4 py-2 font-mono text-foreground"><%= entry.custom_code || "—" %></td>
               <td class="px-4 py-2 text-muted-foreground"><%= truncate(entry.reason, length: 60) %></td>
               <td class="px-4 py-2">
                 <% if entry.active? %>
@@ -97,7 +101,7 @@
           <% end %>
         <% else %>
           <tr>
-            <td colspan="7" class="px-4 py-8 text-center text-sm text-muted-foreground">
+            <td colspan="8" class="px-4 py-8 text-center text-sm text-muted-foreground">
               No blacklist entries found
             </td>
           </tr>

@@ -9,7 +9,7 @@
 
 <div class="max-w-2xl">
   <h1 class="text-2xl font-bold tracking-tight text-foreground mb-2">New Blacklist Entry</h1>
-  <p class="text-sm text-muted-foreground mb-6">Block specific referral relationships from being created via signup or Airtable sync.</p>
+  <p class="text-sm text-muted-foreground mb-6">Block specific referral relationships or reserve custom referral codes across signup, Airtable sync, and custom-link creation.</p>
 
   <% if @entry.errors.any? %>
     <div class="rounded-lg border border-red-500/20 bg-red-500/10 p-4 mb-6">
@@ -49,7 +49,23 @@
               <p class="text-xs text-muted-foreground">Block all referrals TO a specific person. Use for alt accounts.</p>
             </div>
           </label>
+          <label class="flex items-start gap-3 cursor-pointer">
+            <%= f.radio_button :block_type, "custom_code", class: "mt-1" %>
+            <div>
+              <span class="text-sm font-medium text-foreground">Block Custom Code</span>
+              <p class="text-xs text-muted-foreground">Reserve a custom referral code so it cannot be claimed or used.</p>
+            </div>
+          </label>
         </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-foreground mb-1">Custom Referral Code</label>
+        <p class="text-xs text-muted-foreground mb-2">Required for Custom Code blocks. Stored case-insensitively and matched against active and historical custom codes.</p>
+        <%= f.text_field :custom_code,
+          value: @entry.custom_code,
+          class: "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+          placeholder: "e.g. foundersclub" %>
       </div>
 
       <!-- Referrer Identifier -->

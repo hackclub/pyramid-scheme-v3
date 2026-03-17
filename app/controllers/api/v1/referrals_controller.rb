@@ -26,14 +26,7 @@ module Api
 
       # GET /api/v1/referrals_valid
       def referrals_valid
-        # Get all user referral codes (both default and custom) for campaign participants
-        user_codes = current_campaign.participants.pluck(:referral_code, :custom_referral_code).flatten.compact
-
-        # Get all poster referral codes for the campaign
-        poster_codes = current_campaign.posters.pluck(:referral_code).compact
-
-        # Combine and deduplicate
-        all_codes = (user_codes + poster_codes).uniq
+        all_codes = valid_referral_codes_for_campaign
 
         render_success({
           referral_codes: all_codes
@@ -197,6 +190,29 @@ module Api
           created_at: referral.created_at,
           updated_at: referral.updated_at
         }
+      end
+
+      def valid_referral_codes_for_campaign
+        relevant_user_ids = (
+          current_campaign.participants.pluck(:id) +
+          current_campaign.referrals.where.not(referrer_id: nil).distinct.pluck(:referrer_id) +
+          current_campaign.posters.where.not(user_id: nil).distinct.pluck(:user_id)
+        ).compact.uniq
+
+        blocked_custom_codes = ReferralBlacklistEntry.active.custom_code_blocks.pluck(:referrer_identifier)
+        user_codes = User.where(id: relevant_user_ids).pluck(:referral_code, :custom_referral_code).flat_map do |referral_code, custom_referral_code|
+          [ referral_code, (blocked_custom_codes.include?(custom_referral_code.to_s.downcase) ? nil : custom_referral_code) ]
+        end.compact
+        historical_codes = ReferralCodeHistory.where(user_id: relevant_user_ids)
+                                              .pluck(:code, :code_type)
+                                              .filter_map do |code, code_type|
+          next if code_type == "custom" && blocked_custom_codes.include?(code.to_s.downcase)
+
+          code
+        end
+        poster_codes = current_campaign.posters.pluck(:referral_code).compact
+
+        (user_codes + historical_codes + poster_codes).uniq
       end
     end
   end

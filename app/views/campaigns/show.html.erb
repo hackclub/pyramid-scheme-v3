@@ -491,7 +491,7 @@
     <%= render "shared/unified_poster_modal", campaign: @campaign %>
     <%= render "shared/referral_modal",
                referral_link: @campaign_logic.referral_url_for(current_user.effective_referral_code),
-               custom_referral_code: current_user.custom_referral_code,
+               custom_referral_code: current_user.active_custom_referral_code,
                custom_link_base_url: @campaign_logic.referral_base_url,
                is_free: current_user.custom_referral_code_is_free?,
                change_cost: User::CUSTOM_REFERRAL_CODE_CHANGE_COST,

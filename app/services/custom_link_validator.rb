@@ -48,6 +48,10 @@ class CustomLinkValidator
       errors << "This link is reserved"
     end
 
+    if blocked_by_admin?
+      errors << "This link is reserved"
+    end
+
     # Check if taken by another user
     if taken_by_other_user?
       errors << "Already taken"
@@ -84,6 +88,10 @@ class CustomLinkValidator
   rescue StandardError => e
     Rails.logger.warn "YswsBlockedWordsService error: #{e.message}"
     false # Don't block if service is down
+  end
+
+  def blocked_by_admin?
+    ReferralBlacklistEntry.custom_code_blocked?(@code)
   end
 
   def taken_by_other_user?

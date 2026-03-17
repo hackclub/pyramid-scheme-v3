@@ -151,6 +151,14 @@
                 <%= icon :link, size: 18 %>
                 Referrals
               <% end %>
+              <%= link_to admin_referral_lookup_path, class: "flex items-center gap-3 text-sm font-medium #{request.path.include?('referral_lookup') ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'} transition-colors py-2.5 px-3 rounded-lg" do %>
+                <%= icon :search, size: 18 %>
+                Code Lookup
+              <% end %>
+              <%= link_to admin_referral_blacklist_index_path, class: "flex items-center gap-3 text-sm font-medium #{request.path.include?('referral_blacklist') ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'} transition-colors py-2.5 px-3 rounded-lg" do %>
+                <%= icon :shield_off, size: 18 %>
+                Blacklist
+              <% end %>
               <%= link_to admin_posters_path, class: "flex items-center gap-3 text-sm font-medium #{request.path.include?('posters') ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'} transition-colors py-2.5 px-3 rounded-lg" do %>
                 <%= icon :qr_code, size: 18 %>
                 Posters

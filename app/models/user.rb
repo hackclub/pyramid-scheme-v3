@@ -59,12 +59,20 @@ class User < ApplicationRecord
     normalized_code = code.to_s.strip
     return nil if normalized_code.blank?
 
-    # Check current codes first
-    user = find_by("LOWER(referral_code) = :code OR LOWER(custom_referral_code) = :code", code: normalized_code.downcase)
+    normalized_code_downcase = normalized_code.downcase
+
+    user = find_by("LOWER(referral_code) = ?", normalized_code_downcase)
     return user if user
 
-    # Check historical codes (old custom codes that were changed)
-    ReferralCodeHistory.find_original_owner(normalized_code)
+    unless ReferralBlacklistEntry.custom_code_blocked?(normalized_code)
+      user = find_by("LOWER(custom_referral_code) = ?", normalized_code_downcase)
+      return user if user
+    end
+
+    history_scope = ReferralCodeHistory.for_code(normalized_code)
+    history_scope = history_scope.where.not(code_type: "custom") if ReferralBlacklistEntry.custom_code_blocked?(normalized_code)
+
+    history_scope.order(created_at: :desc).first&.user
   end
 
   def admin?
@@ -149,7 +157,17 @@ class User < ApplicationRecord
   CUSTOM_REFERRAL_CODE_CHANGE_COST = 3
 
   def has_custom_referral_code?
-    custom_referral_code.present?
+    active_custom_referral_code.present?
+  end
+
+  def custom_referral_code_blacklisted?
+    custom_referral_code.present? && ReferralBlacklistEntry.custom_code_blocked?(custom_referral_code)
+  end
+
+  def active_custom_referral_code
+    return if custom_referral_code_blacklisted?
+
+    custom_referral_code.presence
   end
 
   def custom_referral_code_is_free?
@@ -165,12 +183,13 @@ class User < ApplicationRecord
   end
 
   def effective_referral_code
-    custom_referral_code.presence || referral_code
+    active_custom_referral_code || referral_code
   end
 
   def set_custom_referral_code!(new_code)
     raise ArgumentError, "Code cannot be blank" if new_code.blank?
     raise InsufficientShardsError, "Not enough shards" unless can_change_custom_referral_code?
+    raise ArgumentError, "Code is reserved" if ReferralBlacklistEntry.custom_code_blocked?(new_code)
 
     transaction do
       # Record the old code in history before changing it

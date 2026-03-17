@@ -86,6 +86,7 @@ Rails.application.routes.draw do
   # API v1
   namespace :api do
     namespace :v1 do
+      resource :dashboard_stats, only: [ :show ]
       resources :referrals, only: [ :index, :show ]
       get "referrals_valid", to: "referrals#referrals_valid"
 

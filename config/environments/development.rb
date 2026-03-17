@@ -46,6 +46,7 @@ Rails.application.configure do
 
   # Allow access through production-like domains when using local proxies/tunnels.
   config.hosts << "pyramid.hackclub.com"
+  config.hosts << "host.docker.internal"
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
