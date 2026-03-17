@@ -53,11 +53,61 @@ class CampaignDashboardStatsService
     ).compact.uniq
 
     {
+      total_users: total_user_count,
+      user_slack_ids: slack_ids_for(internal_user_ids),
       engaged_users: engaged_user_ids.count,
-      engaged_user_slack_ids: User.where(id: engaged_user_ids).where.not(slack_id: [ nil, "" ]).distinct.pluck(:slack_id),
-      total_hours_logged: (campaign.referrals.sum(:tracked_minutes).to_f / 60).round(1),
+      engaged_user_slack_ids: slack_ids_for(engaged_user_ids),
+      total_hours_logged: total_hours_logged,
       timeline: activity_timeline
     }
+  end
+
+  def total_hours_logged
+    airtable_hours = campaign.airtable_referrals.sum(Arel.sql("COALESCE((metadata->>'hours')::numeric, 0)"))
+    return airtable_hours.to_f.round(1) if airtable_hours.to_f.positive?
+
+    (campaign.referrals.sum(:tracked_minutes).to_f / 60).round(1)
+  end
+
+  def slack_ids_for(user_ids)
+    User.where(id: user_ids).where.not(slack_id: [ nil, "" ]).distinct.pluck(:slack_id)
+  end
+
+  def total_user_count
+    internal_count = internal_user_ids.count
+    external_count = external_user_identifiers.count
+    deduped_external_count = (external_user_identifiers - internal_user_emails).count
+
+    internal_count + deduped_external_count
+  end
+
+  def internal_user_ids
+    @internal_user_ids ||= (
+      campaign.user_emblems.distinct.pluck(:user_id) +
+      campaign.referrals.where.not(referrer_id: nil).distinct.pluck(:referrer_id) +
+      campaign.referrals.where.not(referred_id: nil).distinct.pluck(:referred_id) +
+      campaign.posters.where.not(user_id: nil).distinct.pluck(:user_id)
+    ).compact.uniq
+  end
+
+  def external_user_identifiers
+    @external_user_identifiers ||= (
+      campaign.referrals.where.not(referred_identifier: [ nil, "" ]).distinct.pluck(:referred_identifier) +
+      campaign.airtable_referrals.where.not(email: [ nil, "" ]).distinct.pluck(:email)
+    ).filter_map { |identifier| normalize_identifier(identifier) }.uniq
+  end
+
+  def internal_user_emails
+    @internal_user_emails ||= User.where(id: internal_user_ids)
+                                  .where.not(email: [ nil, "" ])
+                                  .distinct
+                                  .pluck(:email)
+                                  .filter_map { |email| normalize_identifier(email) }
+                                  .uniq
+  end
+
+  def normalize_identifier(value)
+    value.to_s.strip.downcase.presence
   end
 
   def activity_timeline
