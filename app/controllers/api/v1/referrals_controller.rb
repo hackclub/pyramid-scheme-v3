@@ -196,6 +196,7 @@ module Api
         relevant_user_ids = (
           current_campaign.participants.pluck(:id) +
           current_campaign.referrals.where.not(referrer_id: nil).distinct.pluck(:referrer_id) +
+          current_campaign.referrals.where.not(referred_id: nil).distinct.pluck(:referred_id) +
           current_campaign.posters.where.not(user_id: nil).distinct.pluck(:user_id)
         ).compact.uniq
 
