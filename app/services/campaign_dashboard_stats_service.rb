@@ -116,13 +116,10 @@ class CampaignDashboardStatsService
   end
 
   def total_hours_logged
-    verified_hours = completed_referral_hours.sum
-    return verified_hours.round(1) if verified_hours.positive?
+    tracked = campaign.referrals.completed.sum(:tracked_minutes).to_f / 60
+    return tracked.round(1) if tracked.positive?
 
-    completed_referrals = campaign.referrals.completed
-    return 0 if completed_referrals.none?
-
-    (completed_referrals.sum(:tracked_minutes).to_f / 60).round(1)
+    completed_referral_hours.sum.round(1)
   end
 
   def shipped_projects_count
@@ -211,12 +208,19 @@ class CampaignDashboardStatsService
 
   def verified_hours_by_date
     @verified_hours_by_date ||= begin
-      campaign.referrals.completed.where.not(completed_at: nil).pluck(:completed_at, :referred_identifier).each_with_object(Hash.new(0.0)) do |(completed_at, identifier), counts|
-        normalized_identifier = normalize_identifier(identifier)
-        next if completed_at.blank? || normalized_identifier.blank?
+      campaign.referrals.completed.where.not(completed_at: nil)
+             .pluck(:completed_at, :tracked_minutes, :referred_identifier)
+             .each_with_object(Hash.new(0.0)) do |(completed_at, tracked_minutes, identifier), counts|
+        next if completed_at.blank?
 
-        counts[completed_at.to_date] += airtable_hours_by_identifier[normalized_identifier]
-      end.transform_values { |hours| hours.round(1) }
+        hours = tracked_minutes.to_f / 60
+        if hours.zero?
+          normalized = normalize_identifier(identifier)
+          hours = airtable_hours_by_identifier[normalized] if normalized.present?
+        end
+
+        counts[completed_at.to_date] += hours
+      end.transform_values { |h| h.round(1) }
     end
   end
 
