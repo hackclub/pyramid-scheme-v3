@@ -12,15 +12,60 @@ class CampaignDashboardStatsService
         name: campaign.name,
         slug: campaign.slug
       },
-      referrals: referral_stats,
-      posters: poster_stats,
-      activity: activity_stats
-    }
+      referrals: safe_section(default_referral_stats) { referral_stats },
+      posters: safe_section(default_poster_stats) { poster_stats },
+      activity: safe_section(default_activity_stats) { activity_stats }
+    }.tap { |payload| payload[:partial_data] = true if @partial_data }
   end
 
   private
 
   attr_reader :campaign
+
+  def default_referral_stats
+    {
+      pending: 0,
+      id_verified: 0,
+      completed: 0,
+      total: 0
+    }
+  end
+
+  def default_poster_stats
+    {
+      pending_physical: 0,
+      rejected_physical: 0,
+      completed_physical: 0,
+      completed_digital: 0,
+      total: 0
+    }
+  end
+
+  def default_activity_stats
+    {
+      all_users: 0,
+      total_users: 0,
+      users_with_activity: 0,
+      user_slack_ids: [],
+      engaged_users: 0,
+      engaged_user_slack_ids: [],
+      total_hours_logged: 0,
+      users_gained_last_week: 0,
+      users_gained_previous_week: 0,
+      verified_hours_last_week: 0,
+      verified_hours_previous_week: 0,
+      timeline: []
+    }
+  end
+
+  def safe_section(fallback)
+    yield
+  rescue StandardError => e
+    @partial_data = true
+    Rails.logger.error("[CampaignDashboardStatsService] #{e.class}: #{e.message}")
+    Rails.logger.error("[CampaignDashboardStatsService] #{e.backtrace.first}")
+    fallback
+  end
 
   def referral_stats
     scoped_referrals = campaign.referrals
