@@ -110,6 +110,8 @@ class CampaignDashboardStatsService
       users_gained_previous_week: sum_previous_n_days(user_additions_by_date, 7).to_i,
       verified_hours_last_week: sum_last_n_days(verified_hours_by_date, 7).round(1),
       verified_hours_previous_week: sum_previous_n_days(verified_hours_by_date, 7).round(1),
+      referrals_gained_last_week: sum_last_n_days(referral_creations_by_date, 7).to_i,
+      referrals_gained_previous_week: sum_previous_n_days(referral_creations_by_date, 7).to_i,
       shipped_projects: shipped_projects_count,
       timeline: activity_timeline
     }
@@ -135,8 +137,8 @@ class CampaignDashboardStatsService
   end
 
   def shipped_projects_count
-    campaign.airtable_referrals.where("(metadata->>'projects_shipped') IS NOT NULL")
-                               .where("(metadata->>'projects_shipped')::int > 0")
+    campaign.airtable_referrals.where("(metadata->>'ships_count') IS NOT NULL")
+                               .where("(metadata->>'ships_count')::int > 0")
                                .count
   end
 
@@ -216,6 +218,10 @@ class CampaignDashboardStatsService
     @user_additions_by_date ||= user_first_seen_dates_by_entity.values.each_with_object(Hash.new(0)) do |date, counts|
       counts[date] += 1
     end
+  end
+
+  def referral_creations_by_date
+    @referral_creations_by_date ||= grouped_counts(campaign.referrals, :created_at)
   end
 
   def verified_hours_by_date
