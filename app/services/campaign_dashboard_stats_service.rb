@@ -54,6 +54,7 @@ class CampaignDashboardStatsService
       users_gained_previous_week: 0,
       verified_hours_last_week: 0,
       verified_hours_previous_week: 0,
+      shipped_projects: 0,
       timeline: []
     }
   end
@@ -109,6 +110,7 @@ class CampaignDashboardStatsService
       users_gained_previous_week: sum_previous_n_days(user_additions_by_date, 7).to_i,
       verified_hours_last_week: sum_last_n_days(verified_hours_by_date, 7).round(1),
       verified_hours_previous_week: sum_previous_n_days(verified_hours_by_date, 7).round(1),
+      shipped_projects: shipped_projects_count,
       timeline: activity_timeline
     }
   end
@@ -121,6 +123,12 @@ class CampaignDashboardStatsService
     return 0 if completed_referrals.none?
 
     (completed_referrals.sum(:tracked_minutes).to_f / 60).round(1)
+  end
+
+  def shipped_projects_count
+    campaign.airtable_referrals.where("(metadata->>'projects_shipped') IS NOT NULL")
+                               .where("(metadata->>'projects_shipped')::int > 0")
+                               .count
   end
 
   def slack_ids_for(user_ids)
@@ -173,21 +181,21 @@ class CampaignDashboardStatsService
     @user_first_seen_dates_by_entity ||= begin
       first_seen = {}
 
-      campaign.user_emblems.select(:user_id, :earned_at).find_each do |emblem|
+      campaign.user_emblems.select(:id, :user_id, :earned_at).find_each do |emblem|
         track_first_seen(first_seen, identity_key_for_user_id(emblem.user_id), emblem.earned_at)
       end
 
-      campaign.referrals.select(:referrer_id, :referred_id, :referred_identifier, :created_at).find_each do |referral|
+      campaign.referrals.select(:id, :referrer_id, :referred_id, :referred_identifier, :created_at).find_each do |referral|
         track_first_seen(first_seen, identity_key_for_user_id(referral.referrer_id), referral.created_at)
         track_first_seen(first_seen, identity_key_for_user_id(referral.referred_id), referral.created_at)
         track_first_seen(first_seen, identity_key_for_identifier(referral.referred_identifier), referral.created_at)
       end
 
-      campaign.posters.select(:user_id, :created_at).find_each do |poster|
+      campaign.posters.select(:id, :user_id, :created_at).find_each do |poster|
         track_first_seen(first_seen, identity_key_for_user_id(poster.user_id), poster.created_at)
       end
 
-      campaign.airtable_referrals.select(:email, :created_at, :synced_at).find_each do |record|
+      campaign.airtable_referrals.select(:id, :email, :created_at, :synced_at).find_each do |record|
         track_first_seen(first_seen, identity_key_for_identifier(record.email), record.synced_at || record.created_at)
       end
 
