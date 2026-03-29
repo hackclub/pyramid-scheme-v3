@@ -196,7 +196,7 @@ en:
         poster_reward:
           one: "You get %{count} shard for putting up a poster."
           other: "You get %{count} shards for putting up a poster."
-        signup_bonus: "Plus 3 shards when someone signs up using your poster!"
+        signup_bonus: "Plus 5 shards when someone signs up using your poster!"
         proof_instructions: "After putting up your poster, take a clear photo showing the poster in place and upload it here."
       rules:
         title: "Important Rules:"
@@ -463,7 +463,7 @@ en:
       - question: "What is Pyramid Scheme?"
         answer: "Pyramid Scheme is a referral program by Hack Club where you can earn shards by referring people for programs and putting up posters. Use your shards to get cool things from the shop!"
       - question: "How do I earn shards?"
-        answer: "You earn <strong>3 shards</strong> for every successful referral (when someone you refer codes for 1 hour), <strong>1 shard</strong> for every verified poster you put up, and <strong>3 shards</strong> when someone signs up using your poster!"
+        answer: "You earn <strong>5 shards</strong> for every successful referral (when someone you refer codes for 1 hour), <strong>1 shard</strong> for every verified poster you put up, and <strong>5 shards</strong> when someone signs up using your poster!"
       - question: "What is a referral?"
         answer: "A referral is when you invite someone to join a Hack Club program. They need to verify their identity and code for at least 1 hour for the referral to be completed."
       - question: "How do posters work?"

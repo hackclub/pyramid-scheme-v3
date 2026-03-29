@@ -70,12 +70,15 @@ class CampaignDashboardStatsService
 
   def referral_stats
     scoped_referrals = campaign.referrals
+    pending_count = scoped_referrals.pending.count
+    id_verified_count = scoped_referrals.id_verified.count
+    completed_count = scoped_referrals.completed.count
 
     {
-      pending: scoped_referrals.where.not(status: :completed).count,
-      id_verified: scoped_referrals.id_verified.count,
-      completed: scoped_referrals.completed.count,
-      total: scoped_referrals.count
+      pending: pending_count,
+      id_verified: id_verified_count,
+      completed: completed_count,
+      total: pending_count + id_verified_count + completed_count
     }
   end
 
