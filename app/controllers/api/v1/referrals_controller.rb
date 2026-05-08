@@ -54,6 +54,12 @@ module Api
           return render_error("Referrer not found")
         end
 
+        # Block self-referrals
+        referred_user = User.find_by(slack_id: params[:referred_identifier]) || User.find_by(email: params[:referred_identifier])
+        if referred_user&.id == referrer.id || referrer.email&.downcase == params[:referred_identifier]&.downcase || referrer.slack_id == params[:referred_identifier]
+          return render_error("Self-referrals are not allowed")
+        end
+
         referral = current_campaign.referrals.new(
           referrer: referrer,
           referred_identifier: params[:referred_identifier],
@@ -115,6 +121,13 @@ module Api
 
           unless referrer
             results[:errors] << { referred_identifier: ref_params[:referred_identifier], error: "Referrer not found" }
+            next
+          end
+
+          # Block self-referrals
+          referred_id = ref_params[:referred_identifier]
+          if referrer.email&.downcase == referred_id&.downcase || referrer.slack_id == referred_id
+            results[:errors] << { referred_identifier: referred_id, error: "Self-referrals are not allowed" }
             next
           end
 

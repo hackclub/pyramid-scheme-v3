@@ -226,6 +226,9 @@ en:
       verified_on: "Verified on %{date}"
 
   landing:
+    sunset:
+      title: "Pyramid Scheme has been sunset!"
+      subtitle: "Please put in your orders before the website is shut down!"
     hero:
       title: "Pyramid Scheme."
       cta_primary: "Start earning"
@@ -469,11 +472,9 @@ en:
       - question: "How do posters work?"
         answer: "You can generate unique QR code posters for campaigns. Put them up in public places, submit a photo for verification, and earn shards when approved."
       - question: "What are campaigns?"
-        answer: "Campaigns are themed referral events like <a href='https://flavortown.hackclub.com' target='_blank' class='underline'>Flavortown</a>. Each campaign has its own leaderboard and may offer special rewards or emblems."
+        answer: "Campaigns are themed referral events like <a href='https://flavortown.hackclub.com' target='_blank' class='underline'>Flavortown</a>. Each campaign may offer special rewards or emblems."
       - question: "Who can participate?"
         answer: "Pyramid Scheme is open to Hack Club members ages 13+. You can sign in with your Hack Club account. Referrals only count for teens aged 13-18."
-      - question: "Can I opt out of the leaderboard?"
-        answer: "Yes! Go to Settings and toggle the leaderboard opt-out option. Your stats will still be tracked, but you won't appear publicly."
       - question: "I have more questions..."
         answer: "You can join the <a href='https://hackclub.com/slack' target='_blank' class='underline'>Hack Club Slack</a> and ask in the <a href='https://hackclub.enterprise.slack.com/archives/C07N1TCHY3T' target='_blank' class='underline'>#pyramid-scheme</a> channel!"
 

@@ -21,6 +21,23 @@ class Referral < ApplicationRecord
   scope :completed_this_week, -> { completed.where(completed_at: Time.current.beginning_of_week..Time.current.end_of_week) }
   scope :with_referrer, -> { includes(:referrer) }
   scope :with_associations, -> { includes(:referrer, :referred, :campaign) }
+  scope :self_referrals, -> {
+    joins("INNER JOIN users ON users.id = referrals.referrer_id")
+      .where("referrals.referred_id = referrals.referrer_id OR LOWER(referrals.referred_identifier) = LOWER(users.email) OR LOWER(referrals.referred_identifier) = users.slack_id")
+  }
+  scope :non_self_referrals, -> {
+    joins("INNER JOIN users AS ref_users ON ref_users.id = referrals.referrer_id")
+      .where("referrals.referred_id IS DISTINCT FROM referrals.referrer_id")
+      .where("LOWER(referrals.referred_identifier) != LOWER(ref_users.email)")
+      .where("LOWER(referrals.referred_identifier) != COALESCE(ref_users.slack_id, '')")
+  }
+
+  def self_referral?
+    return true if referred_id.present? && referred_id == referrer_id
+    return true if referrer.email.present? && referred_identifier.downcase == referrer.email.downcase
+    return true if referrer.slack_id.present? && referred_identifier == referrer.slack_id
+    false
+  end
 
   after_save :check_completion_and_award_shards, if: :saved_change_to_status?
 

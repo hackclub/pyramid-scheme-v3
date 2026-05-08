@@ -64,7 +64,7 @@
     </div>
 
     <!-- Filters Grid -->
-    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
       <!-- Status Filter -->
       <div>
         <label for="referral_status_filter" class="block text-xs font-medium text-muted-foreground mb-2">Statuses</label>
@@ -95,6 +95,15 @@
             class: "flex min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" %>
       </div>
 
+      <!-- Self-Referral Filter -->
+      <div>
+        <label for="self_referral_filter" class="block text-xs font-medium text-muted-foreground mb-2">Self-Referral</label>
+        <%= select_tag "self_referral",
+            options_for_select([["All Referrals", ""], ["Self-Referrals Only", "self_only"], ["Exclude Self-Referrals", "exclude_self"]], @self_referral_filter),
+            id: "self_referral_filter",
+            class: "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" %>
+      </div>
+
       <!-- Campaign Filter -->
       <div>
         <label for="campaign_filter" class="block text-xs font-medium text-muted-foreground mb-2">Campaigns</label>
@@ -110,7 +119,7 @@
 
     <!-- Action Buttons -->
     <div class="flex gap-3 justify-end pt-4">
-      <% if params[:q].present? || @status_filters.any? || @campaign_filters.any? || @referral_type_filters.any? || @poster_subtype_filters.any? %>
+      <% if params[:q].present? || @status_filters.any? || @campaign_filters.any? || @referral_type_filters.any? || @poster_subtype_filters.any? || @self_referral_filter.present? %>
         <%= link_to "Clear All", admin_referrals_path, class: "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors" %>
       <% end %>
       <button type="submit" class="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
@@ -142,7 +151,12 @@
               </td>
 
               <td class="px-4 py-2">
-                <div class="text-foreground"><%= truncate(referral.referred_identifier, length: 25) %></div>
+                <div class="text-foreground">
+                  <%= truncate(referral.referred_identifier, length: 25) %>
+                  <% if referral.self_referral? %>
+                    <span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-red-500/10 text-red-500 ml-1">Self</span>
+                  <% end %>
+                </div>
               </td>
 
               <td class="px-4 py-2">

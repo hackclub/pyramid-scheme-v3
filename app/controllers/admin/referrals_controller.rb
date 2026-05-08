@@ -8,6 +8,7 @@ module Admin
       @referral_type_filters = normalized_string_filters(params[:referral_type], %w[link poster])
       @poster_subtype_filters = normalized_string_filters(params[:poster_subtype], %w[digital manual])
       @campaign_filters = normalized_integer_filters(params[:campaign_id])
+      @self_referral_filter = params[:self_referral].to_s.strip
 
       @referrals = Referral.includes(:referrer, :referred, :campaign)
                            .order(Arel.sql("COALESCE(referrals.completed_at, referrals.verified_at, referrals.created_at) DESC"))
@@ -46,6 +47,13 @@ module Admin
         else
           @referrals = @referrals.where(referral_type: "poster")
         end
+      end
+
+      # Filter by self-referral
+      if @self_referral_filter == "self_only"
+        @referrals = @referrals.self_referrals
+      elsif @self_referral_filter == "exclude_self"
+        @referrals = @referrals.non_self_referrals
       end
 
       # Search across referral + user identity fields

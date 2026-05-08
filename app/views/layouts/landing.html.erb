@@ -29,18 +29,20 @@
 
     <%= yield %>
 
-    <footer class="border-t border-border bg-background">
-      <div class="w-full px-4 py-8 md:px-6">
-        <p class="mx-auto max-w-7xl text-center text-sm text-foreground/80">
-          <span><%= t('site.copyright', year: Time.current.year) %></span>
-          <span class="mx-2 text-foreground/30">|</span>
-          <%= link_to t('nav.faq'), root_path(anchor: 'faq'), class: "hover:text-foreground transition-colors" %>
-          <span class="mx-2 text-foreground/30">·</span>
-          <%= link_to t("footer.hack_club"), "https://hackclub.com", class: "hover:text-foreground transition-colors", target: "_blank" %>
-          <span class="mx-2 text-foreground/30">·</span>
-          <%= link_to t("footer.github"), "https://github.com/hackclub", class: "hover:text-foreground transition-colors", target: "_blank" %>
-        </p>
-      </div>
-    </footer>
+    <% unless content_for?(:skip_footer) %>
+      <footer class="border-t border-border bg-background">
+        <div class="w-full px-4 py-8 md:px-6">
+          <p class="mx-auto max-w-7xl text-center text-sm text-foreground/80">
+            <span><%= t('site.copyright', year: Time.current.year) %></span>
+            <span class="mx-2 text-foreground/30">|</span>
+            <%= link_to t('nav.faq'), root_path(anchor: 'faq'), class: "hover:text-foreground transition-colors" %>
+            <span class="mx-2 text-foreground/30">·</span>
+            <%= link_to t("footer.hack_club"), "https://hackclub.com", class: "hover:text-foreground transition-colors", target: "_blank" %>
+            <span class="mx-2 text-foreground/30">·</span>
+            <%= link_to t("footer.github"), "https://github.com/hackclub", class: "hover:text-foreground transition-colors", target: "_blank" %>
+          </p>
+        </div>
+      </footer>
+    <% end %>
   </body>
 </html>

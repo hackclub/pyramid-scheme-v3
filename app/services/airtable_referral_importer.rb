@@ -122,6 +122,12 @@ class AirtableReferralImporter
       return :skipped
     end
 
+    # Block self-referrals
+    if self_referral?(referrer, referred_email)
+      Rails.logger.warn "Self-referral detected: #{referrer.email} referred themselves, skipping"
+      return :skipped
+    end
+
     # Check blacklist before creating/updating referral
     if blacklisted?(referrer, referred_email)
       Rails.logger.warn "Blacklisted referral: #{referrer.slack_id || referrer.email} -> #{referred_email}, skipping"
@@ -250,6 +256,12 @@ class AirtableReferralImporter
 
     unless referrer
       Rails.logger.warn "Referrer not found for code: #{referrer_code}, skipping record #{airtable_record_id}"
+      return :skipped
+    end
+
+    # Block self-referrals
+    if self_referral?(referrer, referred_email)
+      Rails.logger.warn "Self-referral detected: #{referrer.email} referred themselves, skipping record #{airtable_record_id}"
       return :skipped
     end
 
@@ -387,6 +399,14 @@ class AirtableReferralImporter
   # Ships-based campaigns track project ships instead of coding hours
   def ships_based_campaign?
     campaign&.slug == "construct"
+  end
+
+  # Check if the referrer is trying to refer themselves
+  def self_referral?(referrer, referred_identifier)
+    return false unless referred_identifier.present?
+
+    down = referred_identifier.downcase
+    referrer.email&.downcase == down || referrer.slack_id == referred_identifier
   end
 
   # Check if this referrer→referred pair is blacklisted

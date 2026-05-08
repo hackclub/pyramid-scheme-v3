@@ -71,10 +71,6 @@
                     </button>
                   </span>
                 <% end %>
-                <%= link_to leaderboard_path, class: "#{current_page?(leaderboard_path) ? 'text-foreground' : 'text-foreground/70 hover:text-foreground transition-colors'} inline-flex items-center gap-2" do %>
-                  <%= icon :trophy, size: 16 %>
-                  <%= t('nav.leaderboard') %>
-                <% end %>
                 <%= link_to settings_path, class: "#{current_page?(settings_path) ? 'text-foreground' : 'text-foreground/70 hover:text-foreground transition-colors'} inline-flex items-center gap-2" do %>
                   <%= icon :settings, size: 16 %>
                   <%= t('nav.settings') %>
@@ -182,10 +178,6 @@
                   </button>
                 </span>
               </div>
-            <% end %>
-            <%= link_to leaderboard_path, class: "flex-1 flex flex-col items-center justify-center gap-1 #{current_page?(leaderboard_path) ? 'text-foreground' : 'text-muted-foreground'}" do %>
-              <%= icon :trophy, size: 20 %>
-              <span class="text-[10px]"><%= t("nav.ranks") %></span>
             <% end %>
             <%= link_to settings_path, class: "flex-1 flex flex-col items-center justify-center gap-1 #{current_page?(settings_path) ? 'text-foreground' : 'text-muted-foreground'}" do %>
               <%= icon :settings, size: 20 %>

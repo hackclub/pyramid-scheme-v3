@@ -12,58 +12,56 @@
       </div>
 
       <div class="flex flex-wrap items-center gap-2 sm:gap-3 md:gap-6 text-xs md:text-sm font-semibold text-white/90 justify-end">
-      <% if user_signed_in? %>
-        <%= link_to campaign_path('flavortown'), class: "inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors" do %>
-          <%= icon :flag, size: 16 %>
-          <%= t('nav.campaigns') %>
+        <% if user_signed_in? %>
+          <%= link_to campaign_path('flavortown'), class: "inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors" do %>
+            <%= icon :flag, size: 16 %>
+            <%= t('nav.campaigns') %>
+          <% end %>
+
+          <%= link_to shop_path, class: "inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors" do %>
+            <%= icon :shopping_bag, size: 16 %>
+            <%= t('nav.shop') %>
+          <% end %>
         <% end %>
-      <% end %>
 
-      <% if user_signed_in? %>
-        <%= link_to leaderboard_path, class: "inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors" do %>
-          <%= icon :trophy, size: 16 %>
-          <%= t('nav.leaderboard') %>
-        <% end %>
-      <% end %>
+        <% if user_signed_in? %>
+          <details class="relative">
+            <summary class="list-none inline-flex items-center justify-between gap-2 md:gap-4 rounded-lg border border-white/25 bg-black/15 px-2 md:px-3 py-1.5 md:py-2 text-white hover:bg-white/10 transition-colors cursor-pointer">
+              <span class="inline-flex items-center gap-2 md:gap-3 min-w-0">
+                <% if current_user.avatar.present? %>
+                  <%= image_tag current_user.avatar, class: "w-7 h-7 md:w-8 md:h-8 rounded-full border border-white/20 object-cover flex-shrink-0", alt: current_user.display_name %>
+                <% else %>
+                  <span class="w-7 h-7 md:w-8 md:h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                    <%= icon :user, size: 16, class_name: "text-white/80" %>
+                  </span>
+                <% end %>
 
-      <% if user_signed_in? %>
-        <details class="relative">
-          <summary class="list-none inline-flex items-center justify-between gap-2 md:gap-4 rounded-lg border border-white/25 bg-black/15 px-2 md:px-3 py-1.5 md:py-2 text-white hover:bg-white/10 transition-colors cursor-pointer">
-            <span class="inline-flex items-center gap-2 md:gap-3 min-w-0">
-              <% if current_user.avatar.present? %>
-                <%= image_tag current_user.avatar, class: "w-7 h-7 md:w-8 md:h-8 rounded-full border border-white/20 object-cover flex-shrink-0", alt: current_user.display_name %>
-              <% else %>
-                <span class="w-7 h-7 md:w-8 md:h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-                  <%= icon :user, size: 16, class_name: "text-white/80" %>
-                </span>
-              <% end %>
-
-              <span class="min-w-0 flex flex-col leading-tight">
-                <span class="max-w-[8rem] md:max-w-[12rem] truncate text-xs md:text-sm"><%= current_user.display_name %></span>
-                <span class="inline-flex items-center gap-1 text-[10px] md:text-xs font-semibold text-white/75">
-                  <%= icon :pyramid, size: 12, class_name: "text-white/75 md:w-3.5 md:h-3.5" %>
-                  <span class="tabular-nums"><%= number_with_delimiter(current_user.total_shards) %></span>
-                  <span class="hidden sm:inline"><%= t('nav.shards') %></span>
+                <span class="min-w-0 flex flex-col leading-tight">
+                  <span class="max-w-[8rem] md:max-w-[12rem] truncate text-xs md:text-sm"><%= current_user.display_name %></span>
+                  <span class="inline-flex items-center gap-1 text-[10px] md:text-xs font-semibold text-white/75">
+                    <%= icon :pyramid, size: 12, class_name: "text-white/75 md:w-3.5 md:h-3.5" %>
+                    <span class="tabular-nums"><%= number_with_delimiter(current_user.total_shards) %></span>
+                    <span class="hidden sm:inline"><%= t('nav.shards') %></span>
+                  </span>
                 </span>
               </span>
-            </span>
 
-            <%= icon :chevron_down, size: 14, class_name: "text-white/70 flex-shrink-0 md:w-4 md:h-4" %>
-          </summary>
+              <%= icon :chevron_down, size: 14, class_name: "text-white/70 flex-shrink-0 md:w-4 md:h-4" %>
+            </summary>
 
-          <div class="absolute right-0 mt-2 min-w-full overflow-hidden rounded-lg border border-white/15 bg-black/70 backdrop-blur text-white shadow-md">
-            <%= button_to logout_path, method: :delete, class: "flex w-full items-center gap-2 px-3 py-2.5 text-sm font-semibold hover:bg-white/10 transition-colors cursor-pointer", form_class: "w-full" do %>
-              <%= icon :log_out, size: 16 %>
-              <%= t("nav.logout") %>
-            <% end %>
-          </div>
-        </details>
-      <% else %>
-        <%= link_to auth_path, class: "inline-flex items-center gap-2 md:gap-3 rounded-lg border border-white/25 px-3 md:px-4 py-1.5 md:py-2 text-white hover:bg-white hover:text-black transition-colors", data: { turbo: false } do %>
-          <%= icon :log_in, size: 16, stroke_width: 2.5, class_name: "md:w-[18px] md:h-[18px]" %>
-          <%= t('nav.login') %>
+            <div class="absolute right-0 mt-2 min-w-full overflow-hidden rounded-lg border border-white/15 bg-black/70 backdrop-blur text-white shadow-md">
+              <%= button_to logout_path, method: :delete, class: "flex w-full items-center gap-2 px-3 py-2.5 text-sm font-semibold hover:bg-white/10 transition-colors cursor-pointer", form_class: "w-full" do %>
+                <%= icon :log_out, size: 16 %>
+                <%= t("nav.logout") %>
+              <% end %>
+            </div>
+          </details>
+        <% else %>
+          <%= link_to auth_path, class: "inline-flex items-center gap-2 md:gap-3 rounded-lg border border-white/25 px-3 md:px-4 py-1.5 md:py-2 text-white hover:bg-white hover:text-black transition-colors", data: { turbo: false } do %>
+            <%= icon :log_in, size: 16, stroke_width: 2.5, class_name: "md:w-[18px] md:h-[18px]" %>
+            <%= t('nav.login') %>
+          <% end %>
         <% end %>
-      <% end %>
       </div>
     </div>
   </header>
@@ -95,9 +93,9 @@
         <% end %>
 
         <% if user_signed_in? %>
-          <%= link_to leaderboard_path, class: "inline-flex items-center justify-center gap-2 md:gap-3 rounded-full border border-white/25 px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 text-sm font-semibold text-white hover:bg-white/10 transition-colors" do %>
-            <%= icon :trophy, size: 16, class_name: "md:w-[18px] md:h-[18px]" %>
-            <%= t('landing.hero.cta_leaderboard') %>
+          <%= link_to shop_path, class: "inline-flex items-center justify-center gap-2 md:gap-3 rounded-full border border-white/25 px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 text-sm font-semibold text-white hover:bg-white/10 transition-colors" do %>
+            <%= icon :shopping_bag, size: 16, class_name: "md:w-[18px] md:h-[18px]" %>
+            <%= t('nav.shop') %>
           <% end %>
         <% else %>
           <%= link_to root_path(anchor: 'faq'), class: "inline-flex items-center justify-center gap-2 md:gap-3 rounded-full border border-white/25 px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 text-sm font-semibold text-white hover:bg-white/10 transition-colors" do %>
