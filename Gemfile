@@ -91,7 +91,7 @@ gem "shadcn-ui", "~> 0.0.15"
 gem "rqrcode", "~> 3.1"
 
 # HTTP client for OAuth and QReader service
-gem "faraday", "~> 2.9"
+gem "faraday", "~> 2.14"
 gem "faraday-multipart", "~> 1.0"
 
 # AWS SDK for S3-compatible storage (Cloudflare R2)
