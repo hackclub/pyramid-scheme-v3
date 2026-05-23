@@ -41,6 +41,7 @@ CAMPAIGN_DOMAINS = {
 }
 
 DEFAULT_CAMPAIGN = {"slug": "flavortown", "target": "https://flavortown.hackclub.com"}
+DEFAULT_TEMPLATE_ROOT = "/app/assets/images"
 
 # QR code coordinates for each campaign and style
 # PDF dimensions vary by campaign; y is from bottom edge
@@ -150,24 +151,52 @@ def generate_qr_code_png(content: str, size: int = 300) -> bytes:
     img.save(buffer, format='PNG')
     return buffer.getvalue()
 
-def get_template_path(campaign_slug: str, style: str) -> str:
-    """Get the path to the PDF template for a campaign and style"""
-    # Map style names to filenames
+def get_template_filename(style: str) -> str:
+    """Get the poster PDF filename for a style."""
     template_filename = {
         "bw": "poster-bw.pdf",
         "printer_efficient": "poster-printer_efficient.pdf",
         "color": "poster-color.pdf"
     }.get(style, "poster-color.pdf")
 
-    # Path in the mounted volume (assuming Rails assets are mounted)
-    template_path = f"/app/assets/images/{campaign_slug}/{template_filename}"
+    return template_filename
 
-    if not os.path.exists(template_path):
-        # Fall back to default campaign
-        default_slug = os.getenv("DEFAULT_CAMPAIGN_SLUG", "flavortown")
-        template_path = f"/app/assets/images/{default_slug}/{template_filename}"
+def get_template_roots() -> list[str]:
+    """Get poster template roots, preferring the non-regional campaign folders."""
+    configured_root = os.getenv("POSTER_TEMPLATE_ROOT", DEFAULT_TEMPLATE_ROOT)
+    roots = [
+        configured_root,
+        DEFAULT_TEMPLATE_ROOT,
+        "/rails/app/assets/images",
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "app", "assets", "images")),
+    ]
 
-    return template_path
+    normalized_roots = []
+    for root in roots:
+        normalized_root = (
+            os.path.dirname(root)
+            if os.path.basename(root.rstrip(os.sep)) == "regionals"
+            else root
+        )
+        if normalized_root not in normalized_roots:
+            normalized_roots.append(normalized_root)
+
+    return normalized_roots
+
+def get_template_path(campaign_slug: str, style: str) -> tuple[str, str]:
+    """Get the path and campaign slug for a top-level PDF poster template."""
+    template_filename = get_template_filename(style)
+    default_slug = os.getenv("DEFAULT_CAMPAIGN_SLUG", "flavortown")
+    campaign_slugs = list(dict.fromkeys([campaign_slug, default_slug]))
+    template_roots = get_template_roots()
+
+    for root in template_roots:
+        for slug in campaign_slugs:
+            template_path = os.path.join(root, slug, template_filename)
+            if os.path.exists(template_path):
+                return template_path, slug
+
+    return os.path.join(template_roots[0], default_slug, template_filename), default_slug
 
 def get_qr_config(campaign_slug: str, style: str) -> dict:
     """Get QR code positioning configuration"""
@@ -234,14 +263,14 @@ def generate_poster_pdf(content: str, campaign_slug: str, style: str,
                        referral_code: Optional[str] = None) -> bytes:
     """Generate a complete poster PDF with QR code overlay"""
     # Get template path
-    template_path = get_template_path(campaign_slug, style)
+    template_path, template_slug = get_template_path(campaign_slug, style)
 
     if not os.path.exists(template_path):
         raise HTTPException(status_code=404, detail=f"Template not found for campaign '{campaign_slug}' with style '{style}'")
 
     # Get QR and text configurations
-    qr_config = get_qr_config(campaign_slug, style)
-    text_config = get_text_config(campaign_slug, style) if referral_code else None
+    qr_config = get_qr_config(template_slug, style)
+    text_config = get_text_config(template_slug, style) if referral_code else None
 
     # Generate QR code
     qr_size = qr_config['size']
