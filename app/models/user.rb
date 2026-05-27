@@ -25,6 +25,7 @@ class User < ApplicationRecord
   validates :custom_referral_code, uniqueness: { case_sensitive: false }, allow_nil: true
   validates :custom_referral_code, length: { minimum: 3, maximum: 64 }, allow_nil: true
   validates :custom_referral_code, format: { with: /\A[a-zA-Z]+\z/, message: "must contain only letters (a-z, A-Z)" }, allow_nil: true
+  validates :age_bucket, inclusion: { in: %w[adult minor] }, allow_nil: true
 
   before_validation { self.email = email.to_s.downcase.strip }
   before_validation :generate_referral_code, on: :create
@@ -35,9 +36,8 @@ class User < ApplicationRecord
   scope :by_posters, -> { order(poster_count: :desc) }
   scope :by_shards, -> { order(total_shards: :desc) }
   scope :admins, -> { where(role: :admin) }
-  scope :with_dob, -> { where.not(date_of_birth: nil) }
-  scope :adults, -> { with_dob.where("date_of_birth <= ?", 18.years.ago.to_date) }
-  scope :minors, -> { with_dob.where("date_of_birth > ?", 18.years.ago.to_date) }
+  scope :adults, -> { where(age_bucket: "adult") }
+  scope :minors, -> { where(age_bucket: "minor") }
   scope :banned, -> { where(is_banned: true) }
   scope :active, -> { where(is_banned: false) }
   scope :with_referral_code, -> { where.not(referral_code: nil) }
@@ -85,6 +85,7 @@ class User < ApplicationRecord
 
   def credit_shards!(amount, transaction_type:, transactable: nil, description: nil)
     transaction do
+      lock!
       new_balance = total_shards + amount
       shard_transactions.create!(
         amount: amount,
@@ -98,9 +99,20 @@ class User < ApplicationRecord
   end
 
   def debit_shards!(amount, transaction_type:, transactable: nil, description: nil)
-    raise InsufficientShardsError, "Not enough shards" if total_shards < amount
+    transaction do
+      lock!
+      raise InsufficientShardsError, "Not enough shards" if total_shards < amount
 
-    credit_shards!(-amount, transaction_type: transaction_type, transactable: transactable, description: description)
+      new_balance = total_shards - amount
+      shard_transactions.create!(
+        amount: -amount,
+        transaction_type: transaction_type,
+        transactable: transactable,
+        description: description,
+        balance_after: new_balance
+      )
+      update!(total_shards: new_balance)
+    end
   end
 
   def can_afford?(amount)

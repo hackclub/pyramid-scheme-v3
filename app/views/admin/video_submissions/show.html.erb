@@ -17,8 +17,8 @@
       <% if @submission.video_url.present? %>
         <div class="bg-card rounded-lg border border-border p-4">
           <h3 class="font-semibold mb-2">Video URL</h3>
-          <% safe_url = @submission.video_url.to_s.match?(/\Ahttps?:\/\//i) ? @submission.video_url : "#" %>
-          <%= link_to @submission.video_url, safe_url, target: "_blank", rel: "noopener noreferrer", class: "text-primary hover:underline break-all" %>
+          <% safe_url = @submission.safe_video_url || "#" %>
+          <a href="<%= safe_url %>" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline break-all"><%= @submission.video_url %></a>
         </div>
       <% end %>
 

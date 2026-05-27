@@ -32,7 +32,7 @@ module Admin
     private
 
     def api_key_params
-      params.require(:api_key).permit(:name, :campaign_id, :description, permissions: {})
+      params.require(:api_key).permit(:name, :campaign_id, :description)
     end
   end
 end

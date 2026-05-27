@@ -76,8 +76,8 @@ module Admin
       col = column.to_s
       raise ArgumentError, "Invalid column for group_by_day: #{col}" unless ALLOWED_DATE_COLUMNS.include?(col)
 
-      quoted = Arel.sql("DATE(#{col})")
-      records.group(quoted).order(quoted)
+      date_expression = Arel::Nodes::NamedFunction.new("DATE", [ records.klass.arel_table[col] ])
+      records.group(date_expression).order(date_expression)
     end
   end
 end
@@ -91,8 +91,8 @@ unless ActiveRecord::Relation.method_defined?(:group_by_day)
       col = column.to_s
       raise ArgumentError, "Invalid column for group_by_day: #{col}" unless ALLOWED_DATE_COLUMNS.include?(col)
 
-      quoted = Arel.sql("DATE(#{col})")
-      group(quoted).order(quoted)
+      date_expression = Arel::Nodes::NamedFunction.new("DATE", [ klass.arel_table[col] ])
+      group(date_expression).order(date_expression)
     end
   end
   ActiveRecord::Relation.include(GroupByDayExtension)

@@ -3,11 +3,16 @@ import re
 import json
 import io
 import tempfile
+import hmac
+import logging
+import ipaddress
 from datetime import datetime
 from typing import Optional
+from pathlib import Path
+from urllib.parse import urlencode
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import RedirectResponse, Response, StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import asyncpg
 import qrcode
 from reportlab.pdfgen import canvas
@@ -17,16 +22,17 @@ from PIL import Image
 
 # Pydantic models for poster generation
 class PosterRequest(BaseModel):
-    content: str  # URL to encode in QR code
-    campaign_slug: str
-    style: str = "color"  # color, bw, or printer_efficient
-    referral_code: Optional[str] = None
+    content: str = Field(min_length=1, max_length=2048)  # URL to encode in QR code
+    campaign_slug: str = Field(min_length=1, max_length=64)
+    style: str = Field(default="color", max_length=32)  # color, bw, or printer_efficient
+    referral_code: Optional[str] = Field(default=None, max_length=64)
 
 class BatchPosterRequest(BaseModel):
-    posters: list[dict]  # List of {content, referral_code, poster_type} dicts
-    campaign_slug: str
+    posters: list[dict] = Field(min_length=1, max_length=100)  # List of {content, referral_code, poster_type} dicts
+    campaign_slug: str = Field(min_length=1, max_length=64)
 
 app = FastAPI(title="proxy", docs_url=None, redoc_url=None)
+logger = logging.getLogger("proxy")
 
 # Database connection pool
 db_pool = None
@@ -41,6 +47,9 @@ CAMPAIGN_DOMAINS = {
 }
 
 DEFAULT_CAMPAIGN = {"slug": "flavortown", "target": "https://flavortown.hackclub.com"}
+ALLOWED_CAMPAIGN_SLUGS = frozenset(CAMPAIGN_DOMAINS[host]["slug"] for host in CAMPAIGN_DOMAINS) | {DEFAULT_CAMPAIGN["slug"]}
+ALLOWED_STYLES = frozenset({"bw", "printer_efficient", "color"})
+ASSET_ROOT = Path("/app/assets/images").resolve()
 
 # QR code coordinates for each campaign and style
 # PDF dimensions vary by campaign; y is from bottom edge
@@ -111,6 +120,17 @@ async def get_db_pool():
 
 def get_real_ip(request: Request) -> str:
     """Get real IP from Traefik/Coolify proxy headers"""
+    client_host = request.client.host if request.client else "unknown"
+
+    try:
+        client_ip = ipaddress.ip_address(client_host)
+        trusted_proxy = client_ip.is_private or client_ip.is_loopback
+    except ValueError:
+        trusted_proxy = False
+
+    if not trusted_proxy:
+        return client_host
+
     # Try various proxy headers in order of preference
     forwarded_for = request.headers.get("x-forwarded-for")
     if forwarded_for:
@@ -124,11 +144,45 @@ def get_real_ip(request: Request) -> str:
     # Fallback to direct client
     return request.client.host if request.client else "unknown"
 
+def require_internal_request(request: Request) -> None:
+    """Require the shared internal key for expensive service endpoints."""
+    admin_key = os.getenv("ADMIN_KEY", "")
+    supplied_key = request.headers.get("x-internal-key", "")
+    if not admin_key or not hmac.compare_digest(supplied_key, admin_key):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
 def get_campaign_for_host(host: str) -> dict:
     """Determine campaign based on request host"""
     # Remove port if present
     host_clean = host.split(":")[0].lower()
     return CAMPAIGN_DOMAINS.get(host_clean, DEFAULT_CAMPAIGN)
+
+def sanitize_campaign_slug(campaign_slug: str) -> str:
+    slug = (campaign_slug or DEFAULT_CAMPAIGN["slug"]).strip().lower()
+    if slug not in ALLOWED_CAMPAIGN_SLUGS:
+        raise HTTPException(status_code=400, detail="Invalid campaign")
+    return slug
+
+def sanitize_style(style: str) -> str:
+    poster_style = (style or "color").strip().lower()
+    if poster_style not in ALLOWED_STYLES:
+        raise HTTPException(status_code=400, detail="Invalid poster style")
+    return poster_style
+
+def safe_asset_path(campaign_slug: str, template_filename: str) -> Path:
+    template_path = (ASSET_ROOT / campaign_slug / template_filename).resolve()
+    if not template_path.is_relative_to(ASSET_ROOT):
+        raise HTTPException(status_code=400, detail="Invalid template path")
+    return template_path
+
+def campaign_redirect_url(target_url: str, ref: Optional[str] = None) -> str:
+    if ref:
+        return f"{target_url}/?{urlencode({'ref': ref})}"
+    return f"{target_url}/"
+
+def safe_filename_part(value: Optional[str], fallback: str = "generated") -> str:
+    cleaned = re.sub(r"[^A-Za-z0-9_-]+", "-", value or "").strip("-")
+    return (cleaned or fallback)[:64]
 
 def generate_qr_code_png(content: str, size: int = 300) -> bytes:
     """Generate a QR code as PNG bytes"""
@@ -152,6 +206,9 @@ def generate_qr_code_png(content: str, size: int = 300) -> bytes:
 
 def get_template_path(campaign_slug: str, style: str) -> str:
     """Get the path to the PDF template for a campaign and style"""
+    campaign_slug = sanitize_campaign_slug(campaign_slug)
+    style = sanitize_style(style)
+
     # Map style names to filenames
     template_filename = {
         "bw": "poster-bw.pdf",
@@ -160,14 +217,14 @@ def get_template_path(campaign_slug: str, style: str) -> str:
     }.get(style, "poster-color.pdf")
 
     # Path in the mounted volume (assuming Rails assets are mounted)
-    template_path = f"/app/assets/images/{campaign_slug}/{template_filename}"
+    template_path = safe_asset_path(campaign_slug, template_filename)
 
-    if not os.path.exists(template_path):
+    if not template_path.exists():
         # Fall back to default campaign
         default_slug = os.getenv("DEFAULT_CAMPAIGN_SLUG", "flavortown")
-        template_path = f"/app/assets/images/{default_slug}/{template_filename}"
+        template_path = safe_asset_path(sanitize_campaign_slug(default_slug), template_filename)
 
-    return template_path
+    return str(template_path)
 
 def get_qr_config(campaign_slug: str, style: str) -> dict:
     """Get QR code positioning configuration"""
@@ -236,7 +293,7 @@ def generate_poster_pdf(content: str, campaign_slug: str, style: str,
     # Get template path
     template_path = get_template_path(campaign_slug, style)
 
-    if not os.path.exists(template_path):
+    if not Path(template_path).exists():
         raise HTTPException(status_code=404, detail=f"Template not found for campaign '{campaign_slug}' with style '{style}'")
 
     # Get QR and text configurations
@@ -310,13 +367,15 @@ async def root(request: Request):
     # Preserve ?ref= query parameter if present
     ref_param = request.query_params.get("ref")
     if ref_param:
-        return RedirectResponse(url=f"{target_url}/?ref={ref_param}", status_code=302)
+        return RedirectResponse(url=campaign_redirect_url(target_url, ref=ref_param), status_code=302)
     
-    return RedirectResponse(url=f"{target_url}/", status_code=302)
+    return RedirectResponse(url=campaign_redirect_url(target_url), status_code=302)
 
 @app.post("/generate_poster")
-async def generate_single_poster(poster_request: PosterRequest):
+async def generate_single_poster(poster_request: PosterRequest, request: Request):
     """Generate a single poster PDF with QR code"""
+    require_internal_request(request)
+
     try:
         pdf_data = generate_poster_pdf(
             content=poster_request.content,
@@ -329,23 +388,32 @@ async def generate_single_poster(poster_request: PosterRequest):
             content=pdf_data,
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f"attachment; filename=poster-{poster_request.referral_code or 'generated'}-{poster_request.style}.pdf"
+                "Content-Disposition": (
+                    "attachment; filename="
+                    f"poster-{safe_filename_part(poster_request.referral_code)}-"
+                    f"{safe_filename_part(poster_request.style, 'color')}.pdf"
+                )
             }
         )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate poster: {str(e)}")
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("Failed to generate poster")
+        raise HTTPException(status_code=500, detail="Failed to generate poster")
 
 @app.post("/generate_poster_batch")
-async def generate_poster_batch(batch_request: BatchPosterRequest):
+async def generate_poster_batch(batch_request: BatchPosterRequest, request: Request):
     """Generate multiple posters merged into a single PDF"""
+    require_internal_request(request)
+
     try:
         # Create a PDF writer for merging all posters
         merged_writer = PdfWriter()
 
         for index, poster_data in enumerate(batch_request.posters):
-            content = poster_data.get('content')
-            referral_code = poster_data.get('referral_code')
-            poster_type = poster_data.get('poster_type', 'color')
+            content = str(poster_data.get('content') or "")[:2048]
+            referral_code = str(poster_data.get('referral_code') or "")[:64]
+            poster_type = str(poster_data.get('poster_type') or "color")[:32]
 
             if not content:
                 continue
@@ -354,7 +422,7 @@ async def generate_poster_batch(batch_request: BatchPosterRequest):
             pdf_data = generate_poster_pdf(
                 content=content,
                 campaign_slug=batch_request.campaign_slug,
-                style=poster_type,
+                style=sanitize_style(poster_type),
                 referral_code=referral_code
             )
 
@@ -377,15 +445,20 @@ async def generate_poster_batch(batch_request: BatchPosterRequest):
             content=output_buffer.read(),
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f"attachment; filename=posters_{batch_request.campaign_slug}.pdf"
+                "Content-Disposition": f"attachment; filename=posters_{safe_filename_part(batch_request.campaign_slug)}.pdf"
             }
         )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate poster batch: {str(e)}")
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("Failed to generate poster batch")
+        raise HTTPException(status_code=500, detail="Failed to generate poster batch")
 
 @app.post("/generate_poster_batch_zip")
-async def generate_poster_batch_zip(batch_request: BatchPosterRequest):
+async def generate_poster_batch_zip(batch_request: BatchPosterRequest, request: Request):
     """Generate multiple posters as individual PDFs in a ZIP archive"""
+    require_internal_request(request)
+
     import zipfile
     
     try:
@@ -394,9 +467,9 @@ async def generate_poster_batch_zip(batch_request: BatchPosterRequest):
         
         with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
             for index, poster_data in enumerate(batch_request.posters):
-                content = poster_data.get('content')
-                referral_code = poster_data.get('referral_code')
-                poster_type = poster_data.get('poster_type', 'color')
+                content = str(poster_data.get('content') or "")[:2048]
+                referral_code = str(poster_data.get('referral_code') or "")[:64]
+                poster_type = str(poster_data.get('poster_type') or "color")[:32]
 
                 if not content:
                     continue
@@ -405,12 +478,12 @@ async def generate_poster_batch_zip(batch_request: BatchPosterRequest):
                 pdf_data = generate_poster_pdf(
                     content=content,
                     campaign_slug=batch_request.campaign_slug,
-                    style=poster_type,
+                    style=sanitize_style(poster_type),
                     referral_code=referral_code
                 )
 
                 # Add to zip with meaningful filename
-                filename = f"poster_{index + 1}_{referral_code}.pdf"
+                filename = f"poster_{index + 1}_{safe_filename_part(referral_code)}.pdf"
                 zip_file.writestr(filename, pdf_data)
 
         zip_buffer.seek(0)
@@ -419,11 +492,14 @@ async def generate_poster_batch_zip(batch_request: BatchPosterRequest):
             content=zip_buffer.read(),
             media_type="application/zip",
             headers={
-                "Content-Disposition": f"attachment; filename=posters_{batch_request.campaign_slug}.zip"
+                "Content-Disposition": f"attachment; filename=posters_{safe_filename_part(batch_request.campaign_slug)}.zip"
             }
         )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate poster zip: {str(e)}")
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("Failed to generate poster zip")
+        raise HTTPException(status_code=500, detail="Failed to generate poster zip")
 
 @app.get("/{code:path}")
 async def proxy_referral(code: str, request: Request):
@@ -450,14 +526,14 @@ async def proxy_referral(code: str, request: Request):
         raw_code = raw_code[2:]  # drop "p/"
     elif "/" in raw_code:
         # Unexpected nested path
-        return RedirectResponse(url=f"{target_url}/", status_code=302)
+        return RedirectResponse(url=campaign_redirect_url(target_url), status_code=302)
 
     # Sanitize and validate referral code format (8 alphanumeric characters)
     code_clean = raw_code.upper()
 
     if not re.match(r"^[A-Z0-9]{8}$", code_clean):
         # Invalid format - redirect without ref parameter
-        return RedirectResponse(url=f"{target_url}/", status_code=302)
+        return RedirectResponse(url=campaign_redirect_url(target_url), status_code=302)
 
     pool = await get_db_pool()
 
@@ -546,10 +622,10 @@ async def proxy_referral(code: str, request: Request):
 
     # Redirect based on validity (poster links also go through ?ref=)
     if is_valid:
-        return RedirectResponse(url=f"{target_url}/?ref={code_clean}", status_code=302)
+        return RedirectResponse(url=campaign_redirect_url(target_url, ref=code_clean), status_code=302)
 
     # Invalid code fallback
-    return RedirectResponse(url=f"{target_url}/", status_code=302)
+    return RedirectResponse(url=campaign_redirect_url(target_url), status_code=302)
 
 if __name__ == "__main__":
     import uvicorn

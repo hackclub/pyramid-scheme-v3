@@ -99,7 +99,7 @@ class PostersController < ApplicationController
     end
 
     response = conn.post("/generate_poster") do |req|
-      req.headers["Content-Type"] = "application/json"
+      req.headers.update(internal_service_headers(content_type: "application/json"))
       req.body = {
         content: @poster.referral_url,
         campaign_slug: @poster.campaign.slug,

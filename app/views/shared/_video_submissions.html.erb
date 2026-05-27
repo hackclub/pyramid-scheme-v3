@@ -180,7 +180,7 @@
           <% if submission.video_url.present? %>
             <div class="text-xs">
               <span class="campaign-text-muted">URL:</span>
-              <a href="<%= submission.video_url %>" target="_blank" class="block mt-1 campaign-text-primary hover:underline truncate"><%= submission.video_url %></a>
+              <a href="<%= submission.safe_video_url || "#" %>" target="_blank" rel="noopener noreferrer" class="block mt-1 campaign-text-primary hover:underline truncate"><%= submission.video_url %></a>
             </div>
           <% end %>
 

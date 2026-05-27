@@ -117,6 +117,18 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
+  test "debit_shards! checks the locked current balance" do
+    @regular_user.update!(total_shards: 25)
+    stale_user = User.find(@regular_user.id)
+
+    @regular_user.debit_shards!(10, transaction_type: "admin_debit")
+
+    assert_raises(User::InsufficientShardsError) do
+      stale_user.debit_shards!(20, transaction_type: "admin_debit")
+    end
+    assert_equal 15, @regular_user.reload.total_shards
+  end
+
   test "can_afford? returns true when user has enough shards" do
     @regular_user.update!(total_shards: 100)
     assert @regular_user.can_afford?(50)

@@ -288,7 +288,9 @@ class CampaignDashboardStatsService
   end
 
   def grouped_counts(scope, column)
-    scope.group(Arel.sql("DATE(#{column})")).count
+    column_name = column.to_s
+    date_expression = Arel::Nodes::NamedFunction.new("DATE", [ scope.klass.arel_table[column_name] ])
+    scope.group(date_expression).count
   end
 
   def identity_key_for_user_id(user_id)

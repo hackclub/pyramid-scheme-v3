@@ -2,7 +2,6 @@
 
 class HealthController < ApplicationController
   # Skip all filters and authentication for health checks
-  skip_before_action :verify_authenticity_token
   skip_before_action :authenticate_user!
   skip_before_action :enforce_ban
   skip_before_action :track_user_activity
@@ -18,6 +17,7 @@ class HealthController < ApplicationController
     render plain: "OK", status: :ok
   rescue => e
     # Database connection failed or other error
-    render plain: "Error: #{e.message}", status: :service_unavailable
+    Rails.logger.error("Health check failed: #{e.class}: #{e.message}")
+    render plain: "Service unavailable", status: :service_unavailable
   end
 end

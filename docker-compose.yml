@@ -103,6 +103,7 @@ services:
     environment:
       - PORT=4446
       - DATABASE_URL=postgres://pyramid:pyramid_dev@db:5432/pyramid_development
+      - ADMIN_KEY=${ADMIN_KEY:-dev_admin_key}
     ports:
       - "4446:4446"
     volumes:

@@ -11,7 +11,7 @@ module Admin
       @age_stats = {
         adults: User.adults.count,
         minors: User.minors.count,
-        unknown: User.where(date_of_birth: nil).count
+        unknown: User.where(age_bucket: nil).count
       }
 
       respond_to do |format|
@@ -205,7 +205,7 @@ module Admin
     private
 
     def user_params
-      params.require(:user).permit(:display_name, :role, :internal_notes, :leaderboard_opted_out)
+      params.require(:user).permit(:display_name, :internal_notes, :leaderboard_opted_out)
     end
   end
 end

@@ -133,4 +133,17 @@ class ApplicationController < ActionController::Base
     # Log the click for analytics (non-blocking)
     RefSourceClick.log(ref_value, request) if defined?(RefSourceClick)
   end
+
+  def internal_service_key
+    ENV["ADMIN_KEY"].presence || Rails.application.credentials.admin_key.presence
+  rescue NoMethodError
+    nil
+  end
+
+  def internal_service_headers(content_type: nil)
+    headers = {}
+    headers["X-Internal-Key"] = internal_service_key if internal_service_key.present?
+    headers["Content-Type"] = content_type if content_type.present?
+    headers
+  end
 end

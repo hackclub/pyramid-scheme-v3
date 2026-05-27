@@ -5,7 +5,6 @@
 # - /p/:code - Poster referral
 # - /:code or /r/:code - Regular referral link
 class ProxyController < ApplicationController
-  skip_before_action :verify_authenticity_token
   skip_before_action :authenticate_user!, only: [ :poster_referral, :link_referral ]
 
   # Handle poster referrals from flavortown.hackclub.com/p/:code
@@ -56,7 +55,7 @@ class ProxyController < ApplicationController
 
     # Determine target URL from host domain
     host = request.host.to_s.downcase
-    base_url = CAMPAIGN_HOST_MAP[host] || DEFAULT_TARGET
+    base_url = CAMPAIGN_HOST_MAP.fetch(host, DEFAULT_TARGET)
 
     # If code is present and valid (alphanumeric, <= 64 chars), append as ref parameter
     if code.present? && code.match?(/^[A-Za-z0-9]+$/) && code.length <= 64
@@ -67,17 +66,28 @@ class ProxyController < ApplicationController
           # Set session for poster referral before redirecting
           session[:referral_code] = code
           session[:referral_type] = "poster"
-          redirect_to "#{base_url}/", allow_other_host: true
+          redirect_to external_campaign_url(base_url), allow_other_host: true
           return
         end
       end
 
-      redirect_url = "#{base_url}/?ref=#{CGI.escape(code)}"
+      redirect_url = external_campaign_url(base_url, ref: code)
     else
       # Invalid or missing code - just redirect to base domain
-      redirect_url = "#{base_url}/"
+      redirect_url = external_campaign_url(base_url)
     end
 
     redirect_to redirect_url, allow_other_host: true
+  end
+
+  private
+
+  def external_campaign_url(base_url, ref: nil)
+    raise ArgumentError, "Unexpected campaign redirect host" unless CAMPAIGN_HOST_MAP.value?(base_url) || base_url == DEFAULT_TARGET
+
+    uri = URI.parse(base_url)
+    uri.path = "/"
+    uri.query = ref.present? ? { ref: ref }.to_query : nil
+    uri.to_s
   end
 end

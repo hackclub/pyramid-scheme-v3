@@ -1,6 +1,7 @@
 import os
 import io
-import traceback
+import logging
+import warnings
 from fastapi import FastAPI, File, UploadFile, Request
 from fastapi.responses import JSONResponse
 from slowapi import Limiter
@@ -16,6 +17,11 @@ register_heif_opener()
 
 # Initialize QReader once at startup
 qreader = QReader()
+logger = logging.getLogger("qreader")
+MAX_UPLOAD_BYTES = 20 * 1024 * 1024
+MAX_IMAGE_PIXELS = 25_000_000
+Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
+warnings.simplefilter("error", Image.DecompressionBombWarning)
 
 
 def is_admin_request(request: Request) -> bool:
@@ -45,12 +51,10 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     """Catch all exceptions and return JSON error"""
-    error_detail = str(exc)
-    print(f"Unhandled exception: {error_detail}")
-    traceback.print_exc()
+    logger.exception("Unhandled exception while reading QR code")
     return JSONResponse(
         status_code=500,
-        content={"error": f"Internal server error: {error_detail}", "results": [], "count": 0}
+        content={"error": "internal server error", "results": [], "count": 0}
     )
 
 
@@ -73,11 +77,11 @@ def decode_qr_codes(img: Image.Image) -> list[str]:
 @app.post("/read")
 @limiter.limit("1000/hour")
 async def read(request: Request, file: UploadFile = File(...)):
-    if file.size and file.size > 20 * 1024 * 1024:
+    if file.size and file.size > MAX_UPLOAD_BYTES:
         return JSONResponse(status_code=413, content={"error": "file too large (max 20MB)"})
 
     data = await file.read()
-    if len(data) > 20 * 1024 * 1024:
+    if len(data) > MAX_UPLOAD_BYTES:
         return JSONResponse(status_code=413, content={"error": "file too large (max 20MB)"})
 
     if len(data) == 0:
@@ -85,10 +89,18 @@ async def read(request: Request, file: UploadFile = File(...)):
 
     try:
         img = Image.open(io.BytesIO(data))
+        if img.width * img.height > MAX_IMAGE_PIXELS:
+            return JSONResponse(status_code=413, content={"error": "image dimensions too large"})
+        img.verify()
+        img = Image.open(io.BytesIO(data))
+    except Image.DecompressionBombError:
+        logger.info("Rejected image upload exceeding pixel limit")
+        return JSONResponse(status_code=413, content={"error": "image dimensions too large"})
     except Exception as e:
+        logger.info("Invalid image upload: %s", e)
         return JSONResponse(
             status_code=400,
-            content={"error": f"invalid image format: {str(e)[:100]} - supported: PNG, JPG, HEIC, WebP"}
+            content={"error": "invalid image format - supported: PNG, JPG, HEIC, WebP"}
         )
 
     results = decode_qr_codes(img)

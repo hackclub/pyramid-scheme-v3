@@ -276,7 +276,7 @@ module Admin
       daily_counts = relation
         .where(table[date_field].gteq(start_date))
         .where(table[date_field].lt(start_date + (max_days + 1).days))
-        .group(Arel.sql("DATE(#{relation.connection.quote_column_name(date_field)})"))
+        .group(Arel::Nodes::NamedFunction.new("DATE", [ table[date_field] ]))
         .count
 
       # Convert to cumulative

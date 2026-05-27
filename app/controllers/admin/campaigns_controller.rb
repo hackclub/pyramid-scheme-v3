@@ -105,15 +105,17 @@ module Admin
     end
 
     def campaign_params
+      qr_coordinate_keys = [ :x, :y, :size ]
+
       params.require(:campaign).permit(
         :name, :slug, :theme, :description, :active, :status,
         :starts_at, :ends_at, :referral_shards, :poster_shards,
         :required_coding_minutes, :subdomain, :base_url, :custom_css,
-        :airtable_base_id, :airtable_table_id, :airtable_sync_enabled,
-        theme_config: {},
-        i18n_overrides: {},
-        airtable_field_mappings: {},
-        poster_qr_coordinates: {}
+        poster_qr_coordinates: {
+          color: qr_coordinate_keys,
+          bw: qr_coordinate_keys,
+          printer_efficient: qr_coordinate_keys
+        }
       )
     end
   end

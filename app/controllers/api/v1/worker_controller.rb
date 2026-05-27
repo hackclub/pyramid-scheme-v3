@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "digest"
+
 module Api
   module V1
     class WorkerController < ActionController::API
@@ -136,9 +138,19 @@ module Api
         key = request.headers["X-Internal-Key"] ||
               request.headers["Authorization"]&.gsub(/^Bearer\s+/, "")
 
-        unless key.present? && ActiveSupport::SecurityUtils.secure_compare(key, admin_key)
+        unless valid_internal_key?(key)
           render json: { error: "Unauthorized" }, status: :unauthorized
         end
+      end
+
+      def valid_internal_key?(key)
+        expected_key = admin_key.to_s
+        return false if key.blank? || expected_key.blank?
+
+        ActiveSupport::SecurityUtils.secure_compare(
+          Digest::SHA256.hexdigest(key.to_s),
+          Digest::SHA256.hexdigest(expected_key)
+        )
       end
 
       def admin_key

@@ -105,7 +105,7 @@ class PosterGroupsController < ApplicationController
     end
 
     response = conn.post("/generate_poster_batch") do |req|
-      req.headers["Content-Type"] = "application/json"
+      req.headers.update(internal_service_headers(content_type: "application/json"))
       req.body = {
         posters: posters_data,
         campaign_slug: @poster_group.campaign.slug
@@ -155,7 +155,7 @@ class PosterGroupsController < ApplicationController
     end
 
     response = conn.post("/generate_poster_batch_zip") do |req|
-      req.headers["Content-Type"] = "application/json"
+      req.headers.update(internal_service_headers(content_type: "application/json"))
       req.body = {
         posters: posters_data,
         campaign_slug: @poster_group.campaign.slug

@@ -82,7 +82,7 @@ module Admin
         :airtable_base_id,
         :airtable_table_id,
         :airtable_sync_enabled,
-        airtable_field_mappings: {}
+        airtable_field_mappings: [ :email, :hours, :idv_status, :projects_shipped, :record_id ]
       )
     end
 

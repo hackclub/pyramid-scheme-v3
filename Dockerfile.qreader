@@ -8,13 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libsm6 \
     libxext6 \
     libxrender1 \
-    poppler-utils \
-    imagemagick \
-    ghostscript \
     && rm -rf /var/lib/apt/lists/*
-
-# Allow ImageMagick to process PDFs (security policy)
-RUN sed -i 's/rights="none" pattern="PDF"/rights="read|write" pattern="PDF"/' /etc/ImageMagick-6/policy.xml 2>/dev/null || true
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 

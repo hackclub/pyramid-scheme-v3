@@ -36,6 +36,7 @@
 !/app/assets/builds/.keep
 /public/assets
 /vendor/pycall-python/
+/ref/
 
 # Ignore CI service files.
 /.github

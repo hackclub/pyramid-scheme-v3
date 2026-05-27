@@ -64,7 +64,7 @@ module Api
           referrer: referrer,
           referred_identifier: params[:referred_identifier],
           external_program: params[:external_program],
-          metadata: params[:metadata] || {}
+          metadata: safe_metadata(params[:metadata])
         )
 
         if referral.save
@@ -102,7 +102,7 @@ module Api
 
         # Update metadata
         if params[:metadata].present?
-          referral.update!(metadata: referral.metadata.merge(params[:metadata].to_unsafe_h))
+          referral.update!(metadata: referral.metadata.merge(safe_metadata(params[:metadata])))
         end
 
         render_success(referral: serialize_referral(referral.reload))
@@ -146,7 +146,7 @@ module Api
               referrer: referrer,
               referred_identifier: ref_params[:referred_identifier],
               external_program: ref_params[:external_program],
-              metadata: ref_params[:metadata] || {}
+              metadata: safe_metadata(ref_params[:metadata])
             )
 
             if referral.save
@@ -184,7 +184,42 @@ module Api
         end
 
         if ref_params[:metadata].present?
-          referral.update!(metadata: referral.metadata.merge(ref_params[:metadata].to_h))
+          referral.update!(metadata: referral.metadata.merge(safe_metadata(ref_params[:metadata])))
+        end
+      end
+
+      def safe_metadata(value, depth: 0)
+        return {} if value.blank?
+        return {} if depth > 3
+
+        case value
+        when ActionController::Parameters, Hash
+          value.each_pair.with_object({}) do |(key, child), hash|
+            normalized_key = key.to_s
+            next if normalized_key.blank? || normalized_key.length > 64
+
+            sanitized = safe_metadata_value(child, depth: depth + 1)
+            hash[normalized_key] = sanitized unless sanitized.nil?
+          end
+        else
+          {}
+        end
+      end
+
+      def safe_metadata_value(value, depth:)
+        case value
+        when String
+          value.first(1_000)
+        when Numeric, TrueClass, FalseClass
+          value
+        when NilClass
+          nil
+        when Array
+          return [] if depth > 3
+
+          value.first(50).filter_map { |item| safe_metadata_value(item, depth: depth + 1) }
+        when ActionController::Parameters, Hash
+          safe_metadata(value, depth: depth)
         end
       end
 

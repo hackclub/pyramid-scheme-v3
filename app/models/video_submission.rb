@@ -18,6 +18,7 @@ class VideoSubmission < ApplicationRecord
   validates :shards_awarded, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 10 }
   validates :viral_bonus, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 20 }
   validate :has_url_or_files
+  validate :video_url_is_http_url
 
   validates :video_files,
     content_type: { in: [ "video/mp4", "video/quicktime", "video/webm", "video/x-msvideo", "image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp" ],
@@ -74,6 +75,15 @@ class VideoSubmission < ApplicationRecord
     shards_awarded + viral_bonus
   end
 
+  def safe_video_url
+    return if video_url.blank?
+
+    uri = URI.parse(video_url)
+    uri.to_s if uri.is_a?(URI::HTTP) && uri.host.present?
+  rescue URI::InvalidURIError
+    nil
+  end
+
   def approve!(reviewer, shards:)
     raise ArgumentError, "Shards must be between 1 and 10" unless shards.between?(1, 10)
 
@@ -128,6 +138,13 @@ class VideoSubmission < ApplicationRecord
     if video_url.blank? && !video_files.attached?
       errors.add(:base, "You must provide either a video URL or upload files")
     end
+  end
+
+  def video_url_is_http_url
+    return if video_url.blank?
+    return if safe_video_url.present?
+
+    errors.add(:video_url, "must be a valid http or https URL")
   end
 
   def award_shards!(amount, transaction_type)

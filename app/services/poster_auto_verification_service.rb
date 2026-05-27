@@ -56,16 +56,7 @@ class PosterAutoVerificationService
       @poster.metadata["detected_qr_codes"] = detected_qr_codes
       @poster.save!
 
-      # Check if the poster's referral URL or referral code was detected
-      # Use flexible matching to handle URL variations (trailing slashes, case, etc.)
-      referral_url = @poster.referral_url.downcase.chomp("/")
-      referral_code = @poster.referral_code.downcase
-
-      qr_match_found = detected_qr_codes.any? do |qr|
-        normalized_qr = qr.to_s.downcase.chomp("/")
-        # Match either the full URL or just the referral code in the QR content
-        normalized_qr == referral_url || normalized_qr.include?(referral_code)
-      end
+      qr_match_found = detected_qr_codes.any? { |qr| qr_matches_poster?(qr, @poster) }
 
       if qr_match_found
         handle_success
@@ -109,13 +100,8 @@ class PosterAutoVerificationService
 
     # Try to find a matching poster
     detected_qr_codes.each do |qr|
-      normalized_qr = qr.to_s.downcase.chomp("/")
-
       user_pending_posters.each do |candidate_poster|
-        candidate_url = candidate_poster.referral_url.downcase.chomp("/")
-        candidate_code = candidate_poster.referral_code.downcase
-
-        if normalized_qr == candidate_url || normalized_qr.include?(candidate_code)
+        if qr_matches_poster?(qr, candidate_poster)
           # Found a match! Transfer proof and auto-approve
           transfer_proof_and_approve(candidate_poster, qr)
           @matched_poster = candidate_poster
@@ -215,6 +201,48 @@ class PosterAutoVerificationService
     end
 
     SlackNotificationService.new.notify_admin_new_poster(poster: @poster)
+  end
+
+  def qr_matches_poster?(qr_content, poster)
+    expected_url = poster.referral_url.to_s
+    return false if qr_content.blank? || expected_url.blank? || poster.referral_code.blank?
+
+    return true if normalized_url(qr_content) == normalized_url(expected_url)
+
+    qr_uri = parse_http_uri(qr_content)
+    expected_uri = parse_http_uri(expected_url)
+    return false unless qr_uri && expected_uri
+
+    same_target =
+      qr_uri.scheme == expected_uri.scheme &&
+      qr_uri.host&.downcase == expected_uri.host&.downcase &&
+      normalized_path(qr_uri.path) == normalized_path(expected_uri.path)
+    return false unless same_target
+
+    Rack::Utils.parse_nested_query(qr_uri.query)["ref"].to_s.casecmp?(poster.referral_code.to_s)
+  end
+
+  def normalized_url(value)
+    uri = parse_http_uri(value)
+    return value.to_s.strip.downcase.chomp("/") unless uri
+
+    uri.scheme = uri.scheme.downcase
+    uri.host = uri.host.downcase
+    uri.path = normalized_path(uri.path)
+    uri.to_s.chomp("/")
+  end
+
+  def parse_http_uri(value)
+    uri = URI.parse(value.to_s.strip)
+    return unless uri.is_a?(URI::HTTP) && uri.host.present?
+
+    uri
+  rescue URI::InvalidURIError
+    nil
+  end
+
+  def normalized_path(path)
+    path.present? ? path : "/"
   end
 
   def cleanup_temp_file(temp_file)
