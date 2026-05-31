@@ -3,11 +3,19 @@
 module Api
   module V1
     class BaseController < ActionController::API
+      # Pyramid Scheme V3 has ended: the public data API is closed. Runs before
+      # key authentication so no program data is served, even to valid keys.
+      prepend_before_action :reject_sunset
+
       before_action :authenticate_api_key!
 
       attr_reader :current_api_key, :current_campaign
 
       private
+
+      def reject_sunset
+        render json: { error: "Pyramid Scheme V3 has ended." }, status: :gone
+      end
 
       def authenticate_api_key!
         api_key = request.headers["Authorization"]&.gsub(/^Bearer\s+/, "")
