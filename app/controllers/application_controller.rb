@@ -9,6 +9,12 @@ class ApplicationController < ActionController::Base
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
 
+  # Pyramid Scheme V3 has ended: the public site is shut down. Only the landing
+  # "ended" screen, the auth flow, and the admin namespace remain reachable.
+  SUNSET_ALLOWED_CONTROLLERS = %w[landing sessions health errors banned].freeze
+
+  prepend_before_action :enforce_sunset
+
   before_action :capture_ref_param
   before_action :authenticate_user!
   before_action :enforce_ban
@@ -38,6 +44,25 @@ class ApplicationController < ActionController::Base
   end
 
   private
+
+  # Block every public-facing page now that the program has ended. The admin
+  # namespace stays open (still gated by require_admin!), as does the auth flow
+  # so admins can sign in. Everyone/everything else is sent back to the ended
+  # landing screen.
+  def enforce_sunset
+    return if admin_namespace?
+    return if SUNSET_ALLOWED_CONTROLLERS.include?(controller_name)
+
+    respond_to do |format|
+      format.html { redirect_to root_path }
+      format.json { head :gone }
+      format.any { head :gone }
+    end
+  end
+
+  def admin_namespace?
+    self.class.name.to_s.start_with?("Admin::")
+  end
 
   def authenticate_user!
     return if user_signed_in?

@@ -65,15 +65,15 @@ class SessionsController < ApplicationController
         cookies.delete(:signup_ref)
       end
 
-      # Redirect to stored path or default campaign
-      return_path = session.delete(:return_to)
-      redirect_path = if return_path.present? && return_path.start_with?("/c/")
-        return_path
-      else
-        campaign_path(current_campaign.slug)
-      end
+      # Pyramid Scheme V3 has ended: only admins may proceed (to the admin
+      # area). Everyone else is sent back to the ended landing screen.
+      session.delete(:return_to)
 
-      redirect_to redirect_path, notice: t("auth.flash.welcome", name: user.display_name)
+      if user.admin?
+        redirect_to admin_root_path, notice: t("auth.flash.welcome", name: user.display_name)
+      else
+        redirect_to root_path
+      end
     rescue HackClubAuthService::AuthenticationError => e
       Rails.logger.error("Authentication error: #{e.message}")
       redirect_to root_path, alert: t("auth.flash.auth_failed_with_message", message: e.message)
